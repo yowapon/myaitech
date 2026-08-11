@@ -33,7 +33,37 @@ body{
   font-family:var(--font); font-size:16px; line-height:1.75;
   -webkit-font-smoothing:antialiased; transition:background .2s,color .2s;
 }
-.wrap{max-width:880px; margin:0 auto; padding:64px 28px 120px}
+.layout{display:flex; align-items:flex-start; max-width:1200px; margin:0 auto}
+.wrap{flex:1 1 auto; min-width:0; max-width:880px; padding:64px 44px 120px}
+
+/* ---------- 目次サイドバー ---------- */
+#sidebar{
+  position:sticky; top:0; flex:0 0 250px; height:100vh;
+  padding:28px 14px 40px; overflow-y:auto;
+  border-right:1px solid var(--border); background:var(--bg-sub);
+}
+#sidebar .toc-label{
+  font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--text-faint); padding:0 10px; margin-bottom:10px; font-weight:600;
+}
+#sidebar .toc-foot{
+  margin-top:18px; padding:14px 10px 0; border-top:1px solid var(--border);
+  font-size:12px; color:var(--text-faint); line-height:1.7;
+}
+#sidebar .toc-foot a{color:var(--text-mute); text-decoration:none}
+#sidebar .toc-foot a:hover{color:var(--accent)}
+#toc a{
+  display:block; padding:6px 10px; margin:1px 0; border-radius:6px;
+  color:var(--text-mute); text-decoration:none; font-size:13.5px; line-height:1.45;
+  border-left:2px solid transparent; transition:background .15s,color .15s;
+}
+#toc a:hover{background:var(--bg-hover); color:var(--text)}
+#toc a.active{background:var(--accent-soft); color:var(--accent); font-weight:600; border-left-color:var(--accent)}
+#toc a.sub{
+  padding-left:22px; font-size:12.5px; color:var(--text-faint);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+#toc a.sub:hover{color:var(--text)}
 
 /* ---------- ヘッダー ---------- */
 .eyebrow{font-size:12px; letter-spacing:.12em; color:var(--accent); font-weight:700; text-transform:uppercase}
@@ -93,6 +123,10 @@ footer p{margin:.5em 0}
 }
 #themeBtn:hover{background:var(--bg-hover)}
 
+@media (max-width:960px){
+  #sidebar{display:none}
+  .wrap{padding:56px 28px 100px; max-width:none}
+}
 @media (max-width:640px){
   .wrap{padding:44px 20px 90px}
   h1{font-size:29px}
@@ -102,11 +136,34 @@ footer p{margin:.5em 0}
 </head>
 <body>
 
-<button id="themeBtn" aria-label="ライト/ダーク切替">🌙</button>
+<button id="themeBtn" type="button" aria-label="ライト/ダーク切替">🌙</button>
 
-<div class="wrap">
+<div class="layout">
 
-  <header>
+  <aside id="sidebar">
+    <div class="toc-label">教材ライブラリ</div>
+    <nav id="toc">
+      <a href="#top">はじめに</a>
+      <a href="#cat-ai">🤖 AI・生成AI</a>
+      <a class="sub" href="#m004">AIエージェント入門</a>
+      <a class="sub" href="#m006">ハルシネーション</a>
+      <a href="#cat-sec">🔐 IT・セキュリティ</a>
+      <a class="sub" href="#m001">パスキー入門</a>
+      <a href="#cat-money">💰 お金・投資</a>
+      <a class="sub" href="#m002">株のもうけの5つの部品</a>
+      <a class="sub" href="#m005">新NISAの仕組み</a>
+      <a href="#cat-make">🎮 ものづくり・ビジネス</a>
+      <a class="sub" href="#m003">Steamでゲームを売る</a>
+    </nav>
+    <div class="toc-foot">
+      全6本 ・ 各1ページ完結<br>
+      <a href="https://github.com/yowapon/myaitech">GitHub リポジトリ →</a>
+    </div>
+  </aside>
+
+  <div class="wrap">
+
+  <header id="top">
     <div class="eyebrow">myaitech / kyozai</div>
     <h1>オリジナル教材ライブラリ</h1>
     <p class="lead">AIと一緒に作った、図解つきの学習教材コレクション。1ページ完結・インラインSVGの図解・理解度クイズつきで、ブラウザだけで読めます。分野ごとに並べてあるので、気になるところから開いてください。</p>
@@ -120,7 +177,7 @@ footer p{margin:.5em 0}
   </header>
 
   <!-- ============ AI・生成AI ============ -->
-  <section class="cat">
+  <section class="cat" id="cat-ai">
     <div class="cat-head">
       <h2>🤖 AI・生成AI</h2>
       <span class="count">2本</span>
@@ -128,7 +185,7 @@ footer p{margin:.5em 0}
     <p class="cat-note">道具として使いこなすために、まず「何ができて、何が苦手か」を仕組みから知る。</p>
 
     <div class="list">
-      <a class="item" href="02.kyozai/004.AI%E3%82%A8%E3%83%BC%E3%82%B8%E3%82%A7%E3%83%B3%E3%83%88/AI%E3%82%A8%E3%83%BC%E3%82%B8%E3%82%A7%E3%83%B3%E3%83%88_%E6%95%99%E6%9D%90.html">
+      <a class="item" id="m004" href="02.kyozai/004.AI%E3%82%A8%E3%83%BC%E3%82%B8%E3%82%A7%E3%83%B3%E3%83%88/AI%E3%82%A8%E3%83%BC%E3%82%B8%E3%82%A7%E3%83%B3%E3%83%88_%E6%95%99%E6%9D%90.html">
         <div class="kicker">AI・情報</div>
         <h3>AIエージェント入門 — 「自分で動くAI」のしくみ</h3>
         <p>「聞いたら答えるAI」から「頼んだらやってくれるAI」へ。何が変わったのかを、図10枚とクイズ4問で確かめます。</p>
@@ -139,7 +196,7 @@ footer p{margin:.5em 0}
         </div>
       </a>
 
-      <a class="item" href="02.kyozai/006.%E7%94%9F%E6%88%90AI%E3%81%AE%E3%83%8F%E3%83%AB%E3%82%B7%E3%83%8D%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3/%E7%94%9F%E6%88%90AI%E3%81%AE%E3%83%8F%E3%83%AB%E3%82%B7%E3%83%8D%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3_%E6%95%99%E6%9D%90.html">
+      <a class="item" id="m006" href="02.kyozai/006.%E7%94%9F%E6%88%90AI%E3%81%AE%E3%83%8F%E3%83%AB%E3%82%B7%E3%83%8D%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3/%E7%94%9F%E6%88%90AI%E3%81%AE%E3%83%8F%E3%83%AB%E3%82%B7%E3%83%8D%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3_%E6%95%99%E6%9D%90.html">
         <div class="kicker">生成AIリテラシー</div>
         <h3>生成AIのハルシネーション — もっともらしい嘘は、なぜ起き、どう防ぐか</h3>
         <p>AIが嘘をつくのは、性格でも故障でもなく、文章の作り方と評価のされ方から生まれる構造的な現象です。仕組みから理解して、明日から使える3層の対策（聞き方・仕組み・運用ルール）まで。</p>
@@ -154,7 +211,7 @@ footer p{margin:.5em 0}
   </section>
 
   <!-- ============ IT・セキュリティ ============ -->
-  <section class="cat">
+  <section class="cat" id="cat-sec">
     <div class="cat-head">
       <h2>🔐 IT・セキュリティ</h2>
       <span class="count">1本</span>
@@ -162,7 +219,7 @@ footer p{margin:.5em 0}
     <p class="cat-note">「なんとなく使っているけど仕組みは知らない」技術を、図から解きほぐす。</p>
 
     <div class="list">
-      <a class="item" href="02.kyozai/001.%E3%83%91%E3%82%B9%E3%82%AD%E3%83%BC%E5%85%A5%E9%96%80/%E3%83%91%E3%82%B9%E3%82%AD%E3%83%BC%E5%85%A5%E9%96%80_%E6%95%99%E6%9D%90.html">
+      <a class="item" id="m001" href="02.kyozai/001.%E3%83%91%E3%82%B9%E3%82%AD%E3%83%BC%E5%85%A5%E9%96%80/%E3%83%91%E3%82%B9%E3%82%AD%E3%83%BC%E5%85%A5%E9%96%80_%E6%95%99%E6%9D%90.html">
         <div class="kicker">セキュリティ入門</div>
         <h3>パスキー入門 — 「別のPCから入れない」の正体</h3>
         <p>スマホでは指紋ひとつで入れるのに、別のパソコンからだと「パスキーを登録してください」と言われる。あの不親切なメッセージの意味を、仕組みから解く。</p>
@@ -176,7 +233,7 @@ footer p{margin:.5em 0}
   </section>
 
   <!-- ============ お金・投資 ============ -->
-  <section class="cat">
+  <section class="cat" id="cat-money">
     <div class="cat-head">
       <h2>💰 お金・投資</h2>
       <span class="count">2本</span>
@@ -184,7 +241,7 @@ footer p{margin:.5em 0}
     <p class="cat-note">数字の話を、自分でコントロールできる部分とできない部分に分けて理解する。</p>
 
     <div class="list">
-      <a class="item" href="02.kyozai/002.%E6%A0%AA%E5%9F%BA%E7%A4%8E%E7%9F%A5%E8%AD%98/%E6%A0%AA%E5%BC%8F%E6%8A%95%E8%B3%87%E5%85%A5%E9%96%80_%E6%95%99%E6%9D%90.html">
+      <a class="item" id="m002" href="02.kyozai/002.%E6%A0%AA%E5%9F%BA%E7%A4%8E%E7%9F%A5%E8%AD%98/%E6%A0%AA%E5%BC%8F%E6%8A%95%E8%B3%87%E5%85%A5%E9%96%80_%E6%95%99%E6%9D%90.html">
         <div class="kicker">Investing 101</div>
         <h3>株のもうけは「5つの部品」でできている</h3>
         <p>株価は上がるか下がるかの2択ではありません。もうけを部品に分解すると、自分でコントロールできる部分がはっきり見えます。</p>
@@ -195,7 +252,7 @@ footer p{margin:.5em 0}
         </div>
       </a>
 
-      <a class="item" href="02.kyozai/005.%E6%96%B0NISA/%E6%96%B0NISA_%E6%95%99%E6%9D%90.html">
+      <a class="item" id="m005" href="02.kyozai/005.%E6%96%B0NISA/%E6%96%B0NISA_%E6%95%99%E6%9D%90.html">
         <div class="kicker">お金の教養 / 資産形成</div>
         <h3>投資ゼロから分かる 新NISAの仕組み</h3>
         <p>年360万円・生涯1,800万円という枠の意味を図で理解し、今月いくらから始めるかを自分で決められるところまで。制度の数字はすべて金融庁・国税庁・財務省の一次情報に揃えてあります。</p>
@@ -209,7 +266,7 @@ footer p{margin:.5em 0}
   </section>
 
   <!-- ============ ものづくり・ビジネス ============ -->
-  <section class="cat">
+  <section class="cat" id="cat-make">
     <div class="cat-head">
       <h2>🎮 ものづくり・ビジネス</h2>
       <span class="count">1本</span>
@@ -217,7 +274,7 @@ footer p{margin:.5em 0}
     <p class="cat-note">作ったものを世に出して、お金にするまでの手続き・期限・段取り。</p>
 
     <div class="list">
-      <a class="item" href="02.kyozai/003.steam%E3%82%B2%E3%83%BC%E3%83%A0%E9%96%8B%E7%99%BA%E6%B5%81%E3%82%8C/Steam%E3%82%B2%E3%83%BC%E3%83%A0%E9%96%8B%E7%99%BA%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9_%E6%95%99%E6%9D%90.html">
+      <a class="item" id="m003" href="02.kyozai/003.steam%E3%82%B2%E3%83%BC%E3%83%A0%E9%96%8B%E7%99%BA%E6%B5%81%E3%82%8C/Steam%E3%82%B2%E3%83%BC%E3%83%A0%E9%96%8B%E7%99%BA%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9_%E6%95%99%E6%9D%90.html">
         <div class="kicker">ゲーム開発 / インディー</div>
         <h3>AIと作る自作ゲームをSteamで売るまでの全ルート</h3>
         <p>Codex や Claude Code に書かせて作ったゲームを、Steamで実際に売るまで。手続き・費用・税務・テスト・価格・宣伝・発売日の決め方を順番にたどります。</p>
@@ -236,9 +293,32 @@ footer p{margin:.5em 0}
     <p>教材の設計メモ（企画マークダウン）は各フォルダに <code>*_企画.md</code> として置いてあります。リポジトリ: <a href="https://github.com/yowapon/myaitech">github.com/yowapon/myaitech</a></p>
   </footer>
 
+  </div>
 </div>
 
 <script>
+// ---- 目次スクロール連動 ----
+(function(){
+  var links=[].slice.call(document.querySelectorAll('#toc a'));
+  var map={};
+  links.forEach(function(a){
+    var el=document.querySelector(a.getAttribute('href'));
+    if(el) map[el.id]=a;
+  });
+  var targets=Object.keys(map).map(function(id){return document.getElementById(id);});
+  if(!targets.length) return;
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        links.forEach(function(a){a.classList.remove('active');});
+        map[e.target.id].classList.add('active');
+      }
+    });
+  },{rootMargin:'-10% 0px -75% 0px', threshold:0});
+  targets.forEach(function(t){io.observe(t);});
+})();
+
+// ---- テーマ切替 ----
 (function(){
   var root=document.documentElement, btn=document.getElementById('themeBtn');
   if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
