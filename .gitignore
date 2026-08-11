@@ -1,6 +1,10 @@
 # Claude Code のローカル設定・作業メモ（公開しない）
 .claude/settings.local.json
+.claude/hooks/
 CLAUDE.md
+
+# 作業ログ（引き継ぎメモ・課題・ナレッジ。手元にのみ残す）
+00.worklog/
 
 # 旧版のバックアップ（手元には残すが公開しない）
 old/
