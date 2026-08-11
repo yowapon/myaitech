@@ -93,6 +93,11 @@ h1{font-size:40px; line-height:1.22; margin:.28em 0 .3em; letter-spacing:-.015em
 }
 .item:hover{border-color:var(--accent); background:var(--bg-sub); transform:translateY(-1px)}
 .item .kicker{font-size:11.5px; letter-spacing:.08em; color:var(--accent); font-weight:700; text-transform:uppercase}
+.item .kind{display:inline-block; margin-right:8px; padding:1px 8px; border:1px solid currentColor;
+  border-radius:99px; font-size:10px; letter-spacing:.1em; font-weight:700; vertical-align:1.5px}
+.item.app .kicker{color:var(--green)}
+.item.app .kind{background:var(--green); color:var(--bg); border-color:var(--green)}
+.item.app:hover{border-color:var(--green)}
 .item h3{margin:.35em 0 .3em; font-size:19px; font-weight:700; line-height:1.45; letter-spacing:-.005em}
 .item p{margin:0 0 12px; font-size:14.5px; color:var(--text-mute); line-height:1.75}
 .tags{display:flex; flex-wrap:wrap; gap:7px}
@@ -156,9 +161,11 @@ footer p{margin:.5em 0}
       <a href="#cat-make">🎮 ものづくり・ビジネス</a>
       <a class="sub" href="#m003">Steamでゲームを売る</a>
       <a class="sub" href="#m008">WindowsでApp Storeに出す</a>
+      <a href="#cat-brain">🧠 あたまのトレーニング</a>
+      <a class="sub" href="#a001">フラッシュ暗算ｘ履歴分析</a>
     </nav>
     <div class="toc-foot">
-      全8本 ・ 各1ページ完結<br>
+      教材8本・アプリ1本 ・ 各1ページ完結<br>
       <a href="https://github.com/yowapon/myaitech">GitHub リポジトリ →</a>
     </div>
   </aside>
@@ -168,13 +175,13 @@ footer p{margin:.5em 0}
   <header id="top">
     <div class="eyebrow">myaitech / kyozai</div>
     <h1>オリジナル教材ライブラリ</h1>
-    <p class="lead">AIと一緒に作った、図解つきの学習教材コレクション。1ページ完結・インラインSVGの図解・理解度クイズつきで、ブラウザだけで読めます。分野ごとに並べてあるので、気になるところから開いてください。</p>
+    <p class="lead">AIと一緒に作った、図解つきの学習教材と練習アプリのコレクション。どれも1ページ完結で、ブラウザだけで読めて・遊べます。<strong>読む</strong>は図解と3択クイズつきの教材、<strong>やる</strong>は手を動かして身につける練習アプリです。分野ごとに並べてあるので、気になるところから開いてください。</p>
     <div class="meta">
-      <span class="chip live">教材 8本</span>
+      <span class="chip live">教材 8本・アプリ 1本</span>
       <span class="chip">1ページ完結</span>
       <span class="chip">図解＋3択クイズ</span>
       <span class="chip">ダークモード対応</span>
-      <span class="chip">更新: 2026-08-11</span>
+      <span class="chip">更新: 2026-08-12</span>
     </div>
   </header>
 
@@ -188,7 +195,7 @@ footer p{margin:.5em 0}
 
     <div class="list">
       <a class="item" id="m004" href="02.kyozai/004.AI%E3%82%A8%E3%83%BC%E3%82%B8%E3%82%A7%E3%83%B3%E3%83%88/AI%E3%82%A8%E3%83%BC%E3%82%B8%E3%82%A7%E3%83%B3%E3%83%88_%E6%95%99%E6%9D%90.html">
-        <div class="kicker">AI・情報</div>
+        <div class="kicker"><span class="kind">読む</span>AI・情報</div>
         <h3>AIエージェント入門 — 「自分で動くAI」のしくみ</h3>
         <p>「聞いたら答えるAI」から「頼んだらやってくれるAI」へ。何が変わったのかを、図10枚とクイズ4問で確かめます。</p>
         <div class="tags">
@@ -199,7 +206,7 @@ footer p{margin:.5em 0}
       </a>
 
       <a class="item" id="m006" href="02.kyozai/006.%E7%94%9F%E6%88%90AI%E3%81%AE%E3%83%8F%E3%83%AB%E3%82%B7%E3%83%8D%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3/%E7%94%9F%E6%88%90AI%E3%81%AE%E3%83%8F%E3%83%AB%E3%82%B7%E3%83%8D%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3_%E6%95%99%E6%9D%90.html">
-        <div class="kicker">生成AIリテラシー</div>
+        <div class="kicker"><span class="kind">読む</span>生成AIリテラシー</div>
         <h3>生成AIのハルシネーション — もっともらしい嘘は、なぜ起き、どう防ぐか</h3>
         <p>AIが嘘をつくのは、性格でも故障でもなく、文章の作り方と評価のされ方から生まれる構造的な現象です。仕組みから理解して、明日から使える3層の対策（聞き方・仕組み・運用ルール）まで。</p>
         <div class="tags">
@@ -211,7 +218,7 @@ footer p{margin:.5em 0}
       </a>
 
       <a class="item" id="m007" href="02.kyozai/007.AI%E3%82%A8%E3%83%BC%E3%82%B8%E3%82%A7%E3%83%B3%E3%83%88%E3%81%AE%E6%96%87%E8%84%88%E5%BC%95%E3%81%8D%E7%B6%99%E3%81%8E/AI%E3%82%A8%E3%83%BC%E3%82%B8%E3%82%A7%E3%83%B3%E3%83%88%E3%81%AE%E6%96%87%E8%84%88%E5%BC%95%E3%81%8D%E7%B6%99%E3%81%8E_%E6%95%99%E6%9D%90.html">
-        <div class="kicker">AI・開発ワークフロー</div>
+        <div class="kicker"><span class="kind">読む</span>AI・開発ワークフロー</div>
         <h3>新しいチャットで文脈が失われる問題と、その解決策</h3>
         <p>AIコーディングエージェントは前回の会話を覚えていません。なぜ消えるのか、なぜ長い1本のチャットで粘っても解決しないのか、何をどこに書き残せば次のセッションが続きから始まるのかを、図15枚で。実際のディレクトリ構成・メモの見出し・スキルとフックの分担まで具体例で。</p>
         <div class="tags">
@@ -234,7 +241,7 @@ footer p{margin:.5em 0}
 
     <div class="list">
       <a class="item" id="m001" href="02.kyozai/001.%E3%83%91%E3%82%B9%E3%82%AD%E3%83%BC%E5%85%A5%E9%96%80/%E3%83%91%E3%82%B9%E3%82%AD%E3%83%BC%E5%85%A5%E9%96%80_%E6%95%99%E6%9D%90.html">
-        <div class="kicker">セキュリティ入門</div>
+        <div class="kicker"><span class="kind">読む</span>セキュリティ入門</div>
         <h3>パスキー入門 — 「別のPCから入れない」の正体</h3>
         <p>スマホでは指紋ひとつで入れるのに、別のパソコンからだと「パスキーを登録してください」と言われる。あの不親切なメッセージの意味を、仕組みから解く。</p>
         <div class="tags">
@@ -256,7 +263,7 @@ footer p{margin:.5em 0}
 
     <div class="list">
       <a class="item" id="m002" href="02.kyozai/002.%E6%A0%AA%E5%9F%BA%E7%A4%8E%E7%9F%A5%E8%AD%98/%E6%A0%AA%E5%BC%8F%E6%8A%95%E8%B3%87%E5%85%A5%E9%96%80_%E6%95%99%E6%9D%90.html">
-        <div class="kicker">Investing 101</div>
+        <div class="kicker"><span class="kind">読む</span>Investing 101</div>
         <h3>株のもうけは「5つの部品」でできている</h3>
         <p>株価は上がるか下がるかの2択ではありません。もうけを部品に分解すると、自分でコントロールできる部分がはっきり見えます。</p>
         <div class="tags">
@@ -267,7 +274,7 @@ footer p{margin:.5em 0}
       </a>
 
       <a class="item" id="m005" href="02.kyozai/005.%E6%96%B0NISA/%E6%96%B0NISA_%E6%95%99%E6%9D%90.html">
-        <div class="kicker">お金の教養 / 資産形成</div>
+        <div class="kicker"><span class="kind">読む</span>お金の教養 / 資産形成</div>
         <h3>投資ゼロから分かる 新NISAの仕組み</h3>
         <p>年360万円・生涯1,800万円という枠の意味を図で理解し、今月いくらから始めるかを自分で決められるところまで。制度の数字はすべて金融庁・国税庁・財務省の一次情報に揃えてあります。</p>
         <div class="tags">
@@ -289,7 +296,7 @@ footer p{margin:.5em 0}
 
     <div class="list">
       <a class="item" id="m003" href="02.kyozai/003.steam%E3%82%B2%E3%83%BC%E3%83%A0%E9%96%8B%E7%99%BA%E6%B5%81%E3%82%8C/Steam%E3%82%B2%E3%83%BC%E3%83%A0%E9%96%8B%E7%99%BA%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9_%E6%95%99%E6%9D%90.html">
-        <div class="kicker">ゲーム開発 / インディー</div>
+        <div class="kicker"><span class="kind">読む</span>ゲーム開発 / インディー</div>
         <h3>AIと作る自作ゲームをSteamで売るまでの全ルート</h3>
         <p>Codex や Claude Code に書かせて作ったゲームを、Steamで実際に売るまで。手続き・費用・税務・テスト・価格・宣伝・発売日の決め方を順番にたどります。</p>
         <div class="tags">
@@ -301,7 +308,7 @@ footer p{margin:.5em 0}
       </a>
 
       <a class="item" id="m008" href="02.kyozai/008.AppStore%E3%82%A2%E3%83%97%E3%83%AA%E9%96%8B%E7%99%BA%E6%B5%81%E3%82%8C/Windows%E3%81%A7AppStore%E3%82%A2%E3%83%97%E3%83%AA%E9%96%8B%E7%99%BA_%E6%95%99%E6%9D%90.html">
-        <div class="kicker">アプリ開発 / 個人開発</div>
+        <div class="kicker"><span class="kind">読む</span>アプリ開発 / 個人開発</div>
         <h3>Macを持たないWindowsユーザーが、App Storeにアプリを出すまで</h3>
         <p>iOSアプリにMacが要るのは事実ですが、要るのは全工程のうち4つだけ。どこで止まるのか、どんなMacをどう調達するのか、そして発売前に決めておくべき特許の判断までを、数字と日付で整理します。</p>
         <div class="tags">
@@ -314,8 +321,31 @@ footer p{margin:.5em 0}
     </div>
   </section>
 
+  <!-- ============ あたまのトレーニング ============ -->
+  <section class="cat" id="cat-brain">
+    <div class="cat-head">
+      <h2>🧠 あたまのトレーニング</h2>
+      <span class="count">1本</span>
+    </div>
+    <p class="cat-note">読むだけでなく、手を動かして身につけるための練習アプリ。記録は端末のなかだけに残ります。</p>
+
+    <div class="items">
+      <a class="item app" id="a001" href="03.apps/001.%E3%83%95%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E6%9A%97%E7%AE%97%EF%BD%98%E5%B1%A5%E6%AD%B4%E5%88%86%E6%9E%90/%E3%83%95%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E6%9A%97%E7%AE%97%EF%BD%98%E5%B1%A5%E6%AD%B4%E5%88%86%E6%9E%90_%E3%82%A2%E3%83%97%E3%83%AA.html">
+        <div class="kicker"><span class="kind">やる</span>暗算 / 練習アプリ</div>
+        <h3>フラッシュ暗算ｘ履歴分析</h3>
+        <p>次々と現れる数字を足していく、フラッシュ暗算の練習アプリ。全65ステージのステップモードと自由設定のフリーモードに加えて、たまった記録から「どこで崩れるか」「何を間違えやすいか」を円グラフ・棒グラフ・折れ線で分析します。</p>
+        <div class="tags">
+          <span class="tag">プレイヤー4人まで</span>
+          <span class="tag">全65ステージ</span>
+          <span class="tag">誤答の原因を推定</span>
+          <span class="tag">記録は端末内のみ</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
   <footer>
-    <p>各教材は1枚のHTMLで完結しており、外部のCDNやライブラリを一切読み込みません。オフラインでも、ファイルをそのまま開けば読めます。</p>
+    <p>教材も練習アプリも1枚のHTMLで完結しており、外部のCDNやライブラリを一切読み込みません。オフラインでも、ファイルをそのまま開けば動きます。</p>
     <p>教材の設計メモ（企画マークダウン）は各フォルダに <code>*_企画.md</code> として置いてあります。リポジトリ: <a href="https://github.com/yowapon/myaitech">github.com/yowapon/myaitech</a></p>
   </footer>
 
