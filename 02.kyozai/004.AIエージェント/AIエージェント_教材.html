@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AIエージェント入門 — 「自分で動くAI」のしくみ</title>
+<style>
+:root{
+  --bg:#ffffff; --bg-sub:#f7f7f5; --bg-hover:#efefed;
+  --text:#37352f; --text-mute:#787774; --text-faint:#9b9a97;
+  --border:#e9e9e7; --border-strong:#d3d3d1;
+  --accent:#2383e2; --accent-soft:#e7f1fd;
+  --green:#0f7b6c; --green-soft:#e4f3f0;
+  --amber:#cb912f; --amber-soft:#faf1dd;
+  --red:#e03e3e;   --red-soft:#fbe9e9;
+  --purple:#6940a5; --purple-soft:#eee6f7;
+  --radius:8px;
+  --font: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif;
+}
+html[data-theme="dark"]{
+  --bg:#191919; --bg-sub:#202020; --bg-hover:#2a2a2a;
+  --text:#d4d4d4; --text-mute:#9b9b9b; --text-faint:#6f6f6f;
+  --border:#2f2f2f; --border-strong:#414141;
+  --accent:#5b9dd9; --accent-soft:#1c2f3f;
+  --green:#4dab9a; --green-soft:#1c2b28;
+  --amber:#e0b44a; --amber-soft:#332a1b;
+  --red:#ff7369;   --red-soft:#3a2323;
+  --purple:#9a76d1; --purple-soft:#2a2136;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font); font-size:16px; line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+  transition:background .2s,color .2s;
+}
+.layout{display:flex; align-items:flex-start; max-width:1180px; margin:0 auto}
+
+/* ---------- 目次サイドバー ---------- */
+#sidebar{
+  position:sticky; top:0; flex:0 0 250px; height:100vh;
+  padding:28px 14px 40px; overflow-y:auto;
+  border-right:1px solid var(--border); background:var(--bg-sub);
+}
+#sidebar .toc-label{
+  font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--text-faint); padding:0 10px; margin-bottom:10px; font-weight:600;
+}
+#toc a{
+  display:block; padding:6px 10px; margin:1px 0; border-radius:6px;
+  color:var(--text-mute); text-decoration:none; font-size:13.5px; line-height:1.45;
+  border-left:2px solid transparent; transition:background .15s,color .15s;
+}
+#toc a:hover{background:var(--bg-hover); color:var(--text)}
+#toc a.active{background:var(--accent-soft); color:var(--accent); font-weight:600; border-left-color:var(--accent)}
+#toc a.sub{padding-left:22px; font-size:12.5px}
+
+/* ---------- 本文 ---------- */
+main{flex:1 1 auto; min-width:0; padding:56px 60px 140px; max-width:860px}
+.hero-eyebrow{font-size:12px; letter-spacing:.1em; color:var(--accent); font-weight:700; text-transform:uppercase}
+h1{font-size:40px; line-height:1.25; margin:.25em 0 .35em; letter-spacing:-.01em; font-weight:800}
+h2{font-size:26px; margin:2.6em 0 .6em; padding-bottom:.3em; border-bottom:1px solid var(--border); font-weight:700; letter-spacing:-.005em}
+h3{font-size:18px; margin:1.8em 0 .4em; font-weight:700}
+p{margin:.7em 0}
+a{color:var(--accent)}
+.lead{font-size:18px; color:var(--text-mute); line-height:1.8}
+.meta{display:flex; flex-wrap:wrap; gap:8px; margin:20px 0 8px}
+.chip{
+  font-size:12.5px; padding:4px 11px; border-radius:999px;
+  background:var(--bg-sub); border:1px solid var(--border); color:var(--text-mute);
+}
+strong{font-weight:700}
+mark{background:var(--amber-soft); color:inherit; padding:0 3px; border-radius:3px}
+code{background:var(--bg-sub); border:1px solid var(--border); border-radius:4px; padding:1px 5px; font-size:.88em}
+hr{border:0; border-top:1px solid var(--border); margin:3em 0}
+ul,ol{padding-left:1.4em} li{margin:.3em 0}
+
+/* ---------- 図解ブロック（各セクションの先頭に置く） ---------- */
+.figure{
+  margin:1.4em 0 1.2em; padding:24px; border:1px solid var(--border);
+  border-radius:var(--radius); background:var(--bg-sub);
+}
+.figure svg{display:block; width:100%; height:auto; max-width:100%}
+.figure figcaption{
+  margin-top:14px; padding-top:12px; border-top:1px solid var(--border);
+  font-size:13px; color:var(--text-mute); text-align:center;
+}
+/* SVG内で使う共通クラス */
+.svg-label{font-family:var(--font); font-size:13px; fill:var(--text)}
+.svg-label-sm{font-family:var(--font); font-size:11px; fill:var(--text-mute)}
+.svg-title{font-family:var(--font); font-size:14px; font-weight:700; fill:var(--text)}
+.svg-box{fill:var(--bg); stroke:var(--border-strong); stroke-width:1.5}
+.svg-box-accent{fill:var(--accent-soft); stroke:var(--accent); stroke-width:1.5}
+.svg-arrow{stroke:var(--text-faint); stroke-width:1.8; fill:none}
+
+/* ---------- コールアウト ---------- */
+.callout{
+  display:flex; gap:12px; padding:16px 18px; margin:1.2em 0;
+  border-radius:var(--radius); background:var(--bg-sub); border-left:3px solid var(--text-faint);
+}
+.callout .ico{flex:0 0 auto; font-size:18px; line-height:1.5}
+.callout p:first-child{margin-top:0} .callout p:last-child{margin-bottom:0}
+.callout.tip{background:var(--accent-soft); border-left-color:var(--accent)}
+.callout.warn{background:var(--amber-soft); border-left-color:var(--amber)}
+.callout.key{background:var(--green-soft); border-left-color:var(--green)}
+
+/* ---------- カードグリッド ---------- */
+.cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin:1.2em 0}
+.card{padding:16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg)}
+.card h4{margin:0 0 6px; font-size:14.5px; font-weight:700}
+.card p{margin:0; font-size:13.5px; color:var(--text-mute); line-height:1.7}
+
+/* ---------- 表 ---------- */
+table{width:100%; border-collapse:collapse; margin:1.2em 0; font-size:14.5px}
+th,td{border:1px solid var(--border); padding:10px 12px; text-align:left; vertical-align:top}
+th{background:var(--bg-sub); font-weight:700}
+
+/* ---------- クイズ ---------- */
+.quiz{
+  margin:2em 0; padding:22px 24px; border:1px solid var(--border);
+  border-radius:var(--radius); background:var(--bg-sub);
+}
+.quiz .qtag{
+  display:inline-block; font-size:11px; font-weight:700; letter-spacing:.06em;
+  color:var(--purple); background:var(--purple-soft); padding:3px 9px; border-radius:999px; margin-bottom:10px;
+}
+.quiz .qtext{font-weight:700; font-size:16.5px; margin:0 0 14px; line-height:1.65}
+.quiz .opts{display:flex; flex-direction:column; gap:8px}
+.quiz button.opt{
+  text-align:left; font:inherit; font-size:14.5px; color:var(--text); cursor:pointer;
+  padding:12px 14px; border:1px solid var(--border-strong); border-radius:6px;
+  background:var(--bg); transition:background .15s,border-color .15s;
+  display:flex; gap:10px; align-items:flex-start; line-height:1.6;
+}
+.quiz button.opt:hover:not(:disabled){background:var(--bg-hover); border-color:var(--accent)}
+.quiz button.opt:disabled{cursor:default}
+.quiz button.opt .mark{flex:0 0 20px; font-weight:700; color:var(--text-faint)}
+.quiz button.opt.correct{background:var(--green-soft); border-color:var(--green)}
+.quiz button.opt.correct .mark{color:var(--green)}
+.quiz button.opt.wrong{background:var(--red-soft); border-color:var(--red)}
+.quiz button.opt.wrong .mark{color:var(--red)}
+.quiz .explain{
+  display:none; margin-top:14px; padding:14px 16px; border-radius:6px;
+  background:var(--bg); border:1px solid var(--border); font-size:14px; line-height:1.75;
+}
+.quiz .explain.show{display:block}
+.quiz .verdict{font-weight:700; margin-bottom:4px}
+.quiz .verdict.ok{color:var(--green)} .quiz .verdict.ng{color:var(--red)}
+
+/* ---------- 出典 ---------- */
+.sources{font-size:14px; color:var(--text-mute)}
+.sources li{margin:.5em 0}
+
+/* ---------- テーマ切替ボタン ---------- */
+#themeBtn{
+  position:fixed; top:18px; right:22px; z-index:50;
+  width:38px; height:38px; border-radius:8px; cursor:pointer;
+  border:1px solid var(--border-strong); background:var(--bg); color:var(--text);
+  font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;
+  transition:background .15s;
+}
+#themeBtn:hover{background:var(--bg-hover)}
+
+/* ---------- レスポンシブ ---------- */
+@media (max-width:900px){
+  #sidebar{display:none}
+  main{padding:40px 22px 100px}
+  h1{font-size:30px} h2{font-size:22px}
+}
+@media print{
+  #sidebar,#themeBtn{display:none} main{max-width:none;padding:0}
+  .quiz .explain{display:block}
+}
+</style>
+</head>
+<body>
+
+<button id="themeBtn" aria-label="ライト/ダーク切替">🌙</button>
+
+<div class="layout">
+
+  <aside id="sidebar">
+    <div class="toc-label">目次</div>
+    <nav id="toc">
+      <a href="#about">この教材について</a>
+      <a href="#s1">1. AIエージェントってなに？</a>
+      <a href="#s2">2. ぐるぐる回るループ</a>
+      <a href="#s3">3. 中身は4つの部品</a>
+      <a href="#s4">4. 「道具を使える」が肝</a>
+      <a href="#s5">5. もう身近にいる</a>
+      <a href="#s6">6. どこまで任せる？</a>
+      <a href="#s7">7. データで見る中学生とAI</a>
+      <a href="#s8">8. ここまで来た道のり</a>
+      <a href="#s9">9. 苦手なこと</a>
+      <a href="#s10">10. 上手に付き合う3つの層</a>
+      <a href="#summary">まとめ</a>
+      <a href="#sources">出典</a>
+    </nav>
+  </aside>
+
+  <main>
+
+    <header>
+      <div class="hero-eyebrow">AI・情報</div>
+      <h1>AIエージェント入門</h1>
+      <p class="lead">「聞いたら答えるAI」から「頼んだらやってくれるAI」へ。何が変わったのかを、図10枚とクイズ4問で確かめます。</p>
+      <div class="meta">
+        <span class="chip">対象: 中学生</span>
+        <span class="chip">レベル: 入門</span>
+        <span class="chip">所要 約15分</span>
+        <span class="chip">更新: 2026-08-10</span>
+      </div>
+    </header>
+
+    <section id="about">
+      <h2>この教材について</h2>
+      <div class="callout key">
+        <span class="ico">🎯</span>
+        <div>
+          <p><strong>読み終わるとできるようになること</strong></p>
+          <ol>
+            <li>チャットAIとAIエージェントの違いを自分の言葉で言える</li>
+            <li>エージェントが「考える→道具を使う→結果を見る」を繰り返す仕組みを説明できる</li>
+            <li>AIの答えを確かめてから使う、というやり方が身につく</li>
+          </ol>
+        </div>
+      </div>
+      <p style="font-size:14px;color:var(--text-mute)">
+        主な参照元: <a href="https://www.moba-ken.jp/project/children/kodomo20260312.html">モバイル社会研究所</a> / <a href="https://current.ndl.go.jp/car/236829">文科省ガイドラインVer.2.0</a>（全出典は<a href="#sources">末尾</a>）
+      </p>
+    </section>
+
+    <section id="s1">
+      <h2>1. AIエージェントってなに？</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="チャットAIとAIエージェントの対比">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="var(--text-faint)"/>
+            </marker>
+          </defs>
+          <rect x="10" y="20" width="310" height="170" rx="8" fill="var(--bg)" stroke="var(--border-strong)" stroke-width="1.5"/>
+          <text x="165" y="48" text-anchor="middle" class="svg-title" fill="var(--text-mute)">ふつうのチャットAI</text>
+          <text x="165" y="82" text-anchor="middle" class="svg-label">① 質問する</text>
+          <text x="165" y="110" text-anchor="middle" class="svg-label">② 1回だけ答える</text>
+          <text x="165" y="138" text-anchor="middle" class="svg-label">③ そこで止まる</text>
+          <text x="165" y="168" text-anchor="middle" class="svg-label-sm">次の指示をずっと待っている</text>
+          <path d="M334 105 H 386" class="svg-arrow" stroke-width="2.5" marker-end="url(#ar)"/>
+          <rect x="400" y="20" width="310" height="170" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="555" y="48" text-anchor="middle" class="svg-title" fill="var(--accent)">AIエージェント</text>
+          <text x="555" y="82" text-anchor="middle" class="svg-label">① ゴールを渡す</text>
+          <text x="555" y="110" text-anchor="middle" class="svg-label">② やることを自分で分ける</text>
+          <text x="555" y="138" text-anchor="middle" class="svg-label">③ 道具を使って実行する</text>
+          <text x="555" y="168" text-anchor="middle" class="svg-label-sm">終わるまで自分で続ける</text>
+        </svg>
+        <figcaption>図1: 違いは「答えて止まる」か「終わるまで続ける」か</figcaption>
+      </figure>
+
+      <p>チャットAIは、聞かれたことに1回答えて止まります。AIエージェントは「文化祭の買い出しリストを作って」のような<strong>ゴール</strong>を渡すと、必要な調べものや作業を自分で分けて、終わるまで動き続けます。<mark>答える人か、やりきる人か</mark>の違いです。</p>
+    </section>
+
+    <section id="s2">
+      <h2>2. 動き方は「ぐるぐる回るループ」</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="エージェントの4段階のループ">
+          <g><rect x="270" y="10" width="180" height="60" rx="8" class="svg-box-accent"/>
+             <text x="360" y="46" text-anchor="middle" class="svg-title">① ゴールを受け取る</text></g>
+          <g><rect x="510" y="120" width="180" height="60" rx="8" class="svg-box"/>
+             <text x="600" y="146" text-anchor="middle" class="svg-title">② 次の手を考える</text>
+             <text x="600" y="166" text-anchor="middle" class="svg-label-sm">何が足りない？</text></g>
+          <g><rect x="270" y="230" width="180" height="60" rx="8" class="svg-box"/>
+             <text x="360" y="256" text-anchor="middle" class="svg-title">③ 道具を使う</text>
+             <text x="360" y="276" text-anchor="middle" class="svg-label-sm">検索・計算・送信</text></g>
+          <g><rect x="30" y="120" width="180" height="60" rx="8" class="svg-box"/>
+             <text x="120" y="146" text-anchor="middle" class="svg-title">④ 結果を見る</text>
+             <text x="120" y="166" text-anchor="middle" class="svg-label-sm">うまくいった？</text></g>
+          <path d="M450 45  C 540 45, 600 70, 600 115"  class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M600 185 C 600 230, 540 260, 455 260" class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M270 260 C 180 260, 120 230, 120 185" class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M120 115 C 120 70, 180 45, 265 45"    class="svg-arrow" marker-end="url(#ar)"/>
+        </svg>
+        <figcaption>図2: ゴールに届くまで、この4つを何周もくり返す</figcaption>
+      </figure>
+
+      <p>大事なのは、1周ごとに「次はどうする？」を決め直している点です。だから途中でうまくいかなくても、別のやり方に切り替えられます。決まった台本しか実行できない自動販売機とは、ここが根本的に違います。</p>
+    </section>
+
+    <section id="s3">
+      <h2>3. 中身は4つの部品でできている</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="エージェントを構成する4つの部品">
+          <rect x="270" y="10" width="180" height="54" rx="8" class="svg-box-accent"/>
+          <text x="360" y="43" text-anchor="middle" class="svg-title">AIエージェント</text>
+          <path d="M360 64 V 90 M97 90 H 623 M97 90 V 116 M272 90 V 116 M448 90 V 116 M623 90 V 116" class="svg-arrow" fill="none"/>
+          <g><rect x="15" y="116" width="165" height="80" rx="8" class="svg-box"/>
+             <text x="97" y="148" text-anchor="middle" class="svg-title">頭脳</text>
+             <text x="97" y="170" text-anchor="middle" class="svg-label-sm">考える・言葉を作る</text></g>
+          <g><rect x="190" y="116" width="165" height="80" rx="8" class="svg-box"/>
+             <text x="272" y="148" text-anchor="middle" class="svg-title">目標</text>
+             <text x="272" y="170" text-anchor="middle" class="svg-label-sm">何が終わりか</text></g>
+          <g><rect x="365" y="116" width="165" height="80" rx="8" class="svg-box"/>
+             <text x="448" y="148" text-anchor="middle" class="svg-title">記憶</text>
+             <text x="448" y="170" text-anchor="middle" class="svg-label-sm">さっき何をした？</text></g>
+          <g><rect x="540" y="116" width="165" height="80" rx="8" class="svg-box"/>
+             <text x="623" y="148" text-anchor="middle" class="svg-title">道具</text>
+             <text x="623" y="170" text-anchor="middle" class="svg-label-sm">外の世界にさわる</text></g>
+        </svg>
+        <figcaption>図3: どれか1つでも欠けると、エージェントとしては動かない</figcaption>
+      </figure>
+
+      <p>頭脳だけあっても、考えるだけで何も起きません。目標が「どこまでやるか」を決め、記憶が「さっき何をしたか」を持ち、道具が実際に手を動かします。4つがそろって初めてエージェントになります。</p>
+    </section>
+
+    <section id="s4">
+      <h2>4. 「道具を使える」がいちばんのポイント</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="道具を呼び出して答えるまでの4ステップ">
+          <g><rect x="10" y="40" width="150" height="70" rx="8" class="svg-box-accent"/>
+             <text x="85" y="70" text-anchor="middle" class="svg-title">① たのむ</text>
+             <text x="85" y="92" text-anchor="middle" class="svg-label-sm">明日の服装は？</text></g>
+          <path d="M165 75 H 185" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="190" y="40" width="150" height="70" rx="8" class="svg-box"/>
+             <text x="265" y="70" text-anchor="middle" class="svg-title">② 道具を選ぶ</text>
+             <text x="265" y="92" text-anchor="middle" class="svg-label-sm">天気を調べる</text></g>
+          <path d="M345 75 H 365" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="370" y="40" width="150" height="70" rx="8" class="svg-box"/>
+             <text x="445" y="70" text-anchor="middle" class="svg-title">③ 実行する</text>
+             <text x="445" y="92" text-anchor="middle" class="svg-label-sm">15度・雨</text></g>
+          <path d="M525 75 H 545" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="550" y="40" width="150" height="70" rx="8" class="svg-box"/>
+             <text x="625" y="70" text-anchor="middle" class="svg-title">④ 答えを作る</text>
+             <text x="625" y="92" text-anchor="middle" class="svg-label-sm">上着と傘を</text></g>
+        </svg>
+        <figcaption>図4: AIの中に「明日の天気」は入っていない。だから外の道具を呼ぶ</figcaption>
+      </figure>
+
+      <p>人が計算するとき電卓を、道を調べるとき地図アプリを使うのと同じです。AIも自分の中にない情報は道具で取りに行きます。<strong>使える道具の数が、そのまま「できることの広さ」</strong>になります。</p>
+
+      <div class="callout tip">
+        <span class="ico">💡</span>
+        <div><p>逆に言うと、道具をつながれていないAIは、どれだけ賢くてもメールを送ることも買い物をすることもできません。</p></div>
+      </div>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 1</span>
+      <p class="qtext">チャットAIとAIエージェントの、いちばん大きな違いはどれ？</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>エージェントのほうが頭がよく、絶対に間違えない</span></button>
+        <button class="opt" data-correct><span class="mark">B</span><span>ゴールを渡すと、道具を使いながら終わるまで自分で動き続ける</span></button>
+        <button class="opt"><span class="mark">C</span><span>エージェントは日本語ではなく英語しか使えない</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>違いは賢さではなく「止まるか、続けるか」です。Aは誤り——エージェントも同じAIモデルを頭脳にしているので間違えます。Cも誤りで、言語は関係ありません。</p>
+      </div>
+    </div>
+
+    <section id="s5">
+      <h2>5. もう身近にいる</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="身近なAIエージェントを2つの軸で整理したマトリクス">
+          <rect x="120" y="20" width="500" height="260" fill="none" stroke="var(--border-strong)"/>
+          <line x1="370" y1="20" x2="370" y2="280" stroke="var(--border)"/>
+          <line x1="120" y1="150" x2="620" y2="150" stroke="var(--border)"/>
+          <rect x="380" y="30" width="230" height="110" rx="6" fill="var(--accent-soft)" opacity=".6"/>
+          <text x="245" y="75" text-anchor="middle" class="svg-title">予定を組むAI</text>
+          <text x="245" y="97" text-anchor="middle" class="svg-label-sm">自分で調べて案を出す</text>
+          <text x="495" y="75" text-anchor="middle" class="svg-title">自動運転車</text>
+          <text x="495" y="97" text-anchor="middle" class="svg-label-sm">止まる・よけるを自分で判断</text>
+          <text x="245" y="205" text-anchor="middle" class="svg-title">ゲームのNPC</text>
+          <text x="245" y="227" text-anchor="middle" class="svg-label-sm">決められた動きが中心</text>
+          <text x="495" y="205" text-anchor="middle" class="svg-title">お掃除ロボット</text>
+          <text x="495" y="227" text-anchor="middle" class="svg-label-sm">部屋の地図を作って進む</text>
+          <text x="370" y="308" text-anchor="middle" class="svg-label-sm">← 画面の中だけ ／ 体を持っている →</text>
+          <text x="105" y="55" text-anchor="end" class="svg-label-sm">↑ 自分で決める</text>
+          <text x="105" y="255" text-anchor="end" class="svg-label-sm">↓ 決められた通り</text>
+        </svg>
+        <figcaption>図5: エージェントは画面の中だけの話ではない</figcaption>
+      </figure>
+
+      <p>自動運転車は、周りを見て「止まる・よける」をその場で決めています。お掃除ロボットは部屋の地図を作り、次にどこを掃除するかを自分で選びます。<strong>体を持ったエージェント</strong>も、すでに私たちの生活に入っています。</p>
+    </section>
+
+    <section id="s6">
+      <h2>6. どこまで自分で決めさせる？</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AIに任せる度合いの4段階">
+          <rect x="180" y="10" width="400" height="52" rx="6" class="svg-box"/>
+          <text x="380" y="42" text-anchor="middle" class="svg-title">全部おまかせ（最後まで人が見ない）</text>
+          <rect x="180" y="70" width="400" height="52" rx="6" class="svg-box-accent"/>
+          <text x="380" y="95" text-anchor="middle" class="svg-title">AIが提案し、人がOKを出す</text>
+          <text x="380" y="113" text-anchor="middle" class="svg-label-sm">いまの現実的な標準</text>
+          <rect x="180" y="130" width="400" height="52" rx="6" class="svg-box"/>
+          <text x="380" y="162" text-anchor="middle" class="svg-title">下書きまでAIが作る</text>
+          <rect x="180" y="190" width="400" height="52" rx="6" class="svg-box"/>
+          <text x="380" y="222" text-anchor="middle" class="svg-title">人の作業を手伝うだけ</text>
+          <text x="170" y="42" text-anchor="end" class="svg-label-sm">任せる度合い 大</text>
+          <text x="170" y="222" text-anchor="end" class="svg-label-sm">任せる度合い 小</text>
+        </svg>
+        <figcaption>図6: 上に行くほど楽になるが、間違いに気づく機会は減る</figcaption>
+      </figure>
+
+      <p>会社でいま現実的とされているのは、<strong>AIが提案して人が最後にOKを出す</strong>段階です。全部まかせると、間違ったまま最後まで進んでしまいます。大事な判断ほど人が間に入る、と覚えておきましょう。</p>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 2</span>
+      <p class="qtext">多くの会社が「これくらいが現実的」としている任せ方はどれ？</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>人はいっさい関わらず、AIに最初から最後までまかせる</span></button>
+        <button class="opt"><span class="mark">B</span><span>AIには何もさせず、全部人がやる</span></button>
+        <button class="opt" data-correct><span class="mark">C</span><span>AIが案を出し、人が確認してOKを出す</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>間違いに誰かが気づける形が選ばれています。Aは誤りが最後まで残るので大事な仕事には使えません。Bだとエージェントを使う意味がなくなります。</p>
+      </div>
+    </div>
+
+    <section id="s7">
+      <h2>7. データで見る：中学生とAI</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 230" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="生成AIを使っている小中学生の用途">
+          <line x1="180" y1="20" x2="180" y2="180" stroke="var(--border)"/>
+          <line x1="180" y1="180" x2="700" y2="180" stroke="var(--border-strong)"/>
+          <rect x="180" y="35" width="374" height="30" rx="4" fill="var(--accent)"/>
+          <text x="172" y="55" text-anchor="end" class="svg-label">調べもの</text>
+          <text x="564" y="55" class="svg-label-sm">7割を超える</text>
+          <rect x="180" y="85" width="270" height="30" rx="4" fill="var(--accent)" opacity=".7"/>
+          <text x="172" y="105" text-anchor="end" class="svg-label">宿題や課題</text>
+          <text x="460" y="105" class="svg-label-sm">半数を超える（中学生）</text>
+          <rect x="180" y="135" width="130" height="30" rx="4" fill="var(--accent)" opacity=".45"/>
+          <text x="172" y="155" text-anchor="end" class="svg-label">学校の授業</text>
+          <text x="320" y="155" class="svg-label-sm">2割台</text>
+          <text x="180" y="210" class="svg-label-sm">生成AIを使っている小中学生が対象／出典: モバイル社会研究所「2025年親と子の調査」</text>
+        </svg>
+        <figcaption>図7: 使われている場所は、学校より家のほうが多い</figcaption>
+      </figure>
+
+      <p>2025年11月の全国調査（1,200組）では、中学生の生成AI利用率は<strong>4割を超え、前年の約3倍</strong>になりました。きっかけは「自分で調べた」「友だちから教えてもらった」が中心。つまり、大人に教わる前に自分たちで使い始めている世代です。</p>
+    </section>
+
+    <section id="s8">
+      <h2>8. ここまで来た道のり</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AIエージェントが広まるまでの年表">
+          <line x1="40" y1="90" x2="690" y2="90" stroke="var(--border-strong)" stroke-width="2"/>
+          <g><circle cx="100" cy="90" r="8" fill="var(--accent)" opacity=".7"/>
+             <text x="100" y="68" text-anchor="middle" class="svg-title">2022</text>
+             <text x="100" y="118" text-anchor="middle" class="svg-label-sm">ChatGPT公開</text>
+             <text x="100" y="136" text-anchor="middle" class="svg-label-sm">2か月で1億人</text></g>
+          <g><circle cx="290" cy="90" r="8" fill="var(--accent)" opacity=".8"/>
+             <text x="290" y="68" text-anchor="middle" class="svg-title">2024</text>
+             <text x="290" y="118" text-anchor="middle" class="svg-label-sm">道具を使うAIが実用に</text></g>
+          <g><circle cx="480" cy="90" r="8" fill="var(--accent)"/>
+             <text x="480" y="68" text-anchor="middle" class="svg-title">2025</text>
+             <text x="480" y="118" text-anchor="middle" class="svg-label-sm">エージェント元年</text></g>
+          <g><circle cx="640" cy="90" r="10" fill="var(--green)"/>
+             <text x="640" y="66" text-anchor="middle" class="svg-title">2026</text>
+             <text x="640" y="118" text-anchor="middle" class="svg-label-sm">いま</text></g>
+        </svg>
+        <figcaption>図8: 3〜4年でここまで来た</figcaption>
+      </figure>
+
+      <p>エージェントが一気に増えた理由は、AIが<strong>じっくり長く考えられる</strong>ようになったからです。数十分かかる作業も任せられるようになりました。市場規模も2025年の約71億ドルから2026年は約88億ドルへ伸びる見通しです。</p>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 3</span>
+      <p class="qtext">AIが「道具を使える」ことが、なぜそんなに重要なの？</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>道具を使うと、AIの返事の日本語がきれいになるから</span></button>
+        <button class="opt" data-correct><span class="mark">B</span><span>AIの中にない最新情報を取りに行けて、実際に作業もできるから</span></button>
+        <button class="opt"><span class="mark">C</span><span>道具を使えばAIが電気を使わなくなるから</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>道具の数が「できることの広さ」を決めます。Aは文章の上手さと道具は無関係。Cは事実ではなく、道具を使えば処理はむしろ増えます。</p>
+      </div>
+    </div>
+
+    <section id="s9">
+      <h2>9. 苦手なこと：もっともらしい嘘と、ミスの連鎖</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="小さな誤りが繰り返しの中で大きくなる様子">
+          <g><rect x="10" y="110" width="150" height="40" rx="6" fill="var(--red-soft)" stroke="var(--red)" stroke-width="1.5"/>
+             <text x="85" y="135" text-anchor="middle" class="svg-label">小さな勘違い</text></g>
+          <path d="M165 130 H 185" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="190" y="90" width="150" height="60" rx="6" fill="var(--red-soft)" stroke="var(--red)" stroke-width="1.5"/>
+             <text x="265" y="125" text-anchor="middle" class="svg-label">それを前提に次へ</text></g>
+          <path d="M345 130 H 365" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="370" y="70" width="150" height="80" rx="6" fill="var(--red-soft)" stroke="var(--red)" stroke-width="1.5"/>
+             <text x="445" y="115" text-anchor="middle" class="svg-label">さらに積み上がる</text></g>
+          <path d="M525 130 H 545" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="550" y="40" width="150" height="110" rx="6" fill="var(--red-soft)" stroke="var(--red)" stroke-width="2"/>
+             <text x="625" y="90" text-anchor="middle" class="svg-title" fill="var(--red)">結果が</text>
+             <text x="625" y="112" text-anchor="middle" class="svg-title" fill="var(--red)">大きくズレる</text></g>
+          <text x="10" y="180" class="svg-label-sm">1周目のわずかな誤りが、周回のたびに引き継がれて大きくなる</text>
+        </svg>
+        <figcaption>図9: ループするからこそ、誤りも一緒に育ってしまう</figcaption>
+      </figure>
+
+      <p>AIは「次に来そうな言葉」を選んでいるだけで、それが事実かどうかを自分では確かめられません。これを<strong>ハルシネーション</strong>（もっともらしい作り話）と呼びます。エージェントは何周も回るぶん、最初の小さな誤りが後の作業に引き継がれて大きくなります。</p>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><p>特にあやしいのは、最新の出来事・専門的な内容・ネットに載っていない情報。この3つは必ず自分で裏を取ること。</p></div>
+      </div>
+    </section>
+
+    <section id="s10">
+      <h2>10. 上手に付き合う3つの層</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="人が目的を決め、AIが作り、人が確かめる入れ子構造">
+          <rect x="60" y="10" width="600" height="240" rx="10" class="svg-box"/>
+          <text x="360" y="38" text-anchor="middle" class="svg-title">① 人が目的とルールを決める</text>
+          <rect x="130" y="60" width="460" height="140" rx="10" class="svg-box-accent"/>
+          <text x="360" y="88" text-anchor="middle" class="svg-title">② AIが調べる・作る</text>
+          <rect x="210" y="112" width="300" height="68" rx="8" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.5"/>
+          <text x="360" y="145" text-anchor="middle" class="svg-title" fill="var(--green)">③ 人が確かめる</text>
+          <text x="360" y="166" text-anchor="middle" class="svg-label-sm">自分の言葉に直す</text>
+          <text x="360" y="232" text-anchor="middle" class="svg-label-sm">AIは道具。責任を持つのは、いつも人の側</text>
+        </svg>
+        <figcaption>図10: AIの作業は、人が決めた目的の「内側」にある</figcaption>
+      </figure>
+
+      <p>文部科学省のガイドラインは<strong>「人間中心の原則」</strong>を最初に置いています。AIを使うこと自体が目的ではない、という意味です。学校のルールに従う、名前や住所などの個人情報を入れない、答えは必ず確かめる。この3つを守れば、AIは強い味方になります。</p>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 4</span>
+      <p class="qtext">読書感想文をAIエージェントに全部書かせるのがよくないのは、なぜ？</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>AIは日本語の文章を書くのが苦手だから</span></button>
+        <button class="opt"><span class="mark">B</span><span>AIを使うと必ず先生にバレてしまうから</span></button>
+        <button class="opt" data-correct><span class="mark">C</span><span>感想文の目的は「自分が考える力を育てること」で、AIに任せるとその機会が消えるから</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>これが「人間中心の原則」の考え方です。Aは事実と違い、AIは文章を作るのが得意です。Bはバレるかどうかの問題にすり替えていて、理由になっていません。</p>
+      </div>
+    </div>
+
+    <section id="summary">
+      <h2>まとめ</h2>
+      <div class="cards">
+        <div class="card"><h4>ゴールを渡す相手</h4><p>質問に答えるのではなく、目的に向かって自分で動く。</p></div>
+        <div class="card"><h4>ぐるぐる回って動く</h4><p>考える→道具を使う→結果を見る、のくり返し。</p></div>
+        <div class="card"><h4>最後は人が確かめる</h4><p>誤りは育つ。決めるのも責任を持つのも人。</p></div>
+      </div>
+    </section>
+
+    <section id="sources">
+      <h2>出典</h2>
+      <ul class="sources">
+        <li><a href="https://www.moba-ken.jp/project/children/kodomo20260312.html">モバイル社会研究所「生成AI利用率 中学生は前年比約3倍で4割を超える」</a> — 中学生の利用率・用途の内訳・調査概要（2025年11月、1,200組）</li>
+        <li><a href="https://www.moba-ken.jp/project/children/20260611.html">同「小中学生の生成AI利用者の約半数はAIの答えをそのまま信じないようにしている」</a> — 確かめる意識</li>
+        <li><a href="https://current.ndl.go.jp/car/236829">文部科学省「初等中等教育段階における生成AIの利活用に関するガイドライン（Ver.2.0）」</a> — 人間中心の原則</li>
+        <li><a href="https://code.or.jp/magazine/20250124/">みんなのコード「何が変わった？文科省ガイドライン」</a> — ガイドラインの留意点の整理</li>
+        <li><a href="https://www.eesel.ai/blog/what-is-an-ai-agent-loop">What is an AI agent loop?（eesel AI）</a> — 知覚→推論→行動→観察のループ</li>
+        <li><a href="https://mlflow.org/articles/what-is-an-ai-agent-a-2026-professional-guide/">What Is an AI Agent? A 2026 Professional Guide（MLflow）</a> — 定義と構成要素</li>
+        <li><a href="https://ai-kenkyujo.com/news/ai-agent/">DX/AI研究所「AIエージェントとは？」</a> — 生成AIとの違い</li>
+        <li><a href="https://www.gii.co.jp/report/ires1974252-ai-agents-market-by-agent-system-type-interaction.html">AIエージェント市場 市場規模 分析 予測 2026-2032年</a> — 2025年約71億ドル→2026年約88億ドル</li>
+        <li><a href="https://www.ailead.app/blog/ai-agent-autonomy-levels-copilot-to-autopilot-2026">AIエージェント自律性レベル（ailead）</a> — 任せる度合いの段階</li>
+        <li><a href="https://www.acrovision.jp/blog/?p=1503">エージェントAIの精度を高めるために（アクロビジョン）</a> — 誤りの連鎖リスク</li>
+      </ul>
+    </section>
+
+  </main>
+</div>
+
+<script>
+// ---- テーマ切替（OS設定を初期値にし、選択はlocalStorageではなくセッション内変数で保持） ----
+(function(){
+  var root=document.documentElement, btn=document.getElementById('themeBtn');
+  if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+    root.setAttribute('data-theme','dark');
+  }
+  var sync=function(){ btn.textContent = root.getAttribute('data-theme')==='dark' ? '☀️' : '🌙'; };
+  sync();
+  btn.addEventListener('click',function(){
+    root.setAttribute('data-theme', root.getAttribute('data-theme')==='dark'?'light':'dark');
+    sync();
+  });
+})();
+
+// ---- 目次スクロール連動 ----
+(function(){
+  var links=[].slice.call(document.querySelectorAll('#toc a'));
+  var map={}; links.forEach(function(a){ var el=document.querySelector(a.getAttribute('href')); if(el) map[el.id]=a; });
+  var targets=Object.keys(map).map(function(id){return document.getElementById(id);});
+  if(!targets.length) return;
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        links.forEach(function(a){a.classList.remove('active');});
+        map[e.target.id].classList.add('active');
+      }
+    });
+  },{rootMargin:'-15% 0px -70% 0px', threshold:0});
+  targets.forEach(function(t){io.observe(t);});
+})();
+
+// ---- クイズ：3択・即時採点・解説表示 ----
+(function(){
+  document.querySelectorAll('[data-quiz]').forEach(function(q){
+    var opts=[].slice.call(q.querySelectorAll('.opt'));
+    var box=q.querySelector('.explain'), verdict=q.querySelector('.verdict');
+    opts.forEach(function(btn){
+      btn.addEventListener('click',function(){
+        if(btn.disabled) return;
+        var ok=btn.hasAttribute('data-correct');
+        opts.forEach(function(o){
+          o.disabled=true;
+          if(o.hasAttribute('data-correct')) o.classList.add('correct');
+        });
+        if(!ok) btn.classList.add('wrong');
+        verdict.textContent = ok ? '正解！' : '惜しい — 正解は上の緑の選択肢です';
+        verdict.className = 'verdict ' + (ok?'ok':'ng');
+        box.classList.add('show');
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

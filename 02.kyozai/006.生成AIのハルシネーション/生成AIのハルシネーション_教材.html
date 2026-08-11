@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>生成AIのハルシネーション — もっともらしい嘘は、なぜ起き、どう防ぐか</title>
+<style>
+:root{
+  --bg:#ffffff; --bg-sub:#f7f7f5; --bg-hover:#efefed;
+  --text:#37352f; --text-mute:#787774; --text-faint:#9b9a97;
+  --border:#e9e9e7; --border-strong:#d3d3d1;
+  --accent:#2383e2; --accent-soft:#e7f1fd;
+  --green:#0f7b6c; --green-soft:#e4f3f0;
+  --amber:#cb912f; --amber-soft:#faf1dd;
+  --red:#e03e3e;   --red-soft:#fbe9e9;
+  --purple:#6940a5; --purple-soft:#eee6f7;
+  --radius:8px;
+  --font: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif;
+}
+html[data-theme="dark"]{
+  --bg:#191919; --bg-sub:#202020; --bg-hover:#2a2a2a;
+  --text:#d4d4d4; --text-mute:#9b9b9b; --text-faint:#6f6f6f;
+  --border:#2f2f2f; --border-strong:#414141;
+  --accent:#5b9dd9; --accent-soft:#1c2f3f;
+  --green:#4dab9a; --green-soft:#1c2b28;
+  --amber:#e0b44a; --amber-soft:#332a1b;
+  --red:#ff7369;   --red-soft:#3a2323;
+  --purple:#9a76d1; --purple-soft:#2a2136;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font); font-size:16px; line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+  transition:background .2s,color .2s;
+}
+.layout{display:flex; align-items:flex-start; max-width:1180px; margin:0 auto}
+
+/* ---------- 目次サイドバー ---------- */
+#sidebar{
+  position:sticky; top:0; flex:0 0 250px; height:100vh;
+  padding:28px 14px 40px; overflow-y:auto;
+  border-right:1px solid var(--border); background:var(--bg-sub);
+}
+#sidebar .toc-label{
+  font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--text-faint); padding:0 10px; margin-bottom:10px; font-weight:600;
+}
+#toc a{
+  display:block; padding:6px 10px; margin:1px 0; border-radius:6px;
+  color:var(--text-mute); text-decoration:none; font-size:13.5px; line-height:1.45;
+  border-left:2px solid transparent; transition:background .15s,color .15s;
+}
+#toc a:hover{background:var(--bg-hover); color:var(--text)}
+#toc a.active{background:var(--accent-soft); color:var(--accent); font-weight:600; border-left-color:var(--accent)}
+#toc a.sub{padding-left:22px; font-size:12.5px}
+
+/* ---------- 本文 ---------- */
+main{flex:1 1 auto; min-width:0; padding:56px 60px 140px; max-width:860px}
+.hero-eyebrow{font-size:12px; letter-spacing:.1em; color:var(--accent); font-weight:700; text-transform:uppercase}
+h1{font-size:40px; line-height:1.25; margin:.25em 0 .35em; letter-spacing:-.01em; font-weight:800}
+h2{font-size:26px; margin:2.6em 0 .6em; padding-bottom:.3em; border-bottom:1px solid var(--border); font-weight:700; letter-spacing:-.005em}
+h3{font-size:18px; margin:1.8em 0 .4em; font-weight:700}
+p{margin:.7em 0}
+a{color:var(--accent)}
+.lead{font-size:18px; color:var(--text-mute); line-height:1.8}
+.meta{display:flex; flex-wrap:wrap; gap:8px; margin:20px 0 8px}
+.chip{
+  font-size:12.5px; padding:4px 11px; border-radius:999px;
+  background:var(--bg-sub); border:1px solid var(--border); color:var(--text-mute);
+}
+strong{font-weight:700}
+mark{background:var(--amber-soft); color:inherit; padding:0 3px; border-radius:3px}
+code{background:var(--bg-sub); border:1px solid var(--border); border-radius:4px; padding:1px 5px; font-size:.88em}
+hr{border:0; border-top:1px solid var(--border); margin:3em 0}
+ul,ol{padding-left:1.4em} li{margin:.3em 0}
+
+/* ---------- 図解ブロック（各セクションの先頭に置く） ---------- */
+.figure{
+  margin:1.4em 0 1.2em; padding:24px; border:1px solid var(--border);
+  border-radius:var(--radius); background:var(--bg-sub);
+}
+.figure svg{display:block; width:100%; height:auto; max-width:100%}
+.figure figcaption{
+  margin-top:14px; padding-top:12px; border-top:1px solid var(--border);
+  font-size:13px; color:var(--text-mute); text-align:center;
+}
+/* SVG内で使う共通クラス */
+.svg-label{font-family:var(--font); font-size:13px; fill:var(--text)}
+.svg-label-sm{font-family:var(--font); font-size:11px; fill:var(--text-mute)}
+.svg-title{font-family:var(--font); font-size:14px; font-weight:700; fill:var(--text)}
+.svg-box{fill:var(--bg); stroke:var(--border-strong); stroke-width:1.5}
+.svg-box-accent{fill:var(--accent-soft); stroke:var(--accent); stroke-width:1.5}
+.svg-arrow{stroke:var(--text-faint); stroke-width:1.8; fill:none}
+
+/* ---------- コールアウト ---------- */
+.callout{
+  display:flex; gap:12px; padding:16px 18px; margin:1.2em 0;
+  border-radius:var(--radius); background:var(--bg-sub); border-left:3px solid var(--text-faint);
+}
+.callout .ico{flex:0 0 auto; font-size:18px; line-height:1.5}
+.callout p:first-child{margin-top:0} .callout p:last-child{margin-bottom:0}
+.callout.tip{background:var(--accent-soft); border-left-color:var(--accent)}
+.callout.warn{background:var(--amber-soft); border-left-color:var(--amber)}
+.callout.key{background:var(--green-soft); border-left-color:var(--green)}
+
+/* ---------- カードグリッド ---------- */
+.cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin:1.2em 0}
+.card{padding:16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg)}
+.card h4{margin:0 0 6px; font-size:14.5px; font-weight:700}
+.card p{margin:0; font-size:13.5px; color:var(--text-mute); line-height:1.7}
+
+/* ---------- 表 ---------- */
+table{width:100%; border-collapse:collapse; margin:1.2em 0; font-size:14.5px}
+th,td{border:1px solid var(--border); padding:10px 12px; text-align:left; vertical-align:top}
+th{background:var(--bg-sub); font-weight:700}
+
+/* ---------- クイズ ---------- */
+.quiz{
+  margin:2em 0; padding:22px 24px; border:1px solid var(--border);
+  border-radius:var(--radius); background:var(--bg-sub);
+}
+.quiz .qtag{
+  display:inline-block; font-size:11px; font-weight:700; letter-spacing:.06em;
+  color:var(--purple); background:var(--purple-soft); padding:3px 9px; border-radius:999px; margin-bottom:10px;
+}
+.quiz .qtext{font-weight:700; font-size:16.5px; margin:0 0 14px; line-height:1.65}
+.quiz .opts{display:flex; flex-direction:column; gap:8px}
+.quiz button.opt{
+  text-align:left; font:inherit; font-size:14.5px; color:var(--text); cursor:pointer;
+  padding:12px 14px; border:1px solid var(--border-strong); border-radius:6px;
+  background:var(--bg); transition:background .15s,border-color .15s;
+  display:flex; gap:10px; align-items:flex-start; line-height:1.6;
+}
+.quiz button.opt:hover:not(:disabled){background:var(--bg-hover); border-color:var(--accent)}
+.quiz button.opt:disabled{cursor:default}
+.quiz button.opt .mark{flex:0 0 20px; font-weight:700; color:var(--text-faint)}
+.quiz button.opt.correct{background:var(--green-soft); border-color:var(--green)}
+.quiz button.opt.correct .mark{color:var(--green)}
+.quiz button.opt.wrong{background:var(--red-soft); border-color:var(--red)}
+.quiz button.opt.wrong .mark{color:var(--red)}
+.quiz .explain{
+  display:none; margin-top:14px; padding:14px 16px; border-radius:6px;
+  background:var(--bg); border:1px solid var(--border); font-size:14px; line-height:1.75;
+}
+.quiz .explain.show{display:block}
+.quiz .verdict{font-weight:700; margin-bottom:4px}
+.quiz .verdict.ok{color:var(--green)} .quiz .verdict.ng{color:var(--red)}
+
+/* ---------- 出典 ---------- */
+.sources{font-size:14px; color:var(--text-mute)}
+.sources li{margin:.5em 0}
+
+/* ---------- テーマ切替ボタン ---------- */
+#themeBtn{
+  position:fixed; top:18px; right:22px; z-index:50;
+  width:38px; height:38px; border-radius:8px; cursor:pointer;
+  border:1px solid var(--border-strong); background:var(--bg); color:var(--text);
+  font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;
+  transition:background .15s;
+}
+#themeBtn:hover{background:var(--bg-hover)}
+
+/* ---------- レスポンシブ ---------- */
+@media (max-width:900px){
+  #sidebar{display:none}
+  main{padding:40px 22px 100px}
+  h1{font-size:30px} h2{font-size:22px}
+}
+@media print{
+  #sidebar,#themeBtn{display:none} main{max-width:none;padding:0}
+  .quiz .explain{display:block}
+}
+</style>
+</head>
+<body>
+
+<button id="themeBtn" aria-label="ライト/ダーク切替">🌙</button>
+
+<div class="layout">
+
+  <aside id="sidebar">
+    <div class="toc-label">目次</div>
+    <nav id="toc">
+      <a href="#about">この教材について</a>
+      <a href="#s1">1. ハルシネーションとは何か</a>
+      <a href="#s2">2. AIは次の言葉を確率で選んでいる</a>
+      <a href="#s3">3. 原因①：覚えられない事実がある</a>
+      <a href="#s4">4. 原因②：「知りません」が損をする採点</a>
+      <a href="#s5">5. 3つのタイプに分けて考える</a>
+      <a href="#s6">6. どんな質問が危ないのか</a>
+      <a href="#s7">7. 実際に起きた事故と責任の所在</a>
+      <a href="#s8">8. 数字で見る発生規模</a>
+      <a href="#s9">9. 対策①：聞き方を変える</a>
+      <a href="#s10">10. 対策②：仕組みで減らす</a>
+      <a href="#s11">11. 対策③：運用ルールと最終確認</a>
+      <a href="#s12">12. よくある誤解と使い分けマップ</a>
+      <a href="#summary">まとめ</a>
+      <a href="#sources">出典</a>
+    </nav>
+  </aside>
+
+  <main>
+
+    <!-- ============ ヘッダー ============ -->
+    <header>
+      <div class="hero-eyebrow">生成AIリテラシー / 全社研修</div>
+      <h1>生成AIのハルシネーション</h1>
+      <p class="lead">AIが「もっともらしい嘘」をつくのは、性格でも故障でもなく、文章の作り方と評価のされ方から生まれる構造的な現象です。この教材では、なぜ起きるのかを仕組みから理解し、明日から使える3層の対策（聞き方・仕組み・運用ルール）まで一気に押さえます。</p>
+      <div class="meta">
+        <span class="chip">対象: 非エンジニアの社員全員</span>
+        <span class="chip">レベル: 入門（予備知識不要）</span>
+        <span class="chip">所要 約25分</span>
+        <span class="chip">理解度チェック 4問</span>
+        <span class="chip">更新: 2026-08-10</span>
+      </div>
+    </header>
+
+    <!-- ============ この教材について ============ -->
+    <section id="about">
+      <h2>この教材について</h2>
+      <div class="callout key">
+        <span class="ico">🎯</span>
+        <div>
+          <p><strong>読み終えるとできるようになること</strong></p>
+          <ol>
+            <li>ハルシネーションが「バグ」ではなく仕組み上の必然であることを、自分の言葉で同僚に説明できる</li>
+            <li>自分の業務の中で「AIが間違えやすい依頼」と「任せてよい依頼」を切り分けられる</li>
+            <li>聞き方・仕組み・運用ルールの3層で、具体的な対策を実行できる</li>
+          </ol>
+        </div>
+      </div>
+      <p>専門用語はその都度かみ砕いて説明します。プログラミングや数学の知識は一切必要ありません。数字を出す箇所には必ず出典を付けているので、社内資料に転用する際はリンク先も併せてご確認ください。</p>
+      <p style="font-size:14px;color:var(--text-mute)">
+        主な参照元: <a href="https://openai.com/index/why-language-models-hallucinate/">OpenAI「Why language models hallucinate」(2025)</a> / <a href="https://www.damiencharlotin.com/hallucinations/">AI Hallucination Cases Database</a> / <a href="https://www.soumu.go.jp/johotsusintokei/whitepaper/ja/r07/html/nd112220.html">総務省 令和7年版 情報通信白書</a>（全出典は<a href="#sources">末尾</a>）
+      </p>
+    </section>
+
+    <!-- ============ 1 ============ -->
+    <section id="s1">
+      <h2>1. ハルシネーションとは何か — 本当に危ないのはどこか</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="内容の正しさと文章のもっともらしさで分けた4象限。もっともらしいのに誤っている右下がハルシネーション">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="var(--text-faint)"/>
+            </marker>
+          </defs>
+          <rect x="140" y="20" width="480" height="260" fill="none" stroke="var(--border-strong)"/>
+          <line x1="380" y1="20" x2="380" y2="280" stroke="var(--border)"/>
+          <line x1="140" y1="150" x2="620" y2="150" stroke="var(--border)"/>
+
+          <rect x="390" y="160" width="220" height="110" rx="6" fill="var(--red-soft)" stroke="var(--red)" stroke-width="1.5"/>
+          <rect x="390" y="30" width="220" height="110" rx="6" fill="var(--green-soft)" opacity=".7"/>
+
+          <text x="260" y="78" text-anchor="middle" class="svg-title">正しいが読みにくい</text>
+          <text x="260" y="102" text-anchor="middle" class="svg-label-sm">ぎこちない文。人が直せば済む</text>
+
+          <text x="500" y="78" text-anchor="middle" class="svg-title">正しくて自然</text>
+          <text x="500" y="102" text-anchor="middle" class="svg-label-sm">理想の状態</text>
+
+          <text x="260" y="208" text-anchor="middle" class="svg-title">明らかに変な誤り</text>
+          <text x="260" y="232" text-anchor="middle" class="svg-label-sm">誰でも気づくので実害は小さい</text>
+
+          <text x="500" y="202" text-anchor="middle" class="svg-title" fill="var(--red)">ハルシネーション</text>
+          <text x="500" y="226" text-anchor="middle" class="svg-label-sm">自然な日本語なので</text>
+          <text x="500" y="246" text-anchor="middle" class="svg-label-sm">読んでも気づけない</text>
+
+          <text x="132" y="45" text-anchor="end" class="svg-label-sm">正しい</text>
+          <text x="132" y="265" text-anchor="end" class="svg-label-sm">誤り</text>
+          <text x="380" y="308" text-anchor="middle" class="svg-label-sm">→ 文章としてのもっともらしさ（右ほど自然で流暢）</text>
+        </svg>
+        <figcaption>図1: 危険なのは「間違っていること」ではなく「間違いが自然な文に化けること」</figcaption>
+      </figure>
+
+      <p><strong>ハルシネーション（hallucination＝幻覚）</strong>とは、生成AIが事実に基づかない内容を、もっともらしい文章として出力してしまう現象です。OpenAIの定義では「もっともらしいが誤っている記述」とされています。</p>
+
+      <p>ここで押さえてほしいのは、<mark>ハルシネーションの本当の怖さは「誤ること」ではなく「誤りが自然な日本語に化けること」</mark>だという点です。図1の左下、明らかに文章が破綻している誤りは、読んだ瞬間に誰でも気づくので害が小さい。一方、右下は文体も語彙も正しい情報とまったく同じで、90行の正確な文章の中に1行だけ紛れ込みます。だから見つけられないのです。</p>
+
+      <p>もう一つの重要な性質は、<strong>AIには嘘をつく意図も自覚もない</strong>ということです。人間の嘘は「本当のことを知っていて、あえて別のことを言う」行為ですが、AIは自分が知らないということ自体を認識していません。だから、知らない相手についても、実在しない判例についても、まったく同じ自信の強さで答えます。「AIの回答の自信満々な口調」は、内容の確からしさをまったく示していないと考えてください。</p>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><p><strong>言い換えの注意</strong>：社内では「AIが嘘をつく」という表現をよく使いますが、これは擬人化した比喩です。研修や顧客説明の場では「事実に基づかない内容を、もっともらしく生成してしまう現象」と説明したほうが、原因と対策の話につながります。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section id="s2">
+      <h2>2. なぜ「もっともらしい」のか — AIは次の言葉を確率で選んでいる</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="生成AIが文章を作る5つの工程。事実確認の工程は含まれていない">
+          <g><rect x="10" y="30" width="120" height="66" rx="8" class="svg-box-accent"/>
+             <text x="70" y="60" text-anchor="middle" class="svg-title">① 質問</text>
+             <text x="70" y="80" text-anchor="middle" class="svg-label-sm">を受け取る</text></g>
+          <path d="M134 63 H 151" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="155" y="30" width="120" height="66" rx="8" class="svg-box"/>
+             <text x="215" y="60" text-anchor="middle" class="svg-title">② 文脈把握</text>
+             <text x="215" y="80" text-anchor="middle" class="svg-label-sm">数値に変換</text></g>
+          <path d="M279 63 H 296" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="300" y="30" width="120" height="66" rx="8" class="svg-box"/>
+             <text x="360" y="60" text-anchor="middle" class="svg-title">③ 確率計算</text>
+             <text x="360" y="80" text-anchor="middle" class="svg-label-sm">次に来そうな語</text></g>
+          <path d="M424 63 H 441" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="445" y="30" width="120" height="66" rx="8" class="svg-box"/>
+             <text x="505" y="60" text-anchor="middle" class="svg-title">④ 1語選ぶ</text>
+             <text x="505" y="80" text-anchor="middle" class="svg-label-sm">確率にそって</text></g>
+          <path d="M569 63 H 586" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="590" y="30" width="120" height="66" rx="8" class="svg-box"/>
+             <text x="650" y="60" text-anchor="middle" class="svg-title">⑤ くり返す</text>
+             <text x="650" y="80" text-anchor="middle" class="svg-label-sm">文が完成</text></g>
+
+          <path d="M360 96 V 122" class="svg-arrow" stroke-dasharray="4 3" marker-end="url(#ar)"/>
+          <rect x="90" y="126" width="540" height="44" rx="6" fill="var(--amber-soft)" stroke="var(--amber)" stroke-width="1.5"/>
+          <text x="360" y="153" text-anchor="middle" class="svg-label">この5工程のどこにも「それは事実か」を確かめる手順は無い</text>
+        </svg>
+        <figcaption>図2: 生成AIの文章生成は「次に来そうな語を選び続ける」工程。真偽の判定はどこにも入らない</figcaption>
+      </figure>
+
+      <p>生成AIは、質問の意味を理解して知識データベースを引いているわけではありません。膨大な文章を読んで学んだ「言葉のつながりやすさ」をもとに、<strong>次に来る確率が高い語を1つずつ選び、つなげている</strong>だけです。この方式を「次単語予測」と呼びます。</p>
+
+      <p>この作り方から、2つの性質が必然的に生まれます。1つは<strong>出力が常に流暢になる</strong>こと。「もっともらしさ」こそがAIが最適化している対象なので、内容が正しかろうが間違っていようが、文章はいつも自然になります。もう1つは<strong>途中に事実確認の工程が存在しない</strong>こと。図2の①〜⑤のどこにも「これは本当か」を照合する手順がありません。</p>
+
+      <p>OpenAIの解説によれば、この問題は学習のさせ方にも根があります。AIが最初に行う「事前学習」では、大量の文章を読んで次の語を予測させるだけで、<mark>一つひとつの文に「これは真」「これは偽」というラベルは付いていません</mark>。偽の例を教わらないまま、真偽を見分けられるようになるのは原理的に難しい、というわけです。</p>
+
+      <div class="callout tip">
+        <span class="ico">💡</span>
+        <div><p>「もっともらしさ」と「正しさ」は別物である——この一文だけでも覚えて帰ってください。AIの回答が読みやすいことは、内容が正しい証拠にはまったくなりません。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ クイズ1 ============ -->
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 1</span>
+      <p class="qtext">生成AIに研究者の論文タイトルを尋ねたところ、実在しないタイトルを自信たっぷりに答えました。この現象の説明として最も的確なのはどれでしょう。</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>AIが利用者を試すために、意図的に誤った情報を混ぜた</span></button>
+        <button class="opt" data-correct><span class="mark">B</span><span>AIは「次に来そうな語」を確率で選んで文を作っており、その工程に事実確認が含まれていないから</span></button>
+        <button class="opt"><span class="mark">C</span><span>AIは学習した文章をすべて保存しており、検索処理に失敗しただけ</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p><strong>正解は B。</strong>生成AIは意味を理解して答えを引いているのではなく、言葉のつながりやすさから次の語を選び続けています。そこに真偽の照合は挟まりません。<br>
+        A は誤り。AIに意図や悪意はなく、知らないという自覚もないまま同じ調子で答えます。<br>
+        C も誤り。AIは学習した文章を丸ごと保管して引き出しているのではなく、パターンから毎回その場で生成しています。だから「それらしいが存在しないタイトル」が出てくるのです。</p>
+      </div>
+    </div>
+
+    <!-- ============ 3 ============ -->
+    <section id="s3">
+      <h2>3. 原因① — 覚えられる事実と、どうしても覚えられない事実</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 215" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="規則性のある情報は学習で誤りが消えるが、規則性のない事実は学習しても当てられないという対比">
+          <rect x="10" y="20" width="320" height="175" rx="8" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.5"/>
+          <text x="170" y="50" text-anchor="middle" class="svg-title" fill="var(--green)">規則性がある情報</text>
+          <text x="170" y="84" text-anchor="middle" class="svg-label">・文法、スペル、言い回し</text>
+          <text x="170" y="110" text-anchor="middle" class="svg-label">・よくある定型表現</text>
+          <text x="170" y="136" text-anchor="middle" class="svg-label">・一般常識レベルの知識</text>
+          <line x1="40" y1="152" x2="300" y2="152" stroke="var(--green)" stroke-dasharray="3 3"/>
+          <text x="170" y="176" text-anchor="middle" class="svg-label-sm">学習量を増やすほど誤りが消えていく</text>
+
+          <line x1="360" y1="20" x2="360" y2="195" stroke="var(--border-strong)" stroke-dasharray="5 4"/>
+          <text x="360" y="112" text-anchor="middle" class="svg-label-sm">vs</text>
+
+          <rect x="390" y="20" width="320" height="175" rx="8" fill="var(--red-soft)" stroke="var(--red)" stroke-width="1.5"/>
+          <text x="550" y="50" text-anchor="middle" class="svg-title" fill="var(--red)">規則性がない情報</text>
+          <text x="550" y="84" text-anchor="middle" class="svg-label">・特定の人物の生年月日</text>
+          <text x="550" y="110" text-anchor="middle" class="svg-label">・細かい数値、日付、条番号</text>
+          <text x="550" y="136" text-anchor="middle" class="svg-label">・ニッチな固有名詞、社内情報</text>
+          <line x1="420" y1="152" x2="680" y2="152" stroke="var(--red)" stroke-dasharray="3 3"/>
+          <text x="550" y="176" text-anchor="middle" class="svg-label-sm">いくら学習しても当てられない</text>
+        </svg>
+        <figcaption>図3: AIが得意な情報と、原理的に苦手な情報。誤りが集中するのは右側</figcaption>
+      </figure>
+
+      <p>大規模なAIは、実は誤字脱字や括弧の閉じ忘れといったミスをほとんどしません。学習量を増やすと、そういうミスは自然に消えていくからです。ところが、人名や日付の誤りだけは規模を大きくしても残り続けます。この差はどこから来るのでしょうか。</p>
+
+      <p>OpenAIはこれを、犬と猫の写真にたとえて説明しています。<strong>何百万枚ものペットの写真に「犬」「猫」というラベルを付ければ、AIは高い精度で分類できるようになります。しかし同じ写真に「そのペットの誕生日」をラベルとして付けたらどうなるか。</strong>誕生日は写真の見た目とまったく関係がない、事実上ランダムな情報です。どれだけ高性能なアルゴリズムでも、当てることはできません。</p>
+
+      <p>言語モデルの事前学習でも同じことが起きます。文法や言い回しには一貫したパターンがあるので誤りは消えていきますが、<mark>登場回数が少なく、パターンから導けない事実（誰の誕生日、どの条文の番号、どの会社の創業年）は、いくら学習してもパターン化できない</mark>ため、ハルシネーションとして残ります。</p>
+
+      <p>これが、後で見る「危険度マップ」の理論的な根拠です。固有名詞・数値・日付・引用に誤りが集中するのは偶然ではなく、AIの学習方式から予測できる帰結なのです。</p>
+    </section>
+
+    <!-- ============ 4 ============ -->
+    <section id="s4">
+      <h2>4. 原因② — 「知りません」と言うと損をする採点方式</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 285" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="2つのモデルの棄権率・正答率・誤答率の比較。正答率はほぼ同じだが誤答率が大きく違う">
+          <line x1="120" y1="20" x2="120" y2="232" stroke="var(--border-strong)"/>
+          <line x1="120" y1="232" x2="700" y2="232" stroke="var(--border-strong)"/>
+
+          <rect x="120" y="28" width="291" height="22" rx="3" fill="var(--accent)"/>
+          <text x="419" y="45" class="svg-label-sm">52%</text>
+          <rect x="120" y="54" width="6" height="22" rx="2" fill="var(--amber)"/>
+          <text x="134" y="71" class="svg-label-sm">1%</text>
+          <text x="112" y="58" text-anchor="end" class="svg-title">棄権率</text>
+
+          <rect x="120" y="96" width="123" height="22" rx="3" fill="var(--accent)"/>
+          <text x="251" y="113" class="svg-label-sm">22%</text>
+          <rect x="120" y="122" width="134" height="22" rx="3" fill="var(--amber)"/>
+          <text x="262" y="139" class="svg-label-sm">24%</text>
+          <text x="112" y="126" text-anchor="end" class="svg-title">正答率</text>
+
+          <rect x="120" y="164" width="146" height="22" rx="3" fill="var(--accent)"/>
+          <text x="274" y="181" class="svg-label-sm">26%</text>
+          <rect x="120" y="190" width="420" height="22" rx="3" fill="var(--red)"/>
+          <text x="548" y="207" class="svg-label-sm" fill="var(--red)">75%</text>
+          <text x="112" y="194" text-anchor="end" class="svg-title">誤答率</text>
+
+          <rect x="120" y="248" width="14" height="12" fill="var(--accent)"/>
+          <text x="140" y="259" class="svg-label-sm">新しいモデル（gpt-5-thinking-mini）</text>
+          <rect x="400" y="248" width="14" height="12" fill="var(--amber)"/>
+          <text x="420" y="259" class="svg-label-sm">旧世代モデル（o4-mini）</text>
+          <text x="120" y="278" class="svg-label-sm">単位: % / 出典: OpenAI「Why language models hallucinate」(2025) SimpleQAでの実測値</text>
+        </svg>
+        <figcaption>図4: 正答率の差はわずか2ポイント。決定的に違うのは誤答率（26% vs 75%）</figcaption>
+      </figure>
+
+      <p>もう一つの原因は、AIの側ではなく<strong>AIの「成績表」の付け方</strong>にあります。これはOpenAIが2025年9月に発表した研究の中心的な主張で、ハルシネーションが減らない理由をとてもすっきり説明してくれます。</p>
+
+      <p>4択テストを想像してください。分からない問題を空欄で出せば必ず0点ですが、当てずっぽうで埋めれば当たる可能性があります。<mark>AIの評価も「正答率」だけで順位を付けるものが主流なので、モデルは「黙る」より「推測する」ほうが得をするように学習してしまう</mark>のです。誕生日を聞かれて分からないとき、「9月10日」と答えれば365分の1で当たりますが、「知りません」と答えれば確実に0点。何千問も繰り返せば、推測するモデルのほうがランキング上位に来ます。</p>
+
+      <p>図4はその帰結を実測値で示したものです。SimpleQAという事実確認テストで、旧世代のo4-miniは正答率24%と少しだけ高いのですが、<strong>誤答率が75%</strong>。ほとんど棄権せず、分からない問題も推測で埋めているためです。一方の新しいモデルは半分以上を「答えない」と判断し、誤答率を26%に抑えています。</p>
+
+      <p>業務で使う側にとって、この差は決定的です。<strong>誤答は「気づかないまま資料に混ざる」ので、棄権よりはるかに厄介</strong>だからです。正答率ランキングだけを見てツールを選ぶと、いちばん困る指標を見落とします。</p>
+
+      <div class="callout tip">
+        <span class="ico">💡</span>
+        <div><p><strong>ここから直接引き出せる実務のコツ</strong>：AIが推測に流れるのは「答えないと減点」という圧力があるからです。だからプロンプトで<strong>「分からない場合は『分かりません』と答えてください」と明示的に許可を出す</strong>だけで、推測を減らせます。対策編で詳しく扱います。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ クイズ2 ============ -->
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 2</span>
+      <p class="qtext">同じ事実確認テストで、モデルXは「正答22%・誤答26%・棄権52%」、モデルYは「正答24%・誤答75%・棄権1%」でした。社外向け資料の下書きに使うなら、どちらが安全でしょうか。</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>正答率が高いモデルY</span></button>
+        <button class="opt" data-correct><span class="mark">B</span><span>誤答が少なく、分からないときは答えないモデルX</span></button>
+        <button class="opt"><span class="mark">C</span><span>正答率がほぼ同じなので、どちらを選んでも実務上の差はない</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p><strong>正解は B。</strong>正答率の差はわずか2ポイントですが、誤答率は26%対75%で約3倍。誤答は自然な文章として資料に紛れ込み、人が気づけないまま社外に出るため、棄権よりはるかに損害が大きくなります。<br>
+        A は正答率だけを見た判断で、まさにこれがモデルに推測を促してきた評価の問題そのものです。<br>
+        C は「誤答率」という業務上いちばん重要な差を見落としています。棄権されれば「自分で調べよう」と判断できますが、誤答は判断の機会すら奪います。</p>
+      </div>
+    </div>
+
+    <!-- ============ 5 ============ -->
+    <section id="s5">
+      <h2>5. 3つのタイプに分けて考える — 症状が違えば対策も違う</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ハルシネーションを事実の捏造・資料との食い違い・指示からの逸脱の3タイプに分解した図">
+          <rect x="270" y="10" width="180" height="54" rx="8" class="svg-box-accent"/>
+          <text x="360" y="43" text-anchor="middle" class="svg-title">ハルシネーション</text>
+          <path d="M360 64 V 90 M120 90 H 600 M120 90 V 116 M360 90 V 116 M600 90 V 116" class="svg-arrow" fill="none"/>
+
+          <g>
+            <rect x="20" y="116" width="200" height="112" rx="8" class="svg-box"/>
+            <text x="120" y="145" text-anchor="middle" class="svg-title">① 事実の捏造</text>
+            <text x="120" y="169" text-anchor="middle" class="svg-label-sm">学習データに無い情報を</text>
+            <text x="120" y="187" text-anchor="middle" class="svg-label-sm">それらしく作り出す</text>
+            <text x="120" y="214" text-anchor="middle" class="svg-label-sm" fill="var(--accent)">→ 一次情報で裏取り</text>
+          </g>
+          <g>
+            <rect x="260" y="116" width="200" height="112" rx="8" class="svg-box"/>
+            <text x="360" y="145" text-anchor="middle" class="svg-title">② 資料との食い違い</text>
+            <text x="360" y="169" text-anchor="middle" class="svg-label-sm">渡した資料と矛盾する</text>
+            <text x="360" y="187" text-anchor="middle" class="svg-label-sm">内容を答える</text>
+            <text x="360" y="214" text-anchor="middle" class="svg-label-sm" fill="var(--accent)">→ 元資料と突き合わせ</text>
+          </g>
+          <g>
+            <rect x="500" y="116" width="200" height="112" rx="8" class="svg-box"/>
+            <text x="600" y="145" text-anchor="middle" class="svg-title">③ 指示からの逸脱</text>
+            <text x="600" y="169" text-anchor="middle" class="svg-label-sm">要約なのに元にない話を</text>
+            <text x="600" y="187" text-anchor="middle" class="svg-label-sm">勝手に足す</text>
+            <text x="600" y="214" text-anchor="middle" class="svg-label-sm" fill="var(--accent)">→ 制約を明示して再指示</text>
+          </g>
+        </svg>
+        <figcaption>図5: 「AIが嘘をつく」とひとくくりにせず、症状で3つに分けると打ち手が決まる</figcaption>
+      </figure>
+
+      <p>研究の世界では、ハルシネーションを2つの軸で整理します。1つは<strong>事実性（Factuality）</strong>＝世の中の事実と合っているか。もう1つは<strong>忠実性（Faithfulness）</strong>＝与えた資料や指示に忠実か。この2軸を実務的に言い直したのが図5の3タイプです。</p>
+
+      <p><strong>① 事実の捏造</strong>は最も有名なタイプで、存在しない判例、実在しない論文、架空の統計などを作り出します。学習データに無い情報を出すことから「外在的ハルシネーション」とも呼ばれます。対策は一次情報での裏取り以外にありません。</p>
+
+      <p><strong>② 資料との食い違い</strong>は、こちらが資料を渡しているのに、その内容と矛盾する答えを返すタイプです（「内在的ハルシネーション」）。資料に「契約期間は2年」と書いてあるのに「3年」と要約してしまう、といったケース。元資料が手元にあるので、突き合わせれば必ず見つかります。</p>
+
+      <p><strong>③ 指示からの逸脱</strong>は、業務でいちばん見逃されやすいタイプです。「この議事録を300字に要約して」と頼んだのに、議事録に書かれていない背景説明や結論が滑らかに追加される。読むと自然で、しかも内容として間違っていないこともあるため、<mark>「元の資料に書いてあったか」を確認しない限り気づけません</mark>。要約や翻訳を安全だと思い込んでいる人ほど、ここでつまずきます。</p>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section id="s6">
+      <h2>6. どんな質問が危ないのか — 危険度マップ</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="依頼内容の危険度を4段階に分けた階層図。上ほど危険で下ほど安全">
+          <rect x="200" y="10" width="390" height="56" rx="6" fill="var(--red-soft)" stroke="var(--red)" stroke-width="1.5"/>
+          <text x="395" y="35" text-anchor="middle" class="svg-title">固有名詞・数値・日付・引用・条文</text>
+          <text x="395" y="55" text-anchor="middle" class="svg-label-sm">人名 / 社名 / 統計値 / 判例 / 法令番号</text>
+
+          <rect x="200" y="74" width="390" height="56" rx="6" fill="var(--amber-soft)" stroke="var(--amber)" stroke-width="1.5"/>
+          <text x="395" y="99" text-anchor="middle" class="svg-title">最新の出来事・直近の制度改正</text>
+          <text x="395" y="119" text-anchor="middle" class="svg-label-sm">学習した時点より後のことは知らない</text>
+
+          <rect x="200" y="138" width="390" height="56" rx="6" class="svg-box"/>
+          <text x="395" y="163" text-anchor="middle" class="svg-title">ニッチな専門領域・社内固有の情報</text>
+          <text x="395" y="183" text-anchor="middle" class="svg-label-sm">学習データが薄い／そもそも存在しない</text>
+
+          <rect x="200" y="202" width="390" height="56" rx="6" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.5"/>
+          <text x="395" y="227" text-anchor="middle" class="svg-title">要約・言い換え・翻訳・アイデア出し</text>
+          <text x="395" y="247" text-anchor="middle" class="svg-label-sm">手元の材料を変形するだけの作業</text>
+
+          <text x="192" y="42" text-anchor="end" class="svg-label-sm">危険度 高</text>
+          <text x="192" y="234" text-anchor="end" class="svg-label-sm">危険度 低</text>
+          <text x="600" y="42" class="svg-label-sm">そのまま使わない</text>
+          <text x="600" y="106" class="svg-label-sm">検索連携が必須</text>
+          <text x="600" y="170" class="svg-label-sm">社内資料を添付</text>
+          <text x="600" y="234" class="svg-label-sm">下書きとして活用</text>
+        </svg>
+        <figcaption>図6: 危険度は「依頼の種類」でかなり予測できる。上2層は必ず人が裏を取る</figcaption>
+      </figure>
+
+      <p>「なんとなく不安」を「この層に入るから必ず確認」に変えるのが図6です。3章で見たとおり、<strong>AIが原理的に苦手なのは「パターンから導けない、登場回数の少ない事実」</strong>。それを業務の依頼の形に落とし込むと、上の4層になります。</p>
+
+      <p><strong>最上層（固有名詞・数値・日付・引用）</strong>は、まさにAIが構造的に苦手とする情報そのものです。取引先の創業年、市場規模の数字、法令の条番号、論文や判例の出典。ここはAIの答えを出発点にするのは構いませんが、そのまま資料に載せてはいけません。</p>
+
+      <p><strong>第2層（最新の出来事）</strong>は仕組みの制約です。AIは学習に使われた時点までの文章しか読んでいないため、その後の出来事は知りません。しかも「知らない」と言わずに、それらしい答えを作ってしまいます。ここはWeb検索と連携する機能を使うのが前提になります。</p>
+
+      <p><strong>第3層（ニッチな領域・社内情報）</strong>は、そもそも学習データに存在しないケースです。自社の就業規則や商品仕様をAIが知っているはずがありません。<mark>社内の情報について聞くときは、必ず該当資料を添付してから聞く</mark>のが鉄則です。</p>
+
+      <p><strong>最下層（要約・言い換え・翻訳・アイデア出し）</strong>は、手元の材料を変形する作業なので、事実を新しく作り出す余地が小さく、比較的安全です。ただし5章の③（指示からの逸脱）はここでも起きるので、「元の資料に無いことが足されていないか」だけは確認してください。</p>
+    </section>
+
+    <!-- ============ クイズ3 ============ -->
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 3</span>
+      <p class="qtext">次のうち、AIの回答をそのまま社外向け資料に転記するのが最も危険なのはどれでしょう。</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>自分が取った会議メモを貼り付けて、300字に要約させる</span></button>
+        <button class="opt" data-correct><span class="mark">B</span><span>資料を渡さずに、取引先企業の創業年・代表者名・売上規模を答えさせる</span></button>
+        <button class="opt"><span class="mark">C</span><span>自分が書いたメール文面を、もっと丁寧な言い回しに直させる</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p><strong>正解は B。</strong>企業名・人名・創業年・売上といった固有名詞と数値は、パターンから導けない低頻度の事実の代表例で、AIが最も間違えやすい領域です。しかも「知りません」とは言わず、実在しそうな名前と数字を作ってしまいます。<br>
+        A と C は、手元にある材料を変形しているだけなので、新しい事実を作り出す余地が小さく相対的に安全です。<br>
+        ただし A は要約なので、元のメモに無い内容が足される「指示からの逸脱」型は起こり得ます。安全＝無検証でよい、ではない点に注意してください。</p>
+      </div>
+    </div>
+
+    <!-- ============ 7 ============ -->
+    <section id="s7">
+      <h2>7. 実際に起きた事故 — 責任を取ったのは誰か</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="2023年から2026年までのハルシネーション関連の主な出来事の年表">
+          <line x1="40" y1="95" x2="690" y2="95" stroke="var(--border-strong)" stroke-width="2"/>
+          <g><circle cx="90" cy="95" r="8" fill="var(--accent)" opacity=".8"/>
+             <text x="90" y="70" text-anchor="middle" class="svg-title">2023</text>
+             <text x="90" y="124" text-anchor="middle" class="svg-label-sm">米国の弁護士が</text>
+             <text x="90" y="142" text-anchor="middle" class="svg-label-sm">偽の判例を提出し制裁</text></g>
+          <g><circle cx="280" cy="95" r="8" fill="var(--accent)" opacity=".8"/>
+             <text x="280" y="70" text-anchor="middle" class="svg-title">2024</text>
+             <text x="280" y="124" text-anchor="middle" class="svg-label-sm">Air Canada 敗訴</text>
+             <text x="280" y="142" text-anchor="middle" class="svg-label-sm">AIの回答も企業の責任</text></g>
+          <g><circle cx="460" cy="95" r="8" fill="var(--accent)" opacity=".8"/>
+             <text x="460" y="70" text-anchor="middle" class="svg-title">2025.9</text>
+             <text x="460" y="124" text-anchor="middle" class="svg-label-sm">OpenAIが原因を論文化</text>
+             <text x="460" y="142" text-anchor="middle" class="svg-label-sm">評価の仕組みが主因</text></g>
+          <g><circle cx="628" cy="95" r="10" fill="var(--red)"/>
+             <text x="628" y="68" text-anchor="middle" class="svg-title" fill="var(--red)">2026.8</text>
+             <text x="628" y="124" text-anchor="middle" class="svg-label-sm">裁判所文書での事例</text>
+             <text x="628" y="142" text-anchor="middle" class="svg-label-sm">世界で累計1,868件</text></g>
+        </svg>
+        <figcaption>図7: 「注意喚起の段階」はすでに終わり、責任の所在が判例で確定していく段階に入っている</figcaption>
+      </figure>
+
+      <p>非エンジニアの皆さんに最も知っておいてほしいのは、<mark>ハルシネーションによる損害の責任は、AIを作った会社ではなく「AIを使った側・導入した側」に来る</mark>という事実です。これは既に判例で示されています。</p>
+
+      <h3>ケース1: 存在しない判例を法廷に提出した弁護士（2023年・米国）</h3>
+      <p>米国の弁護士が、ChatGPTに調べさせた判例を裁判所へ提出しました。ところが引用された判例は、事件名も判決文もすべてAIが作り出した架空のものでした。しかも本人は事前にChatGPT自身に「この判例は実在しますか」と確認し、「実在します」という回答を得ていました。<strong>同じAIに聞き直しても検証にはならない</strong>という、いまも通用する教訓を残したケースです。この弁護士は制裁を受けました。</p>
+
+      <h3>ケース2: Air Canadaのチャットボット（2024年・カナダ）</h3>
+      <p>Air Canadaのサイトに設置されたチャットボットが、遺族向けの割引（忌引運賃）について、実際の社内規定とは異なる案内をしました。それを信じて航空券を購入した利用者が、後から割引を拒否されて提訴。裁判所は<strong>「自社サイトのチャットボットの回答も、会社の説明である。利用者がそれを信じたのは合理的だ」</strong>として、Air Canada側に賠償責任を認めました。会社側の「チャットボットは独立した存在」という主張は退けられています。</p>
+      <p>技術的な背景として、このチャットボットは社内の正規の規程文書を参照して答える仕組み（次章のRAG）を使っておらず、モデルの記憶だけで答えていたと報じられています。<strong>仕組みで防げた事故</strong>だったということです。</p>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><p>この2件から引き出せる社内向けの結論はシンプルです。<strong>「AIがそう言ったから」は免責事由にならない。</strong>社外に出る文章・数字・約束は、必ず人間が一次情報で確認した上で発信する必要があります。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ 8 ============ -->
+    <section id="s8">
+      <h2>8. どれくらい起きているのか — 数字で見る</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 135" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="裁判所文書でのハルシネーション事例1868件の当事者別内訳">
+          <rect x="40" y="25" width="375" height="42" rx="4" fill="var(--accent)"/>
+          <rect x="415" y="25" width="248" height="42" fill="var(--amber)"/>
+          <rect x="663" y="25" width="17" height="42" rx="4" fill="var(--text-faint)"/>
+          <text x="227" y="52" text-anchor="middle" class="svg-label" fill="#fff">本人訴訟の当事者 1,096件（59%）</text>
+          <text x="539" y="52" text-anchor="middle" class="svg-label" fill="#fff">弁護士 724件（39%）</text>
+          <path d="M671 67 V 86" stroke="var(--text-faint)" stroke-width="1.2" fill="none"/>
+          <text x="700" y="102" text-anchor="end" class="svg-label-sm">裁判官・鑑定人ほか 約48件</text>
+          <text x="40" y="124" class="svg-label-sm">出典: AI Hallucination Cases Database（2026年8月8日時点・累計1,868件）</text>
+        </svg>
+        <figcaption>図8: 法律の専門家である弁護士だけで724件。「気をつければ防げる」問題ではない</figcaption>
+      </figure>
+
+      <p>フランスHEC Parisの研究者が運営する「AI Hallucination Cases Database」は、世界中の裁判所で、AIが作り出した架空の引用や資料が問題として扱われた決定を収集しています。2026年8月8日時点で累計<strong>1,868件</strong>。国別の内訳は次のとおりです。</p>
+
+      <table>
+        <thead><tr><th>国・地域</th><th>件数</th><th>備考</th></tr></thead>
+        <tbody>
+          <tr><td>米国</td><td>1,297</td><td>全体の約7割</td></tr>
+          <tr><td>カナダ</td><td>206</td><td>2位</td></tr>
+          <tr><td>オーストラリア</td><td>97</td><td></td></tr>
+          <tr><td>英国</td><td>61</td><td></td></tr>
+          <tr><td>イスラエル</td><td>55</td><td></td></tr>
+        </tbody>
+      </table>
+
+      <p>注目してほしいのは図8の内訳です。<strong>弁護士による事例が724件</strong>——法律文書の正確さで報酬を得ている専門家が、これだけの数、AIの作り話をそのまま提出しています。これは<mark>「意識を高く持てば防げる」種類の問題ではない</mark>ことの、何よりの証拠です。個人の注意力ではなく、仕組みと手順で防ぐ必要があります。</p>
+
+      <h3>日本の現在地</h3>
+      <p>総務省の令和7年版 情報通信白書によれば、日本企業で生成AIの活用方針（積極活用・範囲を限定して活用のいずれか）を定めている割合は<strong>2024年度調査で49.7%</strong>（2023年度は42.7%）。個人の生成AI利用経験は<strong>26.7%</strong>で、前年の9.1%から大きく伸びています。同白書のリスク意識調査では、「AIの回答が事実でない可能性」が、犯罪利用やフェイクと並んで「非常にリスクだと感じる」項目の上位に挙がっています。つまり<strong>多くの人が不安には気づいているが、対策の手順までは共有されていない</strong>のが現状です。</p>
+    </section>
+
+    <!-- ============ 9 ============ -->
+    <section id="s9">
+      <h2>9. 対策① — 聞き方を変える（今日からできる）</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="丸投げの聞き方と、制約を付けた聞き方の対比">
+          <rect x="10" y="20" width="300" height="180" rx="8" fill="var(--bg)" stroke="var(--border-strong)" stroke-width="1.5"/>
+          <text x="160" y="50" text-anchor="middle" class="svg-title" fill="var(--text-mute)">よくある聞き方</text>
+          <text x="160" y="86" text-anchor="middle" class="svg-label">「〇〇について教えて」</text>
+          <text x="160" y="118" text-anchor="middle" class="svg-label-sm">・材料を何も渡していない</text>
+          <text x="160" y="142" text-anchor="middle" class="svg-label-sm">・「分からない」と言う余地がない</text>
+          <text x="160" y="178" text-anchor="middle" class="svg-label-sm" fill="var(--red)">→ AIは推測で空白を埋める</text>
+
+          <path d="M322 110 H 372" class="svg-arrow" stroke-width="2.5" marker-end="url(#ar)"/>
+
+          <rect x="390" y="20" width="320" height="180" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="550" y="50" text-anchor="middle" class="svg-title" fill="var(--accent)">作り話を減らす聞き方</text>
+          <text x="550" y="84" text-anchor="middle" class="svg-label">① この資料の範囲だけで答えて</text>
+          <text x="550" y="112" text-anchor="middle" class="svg-label">② 無ければ「記載なし」と答えて</text>
+          <text x="550" y="140" text-anchor="middle" class="svg-label">③ 根拠の該当箇所を引用して</text>
+          <text x="550" y="178" text-anchor="middle" class="svg-label-sm" fill="var(--green)">→ 推測する余地が減る</text>
+        </svg>
+        <figcaption>図9: 効くのは精神論ではなく「材料を渡す・棄権を許す・根拠を書かせる」の3点セット</figcaption>
+      </figure>
+
+      <p>プロンプト（AIへの指示文）でハルシネーションを減らすコツは、たった3つです。しかもこれらは、ここまで学んだ原因からそのまま導けます。</p>
+
+      <h3>① 材料を渡す（3章・6章の原因に効く）</h3>
+      <p>AIが知らない情報について聞くから、推測が生まれます。社内規程、議事録、製品資料、統計のPDF——手元にある正しい材料を添付し、<strong>「この資料の範囲だけで答えてください」</strong>と範囲を限定します。これだけで、事実を新しく作り出す余地が大幅に減ります。</p>
+
+      <h3>② 「分からない」と言う許可を出す（4章の原因に効く）</h3>
+      <p>AIが推測に流れるのは、答えないと評価されない構造で学習してきたからでした。逆に言えば、<strong>「資料に記載がない場合は『記載なし』とだけ答えてください。推測で補わないでください」</strong>と明示すれば、棄権という選択肢を与えることになります。地味ですが、最も費用対効果の高い一文です。</p>
+
+      <h3>③ 根拠を書かせる（検証コストを下げる）</h3>
+      <p><strong>「各項目について、資料のどの部分に基づいているか、原文を引用して示してください」</strong>と頼むと、確認作業が一気に楽になります。引用箇所を資料内で検索するだけで真偽が判定できるからです。加えて、引用を求めると根拠の薄い主張が出にくくなる効果もあります。</p>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div>
+          <p><strong>逆に、効果が薄い頼み方</strong></p>
+          <ul>
+            <li><strong>「嘘をつかないでください」「絶対に正確に答えて」</strong> — 何の制約にもなっていません。AIは自分が誤っている自覚がないので、この指示に従いようがありません。</li>
+            <li><strong>資料を渡さずに「出典を付けて」</strong> — 出典やURLごと作り話になる場合があります。AIが示したURLは、<strong>必ず自分で開いて中身を見てください</strong>。それらしいドメイン名でも、存在しないページであることがあります。</li>
+            <li><strong>同じAIに「今の回答は正しいですか？」と聞く</strong> — 同じ仕組みが同じ誤りを再生産するだけで、検証にはなりません（7章のケース1）。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 10 ============ -->
+    <section id="s10">
+      <h2>10. 対策② — 仕組みで減らす（RAG・検索連携・出典表示）</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="モデルの記憶だけで答える構成と、資料を検索してから答えるRAG構成の比較">
+          <text x="40" y="20" class="svg-label-sm">素のAI（記憶に頼って答える）</text>
+          <g><rect x="40" y="30" width="150" height="56" rx="8" class="svg-box"/>
+             <text x="115" y="63" text-anchor="middle" class="svg-title">質問</text></g>
+          <path d="M194 58 H 244" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="250" y="30" width="170" height="56" rx="8" class="svg-box"/>
+             <text x="335" y="63" text-anchor="middle" class="svg-title">AIの記憶だけ</text></g>
+          <path d="M424 58 H 474" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="480" y="30" width="190" height="56" rx="8" fill="var(--red-soft)" stroke="var(--red)" stroke-width="1.5"/>
+             <text x="575" y="63" text-anchor="middle" class="svg-title">回答（根拠なし）</text></g>
+
+          <line x1="20" y1="106" x2="700" y2="106" stroke="var(--border)" stroke-dasharray="5 4"/>
+
+          <text x="40" y="130" class="svg-label-sm">RAG・検索連携（資料を見ながら答える）</text>
+          <g><rect x="40" y="140" width="150" height="56" rx="8" class="svg-box"/>
+             <text x="115" y="173" text-anchor="middle" class="svg-title">質問</text></g>
+          <path d="M194 168 H 244" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="250" y="140" width="170" height="56" rx="8" class="svg-box-accent"/>
+             <text x="335" y="173" text-anchor="middle" class="svg-title">資料を検索</text></g>
+          <path d="M424 168 H 474" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="480" y="140" width="190" height="56" rx="8" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.5"/>
+             <text x="575" y="173" text-anchor="middle" class="svg-title">回答＋出典リンク</text></g>
+          <path d="M335 236 V 200" class="svg-arrow" marker-end="url(#ar)"/>
+          <rect x="250" y="238" width="170" height="34" rx="6" class="svg-box"/>
+          <text x="335" y="260" text-anchor="middle" class="svg-label-sm">社内文書・公式サイト</text>
+        </svg>
+        <figcaption>図10: 記憶で答えさせず、毎回「開いた本」を横に置かせる。それがRAGの発想</figcaption>
+      </figure>
+
+      <p>聞き方の工夫には限界があります。組織として本気で減らすなら、<strong>そもそもAIに記憶で答えさせない仕組み</strong>を用意するのが本筋です。その代表が<strong>RAG（検索拡張生成）</strong>と呼ばれる方式で、Air Canada事件で使われていなかったのがまさにこれです。</p>
+
+      <p>やっていることは単純で、質問が来たらまず社内文書やWebから関連する文書を検索し、<strong>見つけた文書と質問をセットにしてAIに渡す</strong>。AIは記憶ではなく目の前の文書を読んで答えるので、事実の捏造が起きにくく、しかも「どの文書に基づくか」を出典として示せます。政府の「AI事業者ガイドライン（第1.2版）」でも、RAG等の活用によりハルシネーションの抑制と出力根拠の透明性向上が期待できると触れられています。</p>
+
+      <h3>非エンジニアが今すぐ選べる「仕組み」</h3>
+      <div class="cards">
+        <div class="card"><h4>資料を添付して聞く</h4><p>ファイルをアップロードしてから質問する。個人でできる、最も手軽なRAGです。</p></div>
+        <div class="card"><h4>Web検索モードを使う</h4><p>最新情報を扱うときは、検索機能をオンにして出典リンク付きで答えさせる。</p></div>
+        <div class="card"><h4>出典を出すツールを選ぶ</h4><p>ツール選定の際は「根拠となる箇所を提示できるか」を評価項目に入れる。</p></div>
+        <div class="card"><h4>社内ナレッジを整える</h4><p>参照させる正本が古ければ、答えも古くなる。元データの整備がRAGの前提。</p></div>
+      </div>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><p><strong>RAGでもゼロにはなりません。</strong>検索が的外れな文書を拾えば、AIはその的外れな文書に忠実に答えます。参照した資料自体が古い場合も同じです。出典リンクが付いているからといって、リンク先を見ずに信じるのは、対策としては半分しか機能していません。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ 11 ============ -->
+    <section id="s11">
+      <h2>11. 対策③ — 運用ルール：最後の防衛線は人間</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 305" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="依頼・点検・裏取り・共有の4段階を繰り返す確認サイクル">
+          <g><rect x="270" y="10" width="180" height="60" rx="8" class="svg-box-accent"/>
+             <text x="360" y="38" text-anchor="middle" class="svg-title">① 依頼する</text>
+             <text x="360" y="58" text-anchor="middle" class="svg-label-sm">材料と制約を渡す</text></g>
+          <g><rect x="510" y="120" width="180" height="60" rx="8" class="svg-box"/>
+             <text x="600" y="148" text-anchor="middle" class="svg-title">② 印を付ける</text>
+             <text x="600" y="168" text-anchor="middle" class="svg-label-sm">数字・固有名詞・引用</text></g>
+          <g><rect x="270" y="230" width="180" height="60" rx="8" class="svg-box"/>
+             <text x="360" y="258" text-anchor="middle" class="svg-title">③ 裏取りする</text>
+             <text x="360" y="278" text-anchor="middle" class="svg-label-sm">一次情報に当たる</text></g>
+          <g><rect x="30" y="120" width="180" height="60" rx="8" class="svg-box"/>
+             <text x="120" y="148" text-anchor="middle" class="svg-title">④ 共有する</text>
+             <text x="120" y="168" text-anchor="middle" class="svg-label-sm">失敗例をルールに反映</text></g>
+          <path d="M450 45 C 540 45, 600 70, 600 115" class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M600 185 C 600 230, 540 260, 455 260" class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M270 260 C 180 260, 120 230, 120 185" class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M120 115 C 120 70, 180 45, 265 45" class="svg-arrow" marker-end="url(#ar)"/>
+          <text x="360" y="145" text-anchor="middle" class="svg-label-sm">チームで回す</text>
+          <text x="360" y="165" text-anchor="middle" class="svg-label-sm">確認サイクル</text>
+        </svg>
+        <figcaption>図11: 個人の注意力ではなく、チームの手順として回す</figcaption>
+      </figure>
+
+      <p>8章で見たとおり、弁護士ですら724件やらかしています。<strong>「気をつける」は対策ではありません。</strong>誰がやっても同じ品質になる手順にして、初めて組織の対策になります。政府のガイドラインでも、AIの利用ライフサイクル全体を通じて人間が関与し、確認する仕組み（Human-in-the-Loop）の重要性が示されています。</p>
+
+      <h3>ファクトチェックの実務手順</h3>
+      <ol>
+        <li><strong>印を付ける</strong> — AIの出力を受け取ったら、まず<mark>数値・固有名詞・日付・引用・法令名</mark>にマーカーを引く。ここが6章の最上層にあたる部分です。</li>
+        <li><strong>優先順位を付ける</strong> — 全部を等しく検証すると続きません。「間違っていたら誰が困るか」で並べ替え、社外に出る箇所・金額・契約条件から確認します。</li>
+        <li><strong>一次情報に当たる</strong> — 公式サイト、官公庁の統計、社内の正本文書。<strong>AIに聞き返すのは検証ではありません。</strong>AIが示したURLは必ず開いて、そのページに本当に書いてあるかを目で確認します。</li>
+        <li><strong>記録を残す</strong> — どのツールで、どんな指示で作ったのかを残しておくと、後で誤りが見つかったときに影響範囲を追えます。</li>
+      </ol>
+
+      <h3>社内ルールに最低限入れたい3項目</h3>
+      <div class="cards">
+        <div class="card"><h4>社外公開物は人が確認</h4><p>顧客提出資料・広報・契約関連は、AI出力のまま出さない。確認者を工程として決める。</p></div>
+        <div class="card"><h4>数字と固有名詞は一次情報</h4><p>AIが出した数値・社名・法令は、出典元のページを開いて確認したものだけを使う。</p></div>
+        <div class="card"><h4>使ってよい業務を明示</h4><p>「AI単独で判断させない業務」（人事評価・法務判断・与信など）をリストで定める。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ クイズ4 ============ -->
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 4</span>
+      <p class="qtext">AIが出した市場規模の数字を社外提案書に載せます。ファクトチェックとして最も適切なのはどれでしょう。</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>同じAIに「この数字は正しいですか？」と聞き直して確認する</span></button>
+        <button class="opt"><span class="mark">B</span><span>AIに出典URLを出させ、そのURLの文字列が信頼できそうなドメインか目視で判断する</span></button>
+        <button class="opt" data-correct><span class="mark">C</span><span>数字・固有名詞・引用に印を付け、官公庁統計や公式サイトの原典を自分で開いて確認する</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p><strong>正解は C。</strong>一次情報に自分で当たることだけが検証になります。印を付けてから確認する手順にすると、抜けが減り、他の人にも引き継げます。<br>
+        A は、同じ仕組みが同じ誤りを再生産するだけです。2023年の米国弁護士のケースでも、ChatGPT自身が「その判例は実在します」と答えていました。<br>
+        B は不十分です。URLそのものが作り話である場合があり、もっともらしいドメインでもページが存在しないことがあります。リンクは必ず開いて、その数字がページ内に本当に書かれているかまで確認してください。</p>
+      </div>
+    </div>
+
+    <!-- ============ 12 ============ -->
+    <section id="s12">
+      <h2>12. よくある誤解と、ゼロにならない前提での付き合い方</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="間違いの影響の大きさと検証のしやすさで業務を4象限に分けた使い分けマップ">
+          <rect x="140" y="20" width="480" height="260" fill="none" stroke="var(--border-strong)"/>
+          <line x1="380" y1="20" x2="380" y2="280" stroke="var(--border)"/>
+          <line x1="140" y1="150" x2="620" y2="150" stroke="var(--border)"/>
+
+          <rect x="150" y="30" width="220" height="110" rx="6" fill="var(--red-soft)" stroke="var(--red)" stroke-width="1.5"/>
+          <text x="260" y="72" text-anchor="middle" class="svg-title" fill="var(--red)">AI単独で使わない</text>
+          <text x="260" y="96" text-anchor="middle" class="svg-label-sm">法務判断・与信・人事評価</text>
+          <text x="260" y="116" text-anchor="middle" class="svg-label-sm">医療や安全に関わる判断</text>
+
+          <rect x="390" y="30" width="220" height="110" rx="6" fill="var(--amber-soft)" stroke="var(--amber)" stroke-width="1.5"/>
+          <text x="500" y="72" text-anchor="middle" class="svg-title" fill="var(--amber)">必ず裏取りして使う</text>
+          <text x="500" y="96" text-anchor="middle" class="svg-label-sm">提案書の数値・調査まとめ</text>
+          <text x="500" y="116" text-anchor="middle" class="svg-label-sm">顧客向け文面のドラフト</text>
+
+          <rect x="150" y="160" width="220" height="110" rx="6" class="svg-box"/>
+          <text x="260" y="202" text-anchor="middle" class="svg-title">参考程度にとどめる</text>
+          <text x="260" y="226" text-anchor="middle" class="svg-label-sm">業界動向の雑談的な整理</text>
+          <text x="260" y="246" text-anchor="middle" class="svg-label-sm">未知分野の当たりを付ける</text>
+
+          <rect x="390" y="160" width="220" height="110" rx="6" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.5"/>
+          <text x="500" y="202" text-anchor="middle" class="svg-title" fill="var(--green)">そのまま活用してよい</text>
+          <text x="500" y="226" text-anchor="middle" class="svg-label-sm">言い換え・体裁調整</text>
+          <text x="500" y="246" text-anchor="middle" class="svg-label-sm">アイデア出し・叩き台作り</text>
+
+          <text x="132" y="42" text-anchor="end" class="svg-label-sm">影響 大</text>
+          <text x="132" y="266" text-anchor="end" class="svg-label-sm">影響 小</text>
+          <text x="380" y="308" text-anchor="middle" class="svg-label-sm">→ 検証のしやすさ（右ほど自分で確かめやすい）</text>
+        </svg>
+        <figcaption>図12: 「使う／使わない」の二択ではなく、影響の大きさ×検証のしやすさで判断する</figcaption>
+      </figure>
+
+      <p>最後に、社内でよく聞く誤解を整理しておきます。いずれもOpenAIの研究が明確に否定しているものです。</p>
+
+      <table>
+        <thead><tr><th>よくある誤解</th><th>実際は</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>精度が上がれば、そのうち消える</td>
+            <td>正答率は100%にはなりません。情報が公開されていない、質問自体が曖昧など、<strong>原理的に答えが決まらない質問</strong>が現実には存在するためです。</td>
+          </tr>
+          <tr>
+            <td>大きくて高性能なモデルほど安全</td>
+            <td>必ずしもそうではありません。<strong>自分の限界を知るのは小さいモデルのほうが簡単な場合もあります</strong>（知識がゼロの分野なら「知りません」と言い切れる）。</td>
+          </tr>
+          <tr>
+            <td>原因不明の謎の不具合だ</td>
+            <td>発生の統計的な仕組みはすでに説明されています。2章・4章で見たとおり、<strong>生成方式と評価方式から説明できる現象</strong>です。</td>
+          </tr>
+          <tr>
+            <td>ハルシネーションは避けようがない</td>
+            <td>回避不能ではありません。モデルは<strong>「分からない」と棄権することができます</strong>。問題は、それが評価で報われてこなかったことです。</td>
+          </tr>
+          <tr>
+            <td>専用の検出ツールを入れれば解決する</td>
+            <td>検出の指標だけ追加しても、<strong>正答率偏重の評価が主流である限り</strong>効果は限定的です。組織側でも「確認する手順」まで含めて設計する必要があります。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>実務的な結論はこうなります。<mark>ハルシネーションは当面ゼロにならない。だから「起きる前提」で業務を設計する。</mark>図12のように、間違いの影響の大きさと検証のしやすさで象限に分け、右下（影響が小さく確かめやすい）は積極的に任せ、左上（影響が大きく確かめにくい）はAI単独で使わない。この線引きをチームで共有できていれば、「AIは怖いから使わない」でも「便利だから丸投げ」でもない、現実的な使い方に落ち着きます。</p>
+
+      <div class="callout key">
+        <span class="ico">🧭</span>
+        <div><p>AIを疑うことと、AIを使わないことは別です。<strong>疑い方を知っている人だけが、安心して速く使える</strong>——これがこの教材でいちばん伝えたかったことです。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ まとめ ============ -->
+    <section id="summary">
+      <h2>まとめ</h2>
+      <div class="cards">
+        <div class="card"><h4>① 仕組み上の必然</h4><p>AIは次に来そうな語を確率で選んでいるだけで、工程に事実確認がない。加えて正答率偏重の評価が「推測」を後押ししてきた。</p></div>
+        <div class="card"><h4>② 危ないのは4層の上2つ</h4><p>固有名詞・数値・日付・引用、そして最新情報。パターンから導けない事実ほど誤りやすい。</p></div>
+        <div class="card"><h4>③ 責任は使った側に来る</h4><p>Air Canada判決のとおり「AIがそう言った」は通用しない。裁判所文書での事例は世界で1,868件。</p></div>
+        <div class="card"><h4>④ 対策は3層で</h4><p>聞き方（材料を渡す・棄権を許す・根拠を書かせる）／仕組み（RAG・検索連携）／運用（人が一次情報で確認）。</p></div>
+        <div class="card"><h4>⑤ ゼロ前提で設計する</h4><p>影響の大きさ×検証のしやすさで象限に分け、AI単独で使わない業務をあらかじめ決めておく。</p></div>
+        <div class="card"><h4>⑥ 明日からの一歩</h4><p>「資料の範囲だけで答えて。無ければ記載なしと答えて。根拠を引用して」——この3行をテンプレートにする。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ 出典 ============ -->
+    <section id="sources">
+      <h2>出典</h2>
+      <ul class="sources">
+        <li><a href="https://openai.com/index/why-language-models-hallucinate/">Why language models hallucinate — OpenAI（2025年9月5日）</a> — 発生の仕組み、評価インセンティブ、SimpleQAの棄権率・正答率・誤答率、よくある誤解の否定</li>
+        <li><a href="https://arxiv.org/abs/2509.04664">Why Language Models Hallucinate (arXiv:2509.04664) — Kalai, Nachum, Vempala, Zhang</a> — 上記解説の元論文</li>
+        <li><a href="https://www.damiencharlotin.com/hallucinations/">AI Hallucination Cases Database — Damien Charlotin（2026年8月8日更新）</a> — 世界の裁判所文書での事例累計1,868件、国別・当事者別の内訳</li>
+        <li><a href="https://enterprisezine.jp/article/detail/21105">カナダ大手航空会社が生成AIの"でたらめ回答"で敗訴 — EnterpriseZine</a> — Air Canada事件の経緯と技術的背景</li>
+        <li><a href="https://www.soumu.go.jp/johotsusintokei/whitepaper/ja/r07/html/nd112220.html">令和7年版 情報通信白書「企業におけるAI利用の現状」— 総務省</a> — 日本企業の生成AI活用方針49.7%（2024年度調査、2023年度は42.7%）</li>
+        <li><a href="https://www.soumu.go.jp/johotsusintokei/whitepaper/ja/r07/html/nd112210.html">令和7年版 情報通信白書「個人におけるAI利用の現状」— 総務省</a> — 個人の生成AI利用経験26.7%、AIリスクに対する意識</li>
+        <li><a href="https://www.meti.go.jp/shingikai/mono_info_service/ai_shakai_jisso/pdf/20260331_1.pdf">AI事業者ガイドライン（第1.2版）— 総務省・経済産業省（2026年3月31日）</a> — RAG等によるハルシネーション抑制、人間の関与の必要性</li>
+        <li><a href="https://www.nri.com/jp/knowledge/glossary/hallucination.html">ハルシネーション（用語解説）— 野村総合研究所</a> — 内在的／外在的ハルシネーションの分類</li>
+        <li><a href="https://www.fujifilm.com/fb/ja/solutions/columns/ai-11631">生成AIにおけるハルシネーションとは — 富士フイルムビジネスイノベーション</a> — 流暢さを優先する学習という説明</li>
+        <li><a href="https://www.legalontech.com/jp/media/ai-hallucination-risks">ハルシネーションと法律リスク — LegalOn</a> — 企業法務から見た危険事例と運用ルール</li>
+        <li><a href="https://www.cybersecurity.metro.tokyo.lg.jp/links/728/index.html">生成AIのハルシネーション対策に関する包括的調査報告書 — 東京都</a> — 技術的介入・組織的ガバナンス・人的能力の3層整理</li>
+      </ul>
+      <p style="font-size:13px;color:var(--text-faint)">※ 数値はいずれも上記出典の公開時点のものです。件数や統計は更新されるため、社内資料へ転記する際はリンク先で最新値をご確認ください。</p>
+    </section>
+
+  </main>
+</div>
+
+<script>
+// ---- テーマ切替 ----
+(function(){
+  var root=document.documentElement, btn=document.getElementById('themeBtn');
+  if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+    root.setAttribute('data-theme','dark');
+  }
+  var sync=function(){ btn.textContent = root.getAttribute('data-theme')==='dark' ? '☀️' : '🌙'; };
+  sync();
+  btn.addEventListener('click',function(){
+    root.setAttribute('data-theme', root.getAttribute('data-theme')==='dark'?'light':'dark');
+    sync();
+  });
+})();
+
+// ---- 目次スクロール連動 ----
+(function(){
+  var links=[].slice.call(document.querySelectorAll('#toc a'));
+  var map={}; links.forEach(function(a){ var el=document.querySelector(a.getAttribute('href')); if(el) map[el.id]=a; });
+  var targets=Object.keys(map).map(function(id){return document.getElementById(id);});
+  if(!targets.length) return;
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        links.forEach(function(a){a.classList.remove('active');});
+        map[e.target.id].classList.add('active');
+      }
+    });
+  },{rootMargin:'-15% 0px -70% 0px', threshold:0});
+  targets.forEach(function(t){io.observe(t);});
+})();
+
+// ---- クイズ：3択・即時採点・解説表示 ----
+(function(){
+  document.querySelectorAll('[data-quiz]').forEach(function(q){
+    var opts=[].slice.call(q.querySelectorAll('.opt'));
+    var box=q.querySelector('.explain'), verdict=q.querySelector('.verdict');
+    opts.forEach(function(btn){
+      btn.addEventListener('click',function(){
+        if(btn.disabled) return;
+        var ok=btn.hasAttribute('data-correct');
+        opts.forEach(function(o){
+          o.disabled=true;
+          if(o.hasAttribute('data-correct')) o.classList.add('correct');
+        });
+        if(!ok) btn.classList.add('wrong');
+        verdict.textContent = ok ? '正解！' : '惜しい — 正解は上の緑の選択肢です';
+        verdict.className = 'verdict ' + (ok?'ok':'ng');
+        box.classList.add('show');
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

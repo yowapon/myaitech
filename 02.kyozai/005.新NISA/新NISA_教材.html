@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>投資ゼロから分かる 新NISAの仕組み ― 20代のための入門教材</title>
+<style>
+:root{
+  --bg:#ffffff; --bg-sub:#f7f7f5; --bg-hover:#efefed;
+  --text:#37352f; --text-mute:#787774; --text-faint:#9b9a97;
+  --border:#e9e9e7; --border-strong:#d3d3d1;
+  --accent:#2383e2; --accent-soft:#e7f1fd;
+  --green:#0f7b6c; --green-soft:#e4f3f0;
+  --amber:#cb912f; --amber-soft:#faf1dd;
+  --red:#e03e3e;   --red-soft:#fbe9e9;
+  --purple:#6940a5; --purple-soft:#eee6f7;
+  --radius:8px;
+  --font: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif;
+}
+html[data-theme="dark"]{
+  --bg:#191919; --bg-sub:#202020; --bg-hover:#2a2a2a;
+  --text:#d4d4d4; --text-mute:#9b9b9b; --text-faint:#6f6f6f;
+  --border:#2f2f2f; --border-strong:#414141;
+  --accent:#5b9dd9; --accent-soft:#1c2f3f;
+  --green:#4dab9a; --green-soft:#1c2b28;
+  --amber:#e0b44a; --amber-soft:#332a1b;
+  --red:#ff7369;   --red-soft:#3a2323;
+  --purple:#9a76d1; --purple-soft:#2a2136;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font); font-size:16px; line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+  transition:background .2s,color .2s;
+}
+.layout{display:flex; align-items:flex-start; max-width:1180px; margin:0 auto}
+
+/* ---------- 目次サイドバー ---------- */
+#sidebar{
+  position:sticky; top:0; flex:0 0 250px; height:100vh;
+  padding:28px 14px 40px; overflow-y:auto;
+  border-right:1px solid var(--border); background:var(--bg-sub);
+}
+#sidebar .toc-label{
+  font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--text-faint); padding:0 10px; margin-bottom:10px; font-weight:600;
+}
+#toc a{
+  display:block; padding:6px 10px; margin:1px 0; border-radius:6px;
+  color:var(--text-mute); text-decoration:none; font-size:13.5px; line-height:1.45;
+  border-left:2px solid transparent; transition:background .15s,color .15s;
+}
+#toc a:hover{background:var(--bg-hover); color:var(--text)}
+#toc a.active{background:var(--accent-soft); color:var(--accent); font-weight:600; border-left-color:var(--accent)}
+#toc a.sub{padding-left:22px; font-size:12.5px}
+
+/* ---------- 本文 ---------- */
+main{flex:1 1 auto; min-width:0; padding:56px 60px 140px; max-width:860px}
+.hero-eyebrow{font-size:12px; letter-spacing:.1em; color:var(--accent); font-weight:700; text-transform:uppercase}
+h1{font-size:40px; line-height:1.25; margin:.25em 0 .35em; letter-spacing:-.01em; font-weight:800}
+h2{font-size:26px; margin:2.6em 0 .6em; padding-bottom:.3em; border-bottom:1px solid var(--border); font-weight:700; letter-spacing:-.005em}
+h3{font-size:18px; margin:1.8em 0 .4em; font-weight:700}
+p{margin:.7em 0}
+a{color:var(--accent)}
+.lead{font-size:18px; color:var(--text-mute); line-height:1.8}
+.meta{display:flex; flex-wrap:wrap; gap:8px; margin:20px 0 8px}
+.chip{
+  font-size:12.5px; padding:4px 11px; border-radius:999px;
+  background:var(--bg-sub); border:1px solid var(--border); color:var(--text-mute);
+}
+strong{font-weight:700}
+mark{background:var(--amber-soft); color:inherit; padding:0 3px; border-radius:3px}
+code{background:var(--bg-sub); border:1px solid var(--border); border-radius:4px; padding:1px 5px; font-size:.88em}
+hr{border:0; border-top:1px solid var(--border); margin:3em 0}
+ul,ol{padding-left:1.4em} li{margin:.3em 0}
+
+/* ---------- 図解ブロック（各セクションの先頭に置く） ---------- */
+.figure{
+  margin:1.4em 0 1.2em; padding:24px; border:1px solid var(--border);
+  border-radius:var(--radius); background:var(--bg-sub);
+}
+.figure svg{display:block; width:100%; height:auto; max-width:100%}
+.figure figcaption{
+  margin-top:14px; padding-top:12px; border-top:1px solid var(--border);
+  font-size:13px; color:var(--text-mute); text-align:center;
+}
+/* SVG内で使う共通クラス */
+.svg-label{font-family:var(--font); font-size:13px; fill:var(--text)}
+.svg-label-sm{font-family:var(--font); font-size:11px; fill:var(--text-mute)}
+.svg-title{font-family:var(--font); font-size:14px; font-weight:700; fill:var(--text)}
+.svg-box{fill:var(--bg); stroke:var(--border-strong); stroke-width:1.5}
+.svg-box-accent{fill:var(--accent-soft); stroke:var(--accent); stroke-width:1.5}
+.svg-arrow{stroke:var(--text-faint); stroke-width:1.8; fill:none}
+
+/* ---------- コールアウト ---------- */
+.callout{
+  display:flex; gap:12px; padding:16px 18px; margin:1.2em 0;
+  border-radius:var(--radius); background:var(--bg-sub); border-left:3px solid var(--text-faint);
+}
+.callout .ico{flex:0 0 auto; font-size:18px; line-height:1.5}
+.callout p:first-child{margin-top:0} .callout p:last-child{margin-bottom:0}
+.callout.tip{background:var(--accent-soft); border-left-color:var(--accent)}
+.callout.warn{background:var(--amber-soft); border-left-color:var(--amber)}
+.callout.key{background:var(--green-soft); border-left-color:var(--green)}
+
+/* ---------- カードグリッド ---------- */
+.cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin:1.2em 0}
+.card{padding:16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg)}
+.card h4{margin:0 0 6px; font-size:14.5px; font-weight:700}
+.card p{margin:0; font-size:13.5px; color:var(--text-mute); line-height:1.7}
+
+/* ---------- 表 ---------- */
+table{width:100%; border-collapse:collapse; margin:1.2em 0; font-size:14.5px}
+th,td{border:1px solid var(--border); padding:10px 12px; text-align:left; vertical-align:top}
+th{background:var(--bg-sub); font-weight:700}
+
+/* ---------- クイズ ---------- */
+.quiz{
+  margin:2em 0; padding:22px 24px; border:1px solid var(--border);
+  border-radius:var(--radius); background:var(--bg-sub);
+}
+.quiz .qtag{
+  display:inline-block; font-size:11px; font-weight:700; letter-spacing:.06em;
+  color:var(--purple); background:var(--purple-soft); padding:3px 9px; border-radius:999px; margin-bottom:10px;
+}
+.quiz .qtext{font-weight:700; font-size:16.5px; margin:0 0 14px; line-height:1.65}
+.quiz .opts{display:flex; flex-direction:column; gap:8px}
+.quiz button.opt{
+  text-align:left; font:inherit; font-size:14.5px; color:var(--text); cursor:pointer;
+  padding:12px 14px; border:1px solid var(--border-strong); border-radius:6px;
+  background:var(--bg); transition:background .15s,border-color .15s;
+  display:flex; gap:10px; align-items:flex-start; line-height:1.6;
+}
+.quiz button.opt:hover:not(:disabled){background:var(--bg-hover); border-color:var(--accent)}
+.quiz button.opt:disabled{cursor:default}
+.quiz button.opt .mark{flex:0 0 20px; font-weight:700; color:var(--text-faint)}
+.quiz button.opt.correct{background:var(--green-soft); border-color:var(--green)}
+.quiz button.opt.correct .mark{color:var(--green)}
+.quiz button.opt.wrong{background:var(--red-soft); border-color:var(--red)}
+.quiz button.opt.wrong .mark{color:var(--red)}
+.quiz .explain{
+  display:none; margin-top:14px; padding:14px 16px; border-radius:6px;
+  background:var(--bg); border:1px solid var(--border); font-size:14px; line-height:1.75;
+}
+.quiz .explain.show{display:block}
+.quiz .verdict{font-weight:700; margin-bottom:4px}
+.quiz .verdict.ok{color:var(--green)} .quiz .verdict.ng{color:var(--red)}
+
+/* ---------- 出典 ---------- */
+.sources{font-size:14px; color:var(--text-mute)}
+.sources li{margin:.5em 0}
+
+/* ---------- テーマ切替ボタン ---------- */
+#themeBtn{
+  position:fixed; top:18px; right:22px; z-index:50;
+  width:38px; height:38px; border-radius:8px; cursor:pointer;
+  border:1px solid var(--border-strong); background:var(--bg); color:var(--text);
+  font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;
+  transition:background .15s;
+}
+#themeBtn:hover{background:var(--bg-hover)}
+
+/* ---------- レスポンシブ ---------- */
+@media (max-width:900px){
+  #sidebar{display:none}
+  main{padding:40px 22px 100px}
+  h1{font-size:30px} h2{font-size:22px}
+}
+@media print{
+  #sidebar,#themeBtn{display:none} main{max-width:none;padding:0}
+  .quiz .explain{display:block}
+}
+</style>
+</head>
+<body>
+
+<button id="themeBtn" aria-label="ライト/ダーク切替">🌙</button>
+
+<div class="layout">
+
+  <aside id="sidebar">
+    <div class="toc-label">目次</div>
+    <nav id="toc">
+      <a href="#about">この教材について</a>
+      <a href="#s1">1. まず「税金」の話から</a>
+      <a href="#s2">2. NISAは「非課税の箱」</a>
+      <a href="#s3">3. 2つの枠</a>
+      <a href="#s4">4. 2つの上限</a>
+      <a href="#s5">5. 枠は「買った値段」で数える</a>
+      <a href="#s6">6. 何が買えるのか</a>
+      <a href="#s7">7. 20代の武器は「時間」</a>
+      <a href="#s8">8. 始め方は4ステップ</a>
+      <a href="#s9">9. よくある誤解</a>
+      <a href="#s10">10. NISAの前にやること</a>
+      <a href="#s11">11. 制度の現在地と2026年度改正</a>
+      <a href="#summary">まとめ</a>
+      <a href="#sources">出典</a>
+    </nav>
+  </aside>
+
+  <main>
+
+    <!-- ============ ヘッダー ============ -->
+    <header>
+      <div class="hero-eyebrow">お金の教養 / 資産形成</div>
+      <h1>投資ゼロから分かる<br>新NISAの仕組み</h1>
+      <p class="lead">「NISAって聞くけど、結局なにが得なの？」という状態から、年360万円・生涯1,800万円という枠の意味を図で理解し、今月いくらから始めるかを自分で決められるところまで。制度の数字はすべて金融庁・国税庁・財務省の一次情報に揃えてあります。</p>
+      <div class="meta">
+        <span class="chip">対象: 投資未経験の20代</span>
+        <span class="chip">レベル: 入門（前提知識なし）</span>
+        <span class="chip">所要 約20分</span>
+        <span class="chip">更新: 2026-08-10</span>
+      </div>
+    </header>
+
+    <!-- ============ この教材について ============ -->
+    <section id="about">
+      <h2>この教材について</h2>
+      <div class="callout key">
+        <span class="ico">🎯</span>
+        <div>
+          <p><strong>読み終えるとできるようになること</strong></p>
+          <ol>
+            <li>「NISAは何が得なのか」を <strong>20.315%</strong> という具体的な数字で人に説明できる</li>
+            <li><strong>年360万円 / 生涯1,800万円（成長投資枠1,200万円は内数）</strong> という枠の構造と、簿価管理・枠の復活のルールを図で説明できる</li>
+            <li>生活防衛資金との優先順位をふまえて、<strong>今月いくらから、どこで始めるか</strong>を自分で決められる</li>
+          </ol>
+        </div>
+      </div>
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><p>この教材は制度の解説であり、特定の金融機関・商品の推奨や投資勧誘ではありません。投資には元本割れのリスクがあります。試算はすべて一定の利回りを仮定した計算で、将来の運用成果を保証するものではありません。</p></div>
+      </div>
+      <p style="font-size:14px;color:var(--text-mute)">
+        主な参照元: <a href="https://www.fsa.go.jp/policy/nisa2/know/">金融庁「NISAを知る」</a> / <a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1535.htm">国税庁 No.1535 NISA制度</a> / <a href="https://www.fsa.go.jp/news/r7/sonota/20251226-2/01.pdf">金融庁「令和8年度税制改正について」</a>（全出典は<a href="#sources">末尾</a>）
+      </p>
+    </section>
+
+    <!-- ============ 1 ============ -->
+    <section id="s1">
+      <h2>1. まず「税金」の話から</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="投資の利益10万円のうち、手取りが79.685%、税金が20.315%を占めることを示す比率バー">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="var(--text-faint)"/>
+            </marker>
+          </defs>
+          <text x="40" y="24" class="svg-title">投資で 100,000円 の利益が出たとき（課税口座の場合）</text>
+          <rect x="40" y="40" width="510" height="46" rx="4" fill="var(--green)"/>
+          <rect x="550" y="40" width="130" height="46" rx="4" fill="var(--red)"/>
+          <text x="295" y="61" text-anchor="middle" class="svg-label" fill="#fff">手取り 79.685%</text>
+          <text x="295" y="78" text-anchor="middle" class="svg-label-sm" fill="#fff">79,685円</text>
+          <text x="615" y="61" text-anchor="middle" class="svg-label" fill="#fff">税 20.315%</text>
+          <text x="615" y="78" text-anchor="middle" class="svg-label-sm" fill="#fff">20,315円</text>
+          <line x1="550" y1="92" x2="550" y2="104" stroke="var(--border-strong)"/>
+          <text x="40" y="122" class="svg-label-sm">税の内訳: 所得税 15% ＋ 復興特別所得税 0.315% ＋ 住民税 5% ＝ 20.315%</text>
+          <text x="40" y="140" class="svg-label-sm">出典: 国税庁「株式・配当・利子と税」／復興特別所得税は2037年分まで</text>
+        </svg>
+        <figcaption>図1: 投資の利益には約20%の税金がかかる。NISAはここをゼロにする制度</figcaption>
+      </figure>
+
+      <p>投資の話は「どの商品が儲かるか」から始まりがちですが、NISAを理解するには <strong>税金</strong> から入るのが一番の近道です。株や投資信託で利益が出ると、その利益に対して <mark>20.315%</mark> の税金がかかります。10万円儲けても、手元に残るのは79,685円。100万円なら約20万3千円が持っていかれます。</p>
+
+      <p>課税されるのは次の2つです。</p>
+      <ul>
+        <li><strong>譲渡益</strong>：買った値段より高く売れたときの差額（値上がり益）</li>
+        <li><strong>配当金・分配金</strong>：持っているだけでもらえるお金</li>
+      </ul>
+
+      <p>給料と違って明細に「税金」と書かれて渡されるわけではなく、証券口座の設定（特定口座・源泉徴収あり）によっては自動で引かれて着金するので、普段は意識しません。でも確実に引かれています。<strong>NISAは、この20.315%を丸ごとゼロにする制度</strong>です。それ以上でも以下でもありません。</p>
+
+      <div class="callout tip">
+        <span class="ico">💡</span>
+        <div><p>「20.315%」の端数が気持ち悪い人へ。所得税15%＋住民税5%＝20%が本体で、そこに東日本大震災の復興財源として所得税額の2.1%（15%×2.1%＝0.315%）が上乗せされています。この上乗せは2037年分まで続きます。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section id="s2">
+      <h2>2. NISAは商品ではなく「非課税の箱」</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 230" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="同じ100万円の利益でも、課税口座では手取り796,850円、NISA口座では1,000,000円になることの対比">
+          <rect x="10" y="30" width="310" height="175" rx="8" fill="var(--bg)" stroke="var(--border-strong)" stroke-width="1.5"/>
+          <text x="165" y="58" text-anchor="middle" class="svg-title" fill="var(--text-mute)">ふつうの口座（課税口座）</text>
+          <text x="165" y="94" text-anchor="middle" class="svg-label">利益　　　1,000,000円</text>
+          <text x="165" y="124" text-anchor="middle" class="svg-label" fill="var(--red)">− 税　　　 203,150円</text>
+          <line x1="50" y1="140" x2="280" y2="140" stroke="var(--border-strong)"/>
+          <text x="165" y="170" text-anchor="middle" class="svg-title">手取り　796,850円</text>
+          <text x="165" y="192" text-anchor="middle" class="svg-label-sm">確定申告が必要な場合もある</text>
+
+          <path d="M334 118 H 386" class="svg-arrow" stroke-width="2.5" marker-end="url(#ar)"/>
+
+          <rect x="400" y="30" width="310" height="175" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="555" y="58" text-anchor="middle" class="svg-title" fill="var(--accent)">NISA口座</text>
+          <text x="555" y="94" text-anchor="middle" class="svg-label">利益　　　1,000,000円</text>
+          <text x="555" y="124" text-anchor="middle" class="svg-label" fill="var(--green)">− 税　　　　　　 0円</text>
+          <line x1="440" y1="140" x2="670" y2="140" stroke="var(--accent)"/>
+          <text x="555" y="170" text-anchor="middle" class="svg-title">手取り 1,000,000円</text>
+          <text x="555" y="192" text-anchor="middle" class="svg-label-sm">確定申告も不要</text>
+
+          <text x="360" y="222" text-anchor="middle" class="svg-label-sm">※ 同じ商品を、同じ金額だけ、同じタイミングで買った場合の比較</text>
+        </svg>
+        <figcaption>図2: NISAは「何を買うか」ではなく「どの箱で買うか」の話。中身が同じでも手取りが変わる</figcaption>
+      </figure>
+
+      <p>ここが最初のつまずきポイントです。<strong>NISAという金融商品は存在しません。</strong>NISAは「この口座（箱）の中で買ったものは、利益が出ても課税しませんよ」という <strong>税制上の枠組み</strong> です。だから「NISAを買う」ではなく「NISA口座で、投資信託を買う」が正しい言い方になります。</p>
+
+      <p>同じ全世界株式のインデックスファンドを、ふつうの証券口座で買うか、NISA口座で買うかというだけの違いで、100万円の利益に対して約20万円の差がつきます。これが、投資を始めるなら「とりあえずNISA口座から」と言われる理由です。</p>
+
+      <h3>誰が使えるのか</h3>
+      <ul>
+        <li>日本国内に住んでいて、<strong>その年の1月1日時点で18歳以上</strong>の人</li>
+        <li><strong>1人につき1口座</strong>だけ（A証券とB証券に同時には作れない）</li>
+        <li>金融機関の変更は <strong>年単位で可能</strong>（その年にまだ買付をしていない等の条件あり）</li>
+      </ul>
+
+      <div class="callout tip">
+        <span class="ico">💡</span>
+        <div><p>「1人1口座」と聞くと最初の選択が重く感じますが、変更は年単位でできます。ただし、それまでに買った商品は元の金融機関に残ったまま（引っ越しはできない）で、新しい金融機関では新規買付ができるようになる、という形になります。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section id="s3">
+      <h2>3. NISAには「2つの枠」がある</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="NISAが、つみたて投資枠 年120万円と成長投資枠 年240万円の2つに分かれる分解ツリー">
+          <rect x="250" y="10" width="220" height="58" rx="8" class="svg-box-accent"/>
+          <text x="360" y="36" text-anchor="middle" class="svg-title">NISA（1人1口座）</text>
+          <text x="360" y="56" text-anchor="middle" class="svg-label-sm">年間の投資は合計 最大360万円</text>
+          <path d="M360 68 V 94 M180 94 H 540 M180 94 V 120 M540 94 V 120" class="svg-arrow" fill="none"/>
+
+          <rect x="40" y="120" width="280" height="108" rx="8" class="svg-box"/>
+          <text x="180" y="148" text-anchor="middle" class="svg-title">つみたて投資枠</text>
+          <text x="180" y="172" text-anchor="middle" class="svg-label">年 120万円</text>
+          <text x="180" y="194" text-anchor="middle" class="svg-label-sm">毎月同額なら月10万円まで</text>
+          <text x="180" y="214" text-anchor="middle" class="svg-label-sm">長期・積立・分散向けの投資信託等</text>
+
+          <rect x="400" y="120" width="280" height="108" rx="8" class="svg-box"/>
+          <text x="540" y="148" text-anchor="middle" class="svg-title">成長投資枠</text>
+          <text x="540" y="172" text-anchor="middle" class="svg-label">年 240万円</text>
+          <text x="540" y="194" text-anchor="middle" class="svg-label-sm">まとめて買うことも積立もOK</text>
+          <text x="540" y="214" text-anchor="middle" class="svg-label-sm">上場株式・投資信託・ETF・REIT等</text>
+
+          <text x="360" y="244" text-anchor="middle" class="svg-label-sm">2024年からは、この2つを同じ年に併用できる（旧NISAはどちらか一方だけだった）</text>
+        </svg>
+        <figcaption>図3: NISAの中には性格の違う2つの枠がある。合計すると年360万円</figcaption>
+      </figure>
+
+      <p>NISAは1つの箱に見えて、中は2つに仕切られています。<strong>つみたて投資枠</strong>と<strong>成長投資枠</strong>です。2023年までの旧制度では「つみたてNISA」と「一般NISA」のどちらか一方しか選べませんでしたが、2024年からは <strong>両方を同じ年に併用できる</strong> ようになりました。ここが新NISAの一番大きな変更点です。</p>
+
+      <table>
+        <tr><th style="width:22%"></th><th>つみたて投資枠</th><th>成長投資枠</th></tr>
+        <tr><th>年間の上限</th><td>120万円</td><td>240万円</td></tr>
+        <tr><th>買えるもの</th><td>金融庁の基準を満たした投資信託・ETF（長期の積立・分散投資に適したもの）</td><td>上場株式、投資信託、ETF、REIT など幅広く</td></tr>
+        <tr><th>買えないもの</th><td>個別株、基準を満たさない投資信託</td><td>①整理銘柄・監理銘柄 ②信託期間20年未満・毎月分配型・デリバティブを使った一定の投資信託</td></tr>
+        <tr><th>買い方</th><td>積立契約による定期・継続的な買付</td><td>一括でも積立でも自由</td></tr>
+        <tr><th>向いている人</th><td>投資が初めての人／自分で銘柄を選びたくない人</td><td>個別株を買いたい人／自分で判断できる人</td></tr>
+      </table>
+
+      <p>投資が初めての20代なら、まずは <strong>つみたて投資枠だけで十分</strong> です。成長投資枠は「選択肢が広い」ということは「自分で判断する責任も広い」ということでもあります。選択肢の広さは、投資を始めた翌日に必要になるものではありません。</p>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><p>成長投資枠で除外されている「毎月分配型」の投資信託に注意。毎月お金がもらえて得に見えますが、分配金は元本を取り崩して払われている場合があり、長期の資産形成とは相性が悪いため制度から外されています。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ クイズ1 ============ -->
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 1</span>
+      <p class="qtext">2024年から始まった今のNISAについて、正しいのはどれ？</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>つみたて投資枠と成長投資枠は、どちらか一方を選んで使う</span></button>
+        <button class="opt" data-correct><span class="mark">B</span><span>つみたて投資枠（年120万円）と成長投資枠（年240万円）を併用でき、合計で年360万円まで投資できる</span></button>
+        <button class="opt"><span class="mark">C</span><span>2つを併用すると、合計の年間上限は120万円に減ってしまう</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p><strong>正解はB。</strong>併用できることが2024年からの新制度の目玉で、120万円＋240万円＝年360万円が上限です。<br>Aは2023年までの旧NISAのルール（つみたてNISAと一般NISAはどちらか一方）で、今は当てはまりません。Cのように併用すると枠が減る仕組みは存在しません。</p>
+      </div>
+    </div>
+
+    <!-- ============ 4 ============ -->
+    <section id="s4">
+      <h2>4. 上限は2階建て — 年360万円と生涯1,800万円</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="生涯の非課税保有限度額1800万円のうち、成長投資枠として使えるのは1200万円までであることを示す帯グラフ">
+          <text x="40" y="24" class="svg-title">生涯で使える非課税保有限度額（総枠）＝ 1,800万円</text>
+          <rect x="40" y="42" width="427" height="44" rx="4" fill="var(--accent)"/>
+          <rect x="467" y="42" width="213" height="44" rx="4" fill="var(--green)"/>
+          <text x="253" y="70" text-anchor="middle" class="svg-label" fill="#fff">成長投資枠が使えるのは1,200万円まで</text>
+          <text x="573" y="70" text-anchor="middle" class="svg-label" fill="#fff">残り600万円</text>
+
+          <rect x="40" y="100" width="640" height="30" rx="4" fill="var(--green)" opacity="0.28" stroke="var(--green)" stroke-width="1.5"/>
+          <text x="360" y="120" text-anchor="middle" class="svg-label">つみたて投資枠は 1,800万円 すべてに使える</text>
+
+          <line x1="40" y1="140" x2="40" y2="148" stroke="var(--border-strong)"/>
+          <line x1="467" y1="140" x2="467" y2="148" stroke="var(--border-strong)"/>
+          <line x1="680" y1="140" x2="680" y2="148" stroke="var(--border-strong)"/>
+          <text x="40" y="164" class="svg-label-sm">0円</text>
+          <text x="467" y="164" text-anchor="middle" class="svg-label-sm">1,200万円</text>
+          <text x="680" y="164" text-anchor="end" class="svg-label-sm">1,800万円</text>
+
+          <text x="40" y="192" class="svg-label-sm">つまり、1,800万円を埋めきるには、最低600万円はつみたて投資枠で使う必要がある</text>
+          <text x="40" y="208" class="svg-label-sm">出典: 金融庁「NISAを知る」</text>
+        </svg>
+        <figcaption>図4: 生涯枠1,800万円のうち、成長投資枠として使えるのは1,200万円まで（内数）</figcaption>
+      </figure>
+
+      <p>NISAの上限は2階建てになっています。</p>
+      <ol>
+        <li><strong>1年あたりの上限＝360万円</strong>（つみたて120万円＋成長240万円）</li>
+        <li><strong>生涯の上限＝1,800万円</strong>（＝非課税保有限度額。うち成長投資枠として使えるのは1,200万円まで）</li>
+      </ol>
+
+      <p>この「成長投資枠1,200万円」は追加ではなく <strong>内数</strong> です。1,800万円のうち最大1,200万円までしか成長投資枠に回せない、という意味。逆につみたて投資枠は1,800万円すべてに使えます。仮に年360万円をフルに使い続けても、生涯枠が埋まるまでには最短で5年（360万円×5年＝1,800万円）かかります。</p>
+
+      <div class="callout key">
+        <span class="ico">🔑</span>
+        <div><p><strong>20代にとっての現実的な感覚</strong><br>月5万円を30年間積み立てると、投じた元本はちょうど1,800万円。つまり生涯枠1,800万円は、「一部の富裕層向けの数字」ではなく、<strong>普通に働いて普通に積み立てた人が人生をかけてちょうど使い切るくらいの大きさ</strong>に設計されています。焦って埋めるものではありません。</p></div>
+      </div>
+
+      <p>なお、2023年までの旧NISA（一般NISA・つみたてNISA）で買った分は、この1,800万円の <strong>外枠</strong> で管理されます。旧NISAを持っている人でも、新NISAの枠が減ることはありません。</p>
+    </section>
+
+    <!-- ============ 5 ============ -->
+    <section id="s5">
+      <h2>5. 枠は「買った値段」で数える — 簿価管理と枠の復活</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="100万円で買い150万円で売った場合、翌年に復活する枠が買値の100万円であることを示す4ステップの流れ図">
+          <g><rect x="10" y="40" width="150" height="88" rx="8" class="svg-box-accent"/>
+             <text x="85" y="68" text-anchor="middle" class="svg-title">① 買う</text>
+             <text x="85" y="90" text-anchor="middle" class="svg-label-sm">100万円分を購入</text>
+             <text x="85" y="110" text-anchor="middle" class="svg-label-sm">枠を100万円消費</text></g>
+          <path d="M165 84 H 185" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="190" y="40" width="150" height="88" rx="8" class="svg-box"/>
+             <text x="265" y="68" text-anchor="middle" class="svg-title">② 値上がり</text>
+             <text x="265" y="90" text-anchor="middle" class="svg-label-sm">時価150万円に</text>
+             <text x="265" y="110" text-anchor="middle" class="svg-label-sm">枠の消費は100万円のまま</text></g>
+          <path d="M345 84 H 365" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="370" y="40" width="150" height="88" rx="8" class="svg-box"/>
+             <text x="445" y="68" text-anchor="middle" class="svg-title">③ 売る</text>
+             <text x="445" y="90" text-anchor="middle" class="svg-label-sm">150万円で売却</text>
+             <text x="445" y="110" text-anchor="middle" class="svg-label-sm">利益50万円は非課税</text></g>
+          <path d="M525 84 H 545" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="550" y="40" width="150" height="88" rx="8" class="svg-box" stroke="var(--green)"/>
+             <text x="625" y="68" text-anchor="middle" class="svg-title" fill="var(--green)">④ 翌年</text>
+             <text x="625" y="90" text-anchor="middle" class="svg-label-sm">枠が復活する</text>
+             <text x="625" y="110" text-anchor="middle" class="svg-label-sm">復活は100万円分</text></g>
+          <text x="360" y="160" text-anchor="middle" class="svg-label">復活するのは「買った値段（簿価）」の100万円。時価の150万円ではない</text>
+          <text x="360" y="184" text-anchor="middle" class="svg-label-sm">しかも復活は「翌年以降」。年内に売って年内に買い直す回転売買には使えない</text>
+        </svg>
+        <figcaption>図5: 枠は時価ではなく簿価（買付代金）で管理される。売却分は翌年に復活する</figcaption>
+      </figure>
+
+      <p>ここが新NISAで一番よく誤解される部分です。生涯枠1,800万円は <strong>簿価残高方式</strong> で管理されます。簿価とは <strong>買ったときの代金</strong> のこと（手数料等は含みません）。</p>
+
+      <p>つまり、100万円分を買った時点で枠を100万円使いますが、それが150万円に値上がりしても、<strong>使った枠は100万円のまま</strong>。値上がりしたせいで枠が食われる、ということは起きません。逆に80万円に値下がりしても、使った枠は100万円のままです。</p>
+
+      <h3>売ったら枠は戻ってくる</h3>
+      <p>2023年までの旧NISAでは、一度使った枠は売っても戻ってきませんでした。2024年からは、<strong>売却した商品の簿価の分だけ、翌年以降に枠が復活して再利用できます</strong>。図の例なら、翌年に100万円分の枠が戻ってきます。</p>
+
+      <p>ただし条件が2つ。</p>
+      <ul>
+        <li><strong>復活は「翌年以降」</strong>。売った瞬間にその年の枠が戻るわけではない</li>
+        <li>復活しても、<strong>その年に投資できるのは年360万円まで</strong>という上限は別途かかる</li>
+      </ul>
+
+      <p>この設計のおかげで「結婚資金で一度取り崩したけど、また積み直せる」というライフイベントには対応しつつ、「年に何十回も売買して枠を使い回す」ことはできないようになっています。長期保有を前提にした制度だ、ということが枠のルールにも表れています。</p>
+    </section>
+
+    <!-- ============ クイズ2 ============ -->
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 2</span>
+      <p class="qtext">NISA口座で100万円分の投資信託を買い、150万円に値上がりしたところで全部売りました。翌年に復活する非課税枠はいくら？</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>150万円（売ったときの金額）</span></button>
+        <button class="opt" data-correct><span class="mark">B</span><span>100万円（買ったときの金額）</span></button>
+        <button class="opt"><span class="mark">C</span><span>0円（一度使った枠は復活しない）</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p><strong>正解はB。</strong>非課税保有限度額は簿価（買付代金）で管理されるので、復活するのも買値の100万円です。<br>Aのように時価で復活すると、値上がりした人ほど枠が増えてしまうため、そうはなっていません。Cは2023年までの旧NISAの考え方で、2024年からは翌年以降に再利用できます。なお復活しても、その年に投資できるのは年360万円までという上限は別にかかります。</p>
+      </div>
+    </div>
+
+    <!-- ============ 6 ============ -->
+    <section id="s6">
+      <h2>6. 何が買えるのか — 選択肢は制度側でかなり絞られている</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="つみたて投資枠の対象商品360本のカテゴリ別内訳を示す横棒グラフ">
+          <line x1="170" y1="20" x2="170" y2="205" stroke="var(--border-strong)"/>
+          <line x1="170" y1="205" x2="700" y2="205" stroke="var(--border-strong)"/>
+
+          <rect x="170" y="30" width="520" height="26" rx="4" fill="var(--accent)"/>
+          <text x="162" y="48" text-anchor="end" class="svg-label">資産複合型（内外）</text>
+          <text x="180" y="48" class="svg-label-sm" fill="#fff">147本</text>
+
+          <rect x="170" y="66" width="336" height="26" rx="4" fill="var(--accent)" opacity="0.78"/>
+          <text x="162" y="84" text-anchor="end" class="svg-label">株式型（海外）</text>
+          <text x="180" y="84" class="svg-label-sm" fill="#fff">95本</text>
+
+          <rect x="170" y="102" width="234" height="26" rx="4" fill="var(--accent)" opacity="0.60"/>
+          <text x="162" y="120" text-anchor="end" class="svg-label">株式型（国内）</text>
+          <text x="180" y="120" class="svg-label-sm" fill="#fff">66本</text>
+
+          <rect x="170" y="138" width="124" height="26" rx="4" fill="var(--accent)" opacity="0.44"/>
+          <text x="162" y="156" text-anchor="end" class="svg-label">株式型（内外）</text>
+          <text x="180" y="156" class="svg-label-sm" fill="#fff">35本</text>
+
+          <rect x="170" y="174" width="60" height="26" rx="4" fill="var(--accent)" opacity="0.30"/>
+          <text x="162" y="192" text-anchor="end" class="svg-label">ETF・その他</text>
+          <text x="240" y="192" class="svg-label-sm">17本</text>
+
+          <text x="170" y="228" class="svg-label-sm">つみたて投資枠の対象は合計 360本（2026年7月24日時点）</text>
+          <text x="170" y="244" class="svg-label-sm">出典: 金融庁「つみたて投資枠対象商品の概要について」</text>
+        </svg>
+        <figcaption>図6: つみたて投資枠の対象商品は360本。世に出ている投資信託のごく一部だけが選ばれている</figcaption>
+      </figure>
+
+      <p>「何を買えばいいか分からない」——投資を始めない理由の第1位みたいなものですが、つみたて投資枠については、この問題は <strong>制度側でかなり解決済み</strong> です。金融庁が定めた基準を満たした商品だけが対象になっており、2026年7月24日時点で <strong>360本</strong>。世の中にある投資信託の数からすると、ごく一部です。</p>
+
+      <h3>金融庁の基準（つみたて投資枠）</h3>
+      <ul>
+        <li>販売手数料（購入時手数料）が <strong>ゼロ</strong>（ノーロード）</li>
+        <li><strong>信託報酬が一定以下</strong>（指定インデックス投信の場合、投資先が国内なら年0.5%以下、内外・海外なら年0.75%以下 ※税抜き）</li>
+        <li>頻繁に分配金を出さない（毎月分配型は除外）</li>
+        <li>信託期間が無期限または20年以上 など</li>
+      </ul>
+
+      <p><strong>信託報酬</strong>とは、その投資信託を持っている間ずっと、毎年差し引かれ続ける運用管理費用のこと。実際の対象商品の平均は、法令上の上限よりだいぶ低く、国内型の指定インデックス投信で <strong>平均0.27%</strong>（上限0.5%）、内外・海外型で <strong>平均0.34%</strong>（上限0.75%）です（いずれも税抜き・2026年7月24日時点）。</p>
+
+      <div class="callout tip">
+        <span class="ico">💡</span>
+        <div><p>0.27%と0.9%の差は、1年なら1,000万円に対して約6万円。小さく見えますが、これが30年続くうえに、引かれた分は複利で増えるはずだった元手からも消えます。<strong>信託報酬は「毎年確実に負ける分」なので、低いほうが有利</strong>という判断は、将来の値動きを予想する必要がない数少ない判断です。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ 7 ============ -->
+    <section id="s7">
+      <h2>7. 20代の最大の武器は「時間」</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 275" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="月3万円を年率5%で積み立てた場合の到達額を10年20年30年40年で比較した積み上げ横棒グラフ">
+          <line x1="150" y1="20" x2="150" y2="212" stroke="var(--border-strong)"/>
+          <line x1="150" y1="212" x2="700" y2="212" stroke="var(--border-strong)"/>
+
+          <rect x="150" y="30" width="35" height="32" fill="var(--accent)"/>
+          <rect x="185" y="30" width="6" height="32" fill="var(--green)"/>
+          <text x="142" y="52" text-anchor="end" class="svg-label">10年</text>
+          <text x="201" y="52" class="svg-label-sm">約 419万円</text>
+
+          <rect x="150" y="74" width="71" height="32" fill="var(--accent)"/>
+          <rect x="221" y="74" width="50" height="32" fill="var(--green)"/>
+          <text x="142" y="96" text-anchor="end" class="svg-label">20年</text>
+          <text x="281" y="96" class="svg-label-sm">約 1,233万円</text>
+
+          <rect x="150" y="118" width="106" height="32" fill="var(--accent)"/>
+          <rect x="256" y="118" width="139" height="32" fill="var(--green)"/>
+          <text x="142" y="140" text-anchor="end" class="svg-label">30年</text>
+          <text x="405" y="140" class="svg-label-sm">約 2,497万円</text>
+
+          <rect x="150" y="162" width="142" height="32" fill="var(--accent)"/>
+          <rect x="292" y="162" width="308" height="32" fill="var(--green)"/>
+          <text x="142" y="184" text-anchor="end" class="svg-label">40年</text>
+          <text x="610" y="184" class="svg-label-sm">約 4,578万円</text>
+
+          <rect x="150" y="230" width="14" height="12" fill="var(--accent)"/>
+          <text x="170" y="240" class="svg-label-sm">元本（積み立てた合計額）</text>
+          <rect x="340" y="230" width="14" height="12" fill="var(--green)"/>
+          <text x="360" y="240" class="svg-label-sm">運用益</text>
+
+          <text x="150" y="262" class="svg-label-sm">月3万円を年率5%（仮定）で積み立てた場合の試算。税・手数料は考慮していない</text>
+        </svg>
+        <figcaption>図7: 後半になるほど運用益（緑）が元本（青）を追い越していく。これが複利の効き方</figcaption>
+      </figure>
+
+      <p>20代が持っている、他のどの世代にも真似できない唯一の優位性は <strong>運用できる期間の長さ</strong> です。上の図で注目してほしいのは金額そのものより <strong>青と緑の比率</strong>。10年では緑（運用益）はほんのわずかですが、30年を超えると緑が青を追い越します。</p>
+
+      <p>月3万円を30年間、年率5%で運用できたと仮定すると：</p>
+      <table>
+        <tr><th style="width:32%">積み立てた元本</th><td>1,080万円（月3万円 × 360か月）</td></tr>
+        <tr><th>30年後の評価額</th><td>約 2,497万円</td></tr>
+        <tr><th>そのうち運用益</th><td>約 1,417万円</td></tr>
+        <tr><th>課税口座なら引かれる税</th><td>約 288万円（1,417万円 × 20.315%）</td></tr>
+        <tr><th>NISAなら</th><td><strong>0円</strong></td></tr>
+      </table>
+
+      <p>この約288万円が「NISAを使ったことによる差」です。同じ商品を同じように積み立てて、口座が違うだけで新車1台分くらいの差がつく、という話になります。</p>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><p><strong>年率5%は保証された数字ではありません。</strong>あくまで仮定を置いた試算です。年率3%なら30年後は約1,748万円（運用益 約668万円／課税なら税 約136万円）。年によってはマイナスにもなります。<strong>大事なのは「いくらになる」ではなく「期間が長いほど運用益の比率が上がる」という構造</strong>のほうです。自分の金額・期間で計算し直したい人は、<a href="https://www.fsa.go.jp/policy/nisa2/tsumitate-simulator/">金融庁のつみたてシミュレーター</a>が使えます。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ クイズ3 ============ -->
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 3</span>
+      <p class="qtext">月3万円を30年間、年率5%で運用できたとすると、元本1,080万円が約2,497万円になります。このときNISAを使ったことによる違いは？</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>NISAを使うと運用成績そのものが良くなるので、2,497万円よりもっと増える</span></button>
+        <button class="opt" data-correct><span class="mark">B</span><span>運用益 約1,417万円にかかるはずだった税 約288万円が、かからない</span></button>
+        <button class="opt"><span class="mark">C</span><span>元本1,080万円にも本来かかる税金がゼロになるので、その分も得になる</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p><strong>正解はB。</strong>1,417万円 × 20.315% ≒ 288万円が、口座の違いだけで生まれる差です。<br>Aは誤り——NISAは税制上の仕組みで、運用成績そのものは商品と市場次第。NISA口座だから値上がりしやすい、ということはありません。Cも誤りで、そもそも課税されるのは利益の部分だけ。自分が出した元本に税金はかかりません。</p>
+      </div>
+    </div>
+
+    <!-- ============ 8 ============ -->
+    <section id="s8">
+      <h2>8. 始め方は4ステップ</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="証券会社を選ぶ、口座を申し込む、商品を決める、自動積立を設定する、の4ステップの流れ図">
+          <g><rect x="10" y="35" width="150" height="80" rx="8" class="svg-box-accent"/>
+             <text x="85" y="62" text-anchor="middle" class="svg-title">① 証券会社を選ぶ</text>
+             <text x="85" y="83" text-anchor="middle" class="svg-label-sm">扱う商品を確認</text>
+             <text x="85" y="101" text-anchor="middle" class="svg-label-sm">変更は年単位で可能</text></g>
+          <path d="M165 75 H 185" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="190" y="35" width="150" height="80" rx="8" class="svg-box"/>
+             <text x="265" y="62" text-anchor="middle" class="svg-title">② 口座を申し込む</text>
+             <text x="265" y="83" text-anchor="middle" class="svg-label-sm">マイナンバー＋</text>
+             <text x="265" y="101" text-anchor="middle" class="svg-label-sm">本人確認書類</text></g>
+          <path d="M345 75 H 365" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="370" y="35" width="150" height="80" rx="8" class="svg-box"/>
+             <text x="445" y="62" text-anchor="middle" class="svg-title">③ 商品を決める</text>
+             <text x="445" y="83" text-anchor="middle" class="svg-label-sm">つみたて投資枠の</text>
+             <text x="445" y="101" text-anchor="middle" class="svg-label-sm">対象360本から</text></g>
+          <path d="M525 75 H 545" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="550" y="35" width="150" height="80" rx="8" class="svg-box" stroke="var(--green)"/>
+             <text x="625" y="62" text-anchor="middle" class="svg-title" fill="var(--green)">④ 自動積立に</text>
+             <text x="625" y="83" text-anchor="middle" class="svg-label-sm">毎月の金額を設定</text>
+             <text x="625" y="101" text-anchor="middle" class="svg-label-sm">あとは基本ほったらかし</text></g>
+          <text x="360" y="150" text-anchor="middle" class="svg-label-sm">口座開設の申込みから買付開始まで、ネット証券なら数日〜2週間程度が目安</text>
+          <text x="360" y="170" text-anchor="middle" class="svg-label-sm">（税務署での二重口座チェックが入るため、即日には始まらない）</text>
+        </svg>
+        <figcaption>図8: やることは4つだけ。一番大事なのは④の「自動化」</figcaption>
+      </figure>
+
+      <h3>① 金融機関を選ぶ</h3>
+      <p>銀行・証券会社どちらでもNISA口座は開けますが、<strong>扱っている商品が機関ごとに違います</strong>。銀行のNISA口座では個別株が買えません（銀行は株式の売買を取り扱えないため）。つみたて投資枠の対象商品の品揃えも機関によって差があります。将来の選択肢を狭めたくないなら、取扱商品の多いところを選ぶのが無難です。</p>
+
+      <h3>② 口座を申し込む</h3>
+      <p>必要なのはマイナンバー確認書類と本人確認書類。ネット証券ならスマホで完結します。NISA口座は税務署で「他社と二重に開設していないか」がチェックされるので、申込みから利用開始まで数日〜2週間ほどかかります。</p>
+
+      <h3>③ 商品と金額を決める</h3>
+      <p>まずはつみたて投資枠の対象商品から選べば、極端に不利なものは制度側で弾かれています。金額は <strong>「1年間、絶対に手をつけずに済む額」</strong> から。月1万円でも、20代なら期間が味方します。</p>
+
+      <h3>④ 自動積立に設定する</h3>
+      <p>ここが実は一番重要です。毎月手動で買う運用は、忙しい月や相場が下がった月に止まります。<strong>給料日直後に自動で引き落とされる設定にして、意思決定を仕組みから外す</strong>のが、長続きさせる唯一に近い方法です。</p>
+
+      <div class="callout tip">
+        <span class="ico">💡</span>
+        <div><p>金額は後からいつでも変えられます。「いくらが正解か」を考え込んで3か月始めないより、月5,000円でも始めて動きを体感してから調整するほうが、20代にとっては合理的です。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ 9 ============ -->
+    <section id="s9">
+      <h2>9. よくある誤解と、4つの落とし穴</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 345" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="初心者がつまずくポイントを、始めるとき・続けるときと、リスクの誤解・ルールの誤解の2軸で整理したマトリクス">
+          <rect x="120" y="20" width="500" height="260" fill="none" stroke="var(--border-strong)"/>
+          <rect x="125" y="25" width="240" height="120" fill="var(--red-soft)" opacity="0.7"/>
+          <line x1="370" y1="20" x2="370" y2="280" stroke="var(--border)"/>
+          <line x1="120" y1="150" x2="620" y2="150" stroke="var(--border)"/>
+
+          <text x="245" y="62" text-anchor="middle" class="svg-title">① 元本保証だと思う</text>
+          <text x="245" y="88" text-anchor="middle" class="svg-label-sm">非課税なだけで、値下がりは普通に起きる</text>
+          <text x="245" y="110" text-anchor="middle" class="svg-label-sm">対策: 生活防衛資金を先に確保する</text>
+
+          <text x="495" y="62" text-anchor="middle" class="svg-title">② 枠を急いで埋めようとする</text>
+          <text x="495" y="88" text-anchor="middle" class="svg-label-sm">制度は恒久化・非課税期間は無期限</text>
+          <text x="495" y="110" text-anchor="middle" class="svg-label-sm">対策: 生活を削ってまで入れない</text>
+
+          <text x="245" y="196" text-anchor="middle" class="svg-title">③ 下がったら慌てて売る</text>
+          <text x="245" y="222" text-anchor="middle" class="svg-label-sm">下落局面は数年に一度は来る前提</text>
+          <text x="245" y="244" text-anchor="middle" class="svg-label-sm">対策: 口座を見る頻度を減らす</text>
+
+          <text x="495" y="196" text-anchor="middle" class="svg-title">④ 損益通算できると思う</text>
+          <text x="495" y="222" text-anchor="middle" class="svg-label-sm">NISAの損失は税制上「無いもの」扱い</text>
+          <text x="495" y="244" text-anchor="middle" class="svg-label-sm">対策: 短期売買はNISAでやらない</text>
+
+          <text x="245" y="304" text-anchor="middle" class="svg-label-sm">← リスクについての誤解</text>
+          <text x="495" y="304" text-anchor="middle" class="svg-label-sm">制度ルールについての誤解 →</text>
+          <text x="110" y="88" text-anchor="end" class="svg-label-sm">始めるとき</text>
+          <text x="110" y="218" text-anchor="end" class="svg-label-sm">続けるとき</text>
+          <text x="360" y="332" text-anchor="middle" class="svg-label-sm">赤くなっている①が、最初にして最大のつまずきポイント</text>
+        </svg>
+        <figcaption>図9: つまずきは「いつ起きるか」×「何を誤解しているか」で4象限に整理できる</figcaption>
+      </figure>
+
+      <h3>① NISAは元本保証ではない</h3>
+      <p>一番多い誤解です。NISAは <strong>税金の制度</strong> であって、値下がりを防ぐ仕組みはひとつも入っていません。100万円入れて70万円になることは普通にあります。むしろ非課税のメリットは利益が出て初めて発生するので、<strong>損をしている間、NISAのメリットはゼロ</strong>です。</p>
+
+      <h3>② 損失を「損益通算」できない（NISAの数少ない弱点）</h3>
+      <p>ふつうの課税口座なら、A株で30万円得してB株で20万円損したとき、差額の10万円にだけ課税されます（損益通算）。さらに引ききれない損失は3年間繰り越せます（繰越控除）。<strong>NISA口座の損失には、このどちらも使えません。</strong>NISAで出た損は税制上「無かったこと」にされ、他の口座の利益をそのまま課税されます。</p>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><p>つまりNISAは <strong>「利益が出れば有利、損が出れば課税口座より不利」</strong> という非対称な制度です。だからこそ、値上がりを狙って短期で売買する使い方とは相性が悪く、長く持ち続ける前提の資金を入れる場所になります。</p></div>
+      </div>
+
+      <h3>③ 枠を急いで埋める必要はない</h3>
+      <p>「年360万円も使えます！」という煽りを見て焦る必要はありません。制度は <strong>恒久化</strong> され、非課税保有期間も <strong>無期限</strong> です。生涯枠1,800万円に期限はありません。生活費を削って投資に回すと、下落局面で耐えられず、一番悪いタイミングで売ることになります。</p>
+
+      <h3>④ 「銀行だけ」で決めない</h3>
+      <p>給与振込口座がある銀行でそのまま作るのが楽ですが、銀行のNISA口座では個別株が買えず、取扱う投資信託の本数も限られることがあります。今すぐ個別株を買う気がなくても、数年後に選択肢がないのは不便です。</p>
+    </section>
+
+    <!-- ============ クイズ4 ============ -->
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 4</span>
+      <p class="qtext">NISA口座で買った投資信託が値下がりし、20万円の損失を出して売りました。同じ年、ふつうの課税口座（特定口座）の株では30万円の利益が出ています。税金はどうなる？</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>損益通算されて、差額の10万円分にだけ課税される</span></button>
+        <button class="opt"><span class="mark">B</span><span>NISAの20万円の損失は3年間繰り越して、来年以降の利益と相殺できる</span></button>
+        <button class="opt" data-correct><span class="mark">C</span><span>NISAの損失は無かったものとされ、課税口座の30万円の利益にそのまま課税される</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p><strong>正解はC。</strong>NISA口座の損失は税制上「無いもの」として扱われるため、他の口座の30万円の利益は満額（30万円 × 20.315% ≒ 60,945円）が課税対象になります。<br>Aの損益通算はNISA口座には使えません。Bの繰越控除（3年間）も同じく対象外です。この非対称性が「損切り前提の短期売買はNISAでやらない」と言われる理由です。</p>
+      </div>
+    </div>
+
+    <!-- ============ 10 ============ -->
+    <section id="s10">
+      <h2>10. NISAの前にやること — お金の置き場所の優先順位</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 285" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="生活防衛資金、NISA、iDeCo、課税口座の順にお金を置く優先順位を示した4層のスタック図">
+          <rect x="180" y="10" width="400" height="52" rx="6" class="svg-box"/>
+          <text x="380" y="34" text-anchor="middle" class="svg-title">④ ふつうの課税口座</text>
+          <text x="380" y="52" text-anchor="middle" class="svg-label-sm">NISAの枠を使い切ってから考える</text>
+
+          <rect x="180" y="70" width="400" height="52" rx="6" class="svg-box"/>
+          <text x="380" y="94" text-anchor="middle" class="svg-title">③ iDeCo など</text>
+          <text x="380" y="112" text-anchor="middle" class="svg-label-sm">節税は強力だが、原則60歳まで引き出せない</text>
+
+          <rect x="180" y="130" width="400" height="52" rx="6" class="svg-box-accent"/>
+          <text x="380" y="154" text-anchor="middle" class="svg-title">② NISA</text>
+          <text x="380" y="172" text-anchor="middle" class="svg-label-sm">運用益が非課税で、いつでも売って引き出せる</text>
+
+          <rect x="180" y="190" width="400" height="52" rx="6" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.5"/>
+          <text x="380" y="214" text-anchor="middle" class="svg-title" fill="var(--green)">① 生活防衛資金（現金・預金）</text>
+          <text x="380" y="232" text-anchor="middle" class="svg-label-sm">生活費の3〜6か月分。ここは投資に回さない</text>
+
+          <text x="170" y="40" text-anchor="end" class="svg-label-sm">枠を超えたら</text>
+          <text x="170" y="100" text-anchor="end" class="svg-label-sm">余裕があれば</text>
+          <text x="170" y="160" text-anchor="end" class="svg-label-sm">次にここ</text>
+          <text x="170" y="220" text-anchor="end" class="svg-label-sm">まずここ</text>
+          <path d="M600 232 V 40" class="svg-arrow" marker-end="url(#ar)"/>
+          <text x="614" y="140" class="svg-label-sm">下から順に</text>
+          <text x="360" y="272" text-anchor="middle" class="svg-label-sm">「NISAをやるか / やらないか」ではなく「現金をいくら残すか」という配分の問題</text>
+        </svg>
+        <figcaption>図10: 土台は現金。NISAはその上に積む2階部分で、いきなり全額を投資に回すものではない</figcaption>
+      </figure>
+
+      <p>NISAは「いつでも売って引き出せる」のが強みですが、<strong>売るタイミングの価格は選べません</strong>。急に引っ越しが決まった月に相場が20%下げていたら、下げた価格で売るしかない。だから、近い将来に使うお金と、当面使わないお金は分けて置きます。</p>
+
+      <p>まず確保すべきは <strong>生活防衛資金</strong>。転職・病気・急な引っ越しに耐えるための現金で、目安は生活費の3〜6か月分です。これを預金で確保したうえで、その先の余裕資金をNISAに回します。</p>
+
+      <h3>NISAとiDeCoの棲み分け</h3>
+      <table>
+        <tr><th style="width:22%"></th><th>NISA</th><th>iDeCo（個人型確定拠出年金）</th></tr>
+        <tr><th>運用益</th><td>非課税</td><td>非課税</td></tr>
+        <tr><th>掛金（拠出額）</th><td>所得控除にならない</td><td><strong>全額が所得控除</strong>（その年の所得税・住民税が下がる）</td></tr>
+        <tr><th>引き出し</th><td><strong>いつでも可能</strong></td><td><strong>原則60歳まで不可</strong></td></tr>
+        <tr><th>目的</th><td>使途自由（結婚・住宅・教育・老後）</td><td>老後資金に用途を固定</td></tr>
+        <tr><th>20代の位置づけ</th><td>まずこちら</td><td>余裕が出てから検討</td></tr>
+      </table>
+
+      <p>iDeCoの「掛金が全額所得控除」は非常に強力な優遇です。ただし <strong>原則60歳まで1円も引き出せません</strong>。転職・結婚・引っ越し・留学など、まとまったお金が必要になるイベントが多い20代にとって、この流動性のなさは重い制約になります。<strong>まずNISA、余裕が出てからiDeCo</strong> が定石とされるのはこのためです（掛金の上限や加入資格は職業・勤務先の制度によって異なるので、実際に始めるときは自分の条件を確認してください）。</p>
+    </section>
+
+    <!-- ============ 11 ============ -->
+    <section id="s11">
+      <h2>11. 制度の現在地と、2026年度の改正</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 195" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="2014年の一般NISA開始から2027年の年齢要件撤廃予定までのNISA制度の年表">
+          <line x1="30" y1="95" x2="695" y2="95" stroke="var(--border-strong)" stroke-width="2"/>
+
+          <g><circle cx="80" cy="95" r="8" fill="var(--accent)" opacity="0.55"/>
+             <text x="80" y="72" text-anchor="middle" class="svg-title">2014</text>
+             <text x="80" y="124" text-anchor="middle" class="svg-label-sm">一般NISA開始</text></g>
+
+          <g><circle cx="210" cy="95" r="8" fill="var(--accent)" opacity="0.7"/>
+             <text x="210" y="72" text-anchor="middle" class="svg-title">2018</text>
+             <text x="210" y="124" text-anchor="middle" class="svg-label-sm">つみたてNISA開始</text></g>
+
+          <g><circle cx="360" cy="95" r="8" fill="var(--accent)"/>
+             <text x="360" y="72" text-anchor="middle" class="svg-title">2024</text>
+             <text x="360" y="124" text-anchor="middle" class="svg-label-sm">新NISA開始</text>
+             <text x="360" y="142" text-anchor="middle" class="svg-label-sm">無期限化・恒久化・併用可</text></g>
+
+          <g><circle cx="510" cy="95" r="11" fill="var(--green)"/>
+             <text x="510" y="70" text-anchor="middle" class="svg-title" fill="var(--green)">今ここ</text>
+             <text x="510" y="124" text-anchor="middle" class="svg-label-sm">2,821万口座</text>
+             <text x="510" y="142" text-anchor="middle" class="svg-label-sm">累計買付 71兆円</text></g>
+
+          <g><circle cx="645" cy="95" r="8" fill="var(--bg)" stroke="var(--accent)" stroke-width="2"/>
+             <text x="645" y="72" text-anchor="middle" class="svg-title">2027〜</text>
+             <text x="645" y="124" text-anchor="middle" class="svg-label-sm">0〜17歳にも</text>
+             <text x="645" y="142" text-anchor="middle" class="svg-label-sm">つみたて枠（予定）</text></g>
+
+          <text x="30" y="180" class="svg-label-sm">口座数・買付額は2025年12月末時点。出典: 金融庁「NISA口座の利用状況に関する調査結果」</text>
+        </svg>
+        <figcaption>図11: 制度は拡大方向に動いてきた。既存の枠が縮小される予定はない</figcaption>
+      </figure>
+
+      <p>NISA口座数は <strong>2025年12月末で2,821万口座</strong>、制度開始からの累計買付額は <strong>71兆円</strong> に達しました。政府目標は「2027年12月末までに3,400万口座・買付額56兆円」なので、<strong>買付額は目標を先に超過</strong>し、口座数も射程圏内という状況です。</p>
+
+      <h3>2025年12月26日 閣議決定「令和8年度税制改正大綱」で決まったこと</h3>
+      <p>金融庁の資料によると、NISA関係では主に次の見直しが盛り込まれました。実施は <strong>令和9年（2027年）〜が中心</strong> です。</p>
+
+      <div class="cards">
+        <div class="card"><h4>0〜17歳にもつみたて投資枠</h4><p>年齢要件を撤廃。0〜17歳は年間投資枠60万円・非課税保有限度額600万円。12歳以降は子の同意がある場合のみ親権者等による払出しが可能。18歳になると通常のNISAへ自動移行。</p></div>
+        <div class="card"><h4>対象の株式指数を追加</h4><p>「マーケット全体を広くカバー」「市場関係者に広く浸透」という観点から、つみたて投資枠の指定株式指数に一定のものを追加。一定の広がりのある地域を対象とした指数は、その指数のみに連動する投資信託等も対象に（他の指数との組合せ要件も撤廃）。</p></div>
+        <div class="card"><h4>債券・バランス型も対象に</h4><p>指定指数に連動しない公募株式投信の要件を「主に株式に投資するもの」から「主に株式<strong>又は公社債</strong>に投資するもの」へ拡大。リスクを抑えたい人の選択肢が増える。</p></div>
+        <div class="card"><h4>手続きの簡素化</h4><p>口座開設から10年経過時などに行われていた住所等の定期確認（転送不要郵便による所在地確認）を廃止。放置による新規買付停止のリスクが減る。</p></div>
+      </div>
+
+      <div class="callout key">
+        <span class="ico">🔑</span>
+        <div><p><strong>ここが大事：既存の18歳以上の枠（年360万円・生涯1,800万円）は縮小されません。</strong>改正はいずれも拡充方向です。「制度が変わるみたいだから様子を見よう」と待つ理由にはならない、ということです。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ まとめ ============ -->
+    <section id="summary">
+      <h2>まとめ</h2>
+
+      <div class="cards">
+        <div class="card"><h4>NISA＝非課税の箱</h4><p>投資の利益にかかる20.315%（所得税15%＋復興特別所得税0.315%＋住民税5%）がゼロになる口座。商品名ではない。</p></div>
+        <div class="card"><h4>枠は2階建て</h4><p>年360万円（つみたて120万＋成長240万）／生涯1,800万円（成長投資枠1,200万円は内数）。制度は恒久化・非課税期間は無期限。</p></div>
+        <div class="card"><h4>簿価で数え、翌年に復活</h4><p>枠の消費は買った値段（簿価）で計算。値上がりしても枠は減らない。売った分は翌年以降に簿価分だけ復活する。</p></div>
+        <div class="card"><h4>20代の武器は時間</h4><p>月3万円×30年・年率5%の仮定で元本1,080万円→約2,497万円。運用益約1,417万円への税約288万円がゼロになる。</p></div>
+        <div class="card"><h4>弱点も知っておく</h4><p>元本保証ではない。損益通算も繰越控除もできないので、損が出たときは課税口座より不利になる。</p></div>
+        <div class="card"><h4>まず現金、次にNISA</h4><p>生活費3〜6か月分は預金で確保。そのうえで自動積立に設定して、意思決定を仕組みから外す。</p></div>
+      </div>
+
+      <div class="callout tip">
+        <span class="ico">✅</span>
+        <div>
+          <p><strong>今日やる1つのこと</strong></p>
+          <p>金額を決めきる必要はありません。まずは <a href="https://www.fsa.go.jp/policy/nisa2/tsumitate-simulator/">金融庁のつみたてシミュレーター</a> に「自分が毎月出せそうな額」と「65歳までの年数」を入れて、数字を見てみるところから。そこで出た金額に納得できたら、次のステップは口座の申込みです。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 出典 ============ -->
+    <section id="sources">
+      <h2>出典</h2>
+      <ul class="sources">
+        <li><a href="https://www.fsa.go.jp/policy/nisa2/know/">NISAを知る：NISA特設ウェブサイト（金融庁）</a> — 年間投資枠360万円、非課税保有限度額1,800万円／成長投資枠1,200万円、無期限化・恒久化、18歳以上の要件、枠の再利用、成長投資枠の除外商品</li>
+        <li><a href="https://www.fsa.go.jp/policy/nisa2/question/index.html">よくある質問：NISA特設ウェブサイト（金融庁）</a> — 簿価残高方式の定義</li>
+        <li><a href="https://www.mof.go.jp/tax_policy/summary/income/nisa.pdf">NISA制度の概要（財務省）</a> — 年間投資上限額・非課税保有期間・非課税保有限度額の制度表</li>
+        <li><a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1535.htm">No.1535 NISA制度（国税庁）</a> — NISA口座の課税関係、損益通算・繰越控除ができないこと</li>
+        <li><a href="https://www.fsa.go.jp/policy/nisa/20260703.html">NISA口座の利用状況に関する調査結果（令和7年12月末時点）（金融庁）</a> — 利用状況調査の一次ページ</li>
+        <li><a href="https://www.fsa.go.jp/policy/nisa/20260703/2512nisa-graph.pdf">NISAの利用状況の推移（グラフ）PDF（金融庁）</a> — 2,821万口座／累計買付71兆円／政府目標3,400万口座・56兆円</li>
+        <li><a href="https://www.fsa.go.jp/policy/nisa2/products/20260724/28.pdf">つみたて投資枠対象商品の概要について（2026年7月24日時点）PDF（金融庁）</a> — 対象360本の内訳、信託報酬の法令上限（0.5%／0.75%）と実際の平均（0.27%／0.34%）</li>
+        <li><a href="https://www.fsa.go.jp/policy/nisa2/products/">つみたて投資枠対象商品（金融庁）</a> — 対象商品の届出一覧（運用会社別・対象資産別）</li>
+        <li><a href="https://www.fsa.go.jp/news/r7/sonota/20251226-2/01.pdf">令和8（2026）年度税制改正について — 税制改正大綱における金融庁関係の主要項目 PDF（金融庁, 2025年12月）</a> — 0〜17歳のつみたて投資枠（年60万円・限度額600万円・12歳以降の払出し）、対象株式指数の追加、公社債を含む投信の対象化、定期売却サービスの手数料容認、所在地確認手続きの廃止</li>
+        <li><a href="https://www.japantimes.co.jp/business/2025/12/10/nisa-tax-free-cap-minors/">NISA program for minors to have ¥6 million tax-exemption cap（The Japan Times, 2025-12-10）</a> — 未成年向け拡充の内容と実施時期の裏取り</li>
+        <li><a href="https://www.fsa.go.jp/policy/nisa2/tsumitate-simulator/">つみたてシミュレーター（金融庁）</a> — 読者が自分の金額・期間で再計算するためのツール</li>
+      </ul>
+      <p style="font-size:13px;color:var(--text-faint)">
+        ※ 積立シミュレーションの数値（419万円／1,233万円／2,497万円／4,578万円、および年率3%の1,748万円）は、毎月末に定額を積み立て、年率一定・複利で再投資すると仮定した本教材独自の試算です（月利＝年率÷12で計算、税・手数料は考慮せず）。将来の運用成果を示すものではありません。税額は20.315%で算出しています。<br>
+        ※ 本教材は2026年8月10日時点の公表情報に基づく制度解説であり、投資勧誘を目的とするものではありません。実際の口座開設や商品選択にあたっては、各金融機関の交付資料および最新の法令をご確認ください。
+      </p>
+    </section>
+
+  </main>
+</div>
+
+<script>
+// ---- テーマ切替 ----
+(function(){
+  var root=document.documentElement, btn=document.getElementById('themeBtn');
+  if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+    root.setAttribute('data-theme','dark');
+  }
+  var sync=function(){ btn.textContent = root.getAttribute('data-theme')==='dark' ? '☀️' : '🌙'; };
+  sync();
+  btn.addEventListener('click',function(){
+    root.setAttribute('data-theme', root.getAttribute('data-theme')==='dark'?'light':'dark');
+    sync();
+  });
+})();
+
+// ---- 目次スクロール連動 ----
+(function(){
+  var links=[].slice.call(document.querySelectorAll('#toc a'));
+  var map={}; links.forEach(function(a){ var el=document.querySelector(a.getAttribute('href')); if(el) map[el.id]=a; });
+  var targets=Object.keys(map).map(function(id){return document.getElementById(id);});
+  if(!targets.length) return;
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        links.forEach(function(a){a.classList.remove('active');});
+        map[e.target.id].classList.add('active');
+      }
+    });
+  },{rootMargin:'-15% 0px -70% 0px', threshold:0});
+  targets.forEach(function(t){io.observe(t);});
+})();
+
+// ---- クイズ：3択・即時採点・解説表示 ----
+(function(){
+  document.querySelectorAll('[data-quiz]').forEach(function(q){
+    var opts=[].slice.call(q.querySelectorAll('.opt'));
+    var box=q.querySelector('.explain'), verdict=q.querySelector('.verdict');
+    opts.forEach(function(btn){
+      btn.addEventListener('click',function(){
+        if(btn.disabled) return;
+        var ok=btn.hasAttribute('data-correct');
+        opts.forEach(function(o){
+          o.disabled=true;
+          if(o.hasAttribute('data-correct')) o.classList.add('correct');
+        });
+        if(!ok) btn.classList.add('wrong');
+        verdict.textContent = ok ? '正解！' : '惜しい — 正解は上の緑の選択肢です';
+        verdict.className = 'verdict ' + (ok?'ok':'ng');
+        box.classList.add('show');
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
