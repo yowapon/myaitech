@@ -448,8 +448,9 @@ input[type=range]:disabled{opacity:.4}
    プレイ画面
    ============================================================ */
 body.playing .appbar{position:static}
+body.playing main{padding-top:14px;padding-bottom:16px}
 .play-wrap{
-  min-height:calc(100dvh - 130px);
+  min-height:calc(100dvh - 148px);
   display:flex;flex-direction:column;
 }
 .play-top{
@@ -459,9 +460,9 @@ body.playing .appbar{position:static}
 .play-prog{flex:1;height:4px;background:var(--bg-sunk);border-radius:2px;overflow:hidden;margin:0 4px}
 .play-prog i{display:block;height:100%;background:var(--accent);transition:width .3s}
 .flash-stage{
-  flex:1;
+  flex:1 1 auto;
   display:flex;align-items:center;justify-content:center;
-  min-height:min(34vh,240px);
+  min-height:min(30vh,220px);
   max-height:min(56vh,440px);   /* 画面が縦に長くても間延びさせない */
   background:var(--bg-elev);
   border:1px solid var(--border);border-radius:var(--radius);
@@ -494,12 +495,21 @@ body[data-fs="lg"] .flash-num{font-size:clamp(4.4rem,25vw,13rem)}
 @keyframes pop{from{opacity:0;transform:scale(.7)}60%{opacity:1;transform:scale(1.04)}to{transform:scale(1)}}
 .flash-hint{font-size:15px;color:var(--fg-muted);text-align:center;padding:0 20px}
 
-.answer-area{margin-top:16px}
+/* 回答中は数字を出さないので、表示エリアを縮めてテンキーを画面内に収める */
+body.answering .flash-stage{
+  flex:0 0 auto;
+  min-height:0;
+  height:clamp(44px,7vh,80px);
+}
+body.answering .flash-hint{font-size:13.5px}
+body.answering .play-top{margin-bottom:6px}
+
+.answer-area{margin-top:14px}
 .answer-box{
   /* 高さを固定する。中身の文字サイズが変わっても枠が動かないので、
      下に置いたテンキーの位置がずれない */
   display:flex;align-items:center;justify-content:center;gap:10px;
-  height:74px;padding:10px 16px;
+  height:clamp(62px,9.5vh,74px);padding:8px 16px;
   background:var(--bg-elev);border:2px solid var(--accent);
   border-radius:var(--radius);box-shadow:var(--shadow);
 }
@@ -516,22 +526,24 @@ body[data-fs="lg"] .flash-num{font-size:clamp(4.4rem,25vw,13rem)}
 }
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 .judge{
-  /* 判定が出る前後で下のテンキーが動かないよう、2行ぶんの高さを常に確保する */
+  /* 判定が出る前後で下のテンキーが動かないよう、高さを常に確保する */
   display:flex;align-items:center;justify-content:center;
-  text-align:center;font-size:14.5px;margin-top:8px;height:3.2em;font-weight:600;
-  line-height:1.5;
+  text-align:center;font-size:14.5px;margin-top:8px;height:2.9em;font-weight:600;
+  line-height:1.45;
 }
 .judge.ok{color:var(--ok)}
 .judge.ng{color:var(--ng)}
 .judge .ans{font-variant-numeric:tabular-nums}
 
 .keypad{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:9px;
-  max-width:340px;margin:16px auto 0;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(6px,1.1vh,9px);
+  max-width:340px;margin:clamp(10px,1.6vh,16px) auto 0;
 }
 .keypad.hidden{display:none}
 .keypad button{
-  padding:16px 0;font-size:22px;font-weight:700;
+  /* 画面が低い端末ではボタンも低くして、決定までを1画面に収める */
+  padding:clamp(9px,1.7vh,16px) 0;
+  font-size:clamp(19px,2.6vh,22px);font-weight:700;
   font-variant-numeric:tabular-nums;
   background:var(--bg-elev);border:1px solid var(--border-strong);
   border-radius:var(--radius-sm);box-shadow:var(--shadow);
@@ -540,7 +552,10 @@ body[data-fs="lg"] .flash-num{font-size:clamp(4.4rem,25vw,13rem)}
 }
 .keypad button:active{background:var(--bg-sunk);transform:translateY(1px)}
 .keypad button.util{font-size:15px;font-weight:600;color:var(--fg-muted)}
-.keypad button.enter{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-size:16px}
+.keypad button.enter{
+  background:var(--accent);border-color:var(--accent);color:var(--accent-fg);
+  font-size:clamp(15px,2.1vh,17px);
+}
 .kbd-hint{text-align:center;font-size:12.5px;color:var(--fg-faint);margin-top:14px}
 .kbd-hint kbd{
   display:inline-block;padding:1px 6px;margin:0 1px;
@@ -1424,6 +1439,7 @@ function show(name, opts) {
   App.screen = name;
 
   document.body.classList.toggle('playing', name === 'play');
+  if (name !== 'play') document.body.classList.remove('answering');
   $('#btnQuit').classList.toggle('on', name === 'play');
   $('#who').classList.toggle('on', !!App.player && name !== 'player');
 
@@ -1901,6 +1917,7 @@ function prepareRun(cfg, meta) {
   $('#playCount').textContent = `0 / ${cfg.questions}`;
   $('#playBar').style.width = '0%';
   $('#answerArea').hidden = true;
+  document.body.classList.remove('answering');
   $('#playStartRow').hidden = false;
   $('#judge').textContent = '';
   $('#judge').className = 'judge';
@@ -1948,6 +1965,7 @@ function nextQuestion() {
   r.phase = 'flash';
   r.input = '';
   r.backspaces = 0;
+  document.body.classList.remove('answering');   // 表示エリアを大きく戻す
   $('#answerArea').hidden = true;
   $('#judge').textContent = '';
   $('#judge').className = 'judge';
@@ -1986,6 +2004,8 @@ function enterAnswerPhase() {
   const r = App.run;
   r.phase = 'answer';
   r.shownAt = performance.now();
+  // 回答中は数字を出さないので表示エリアを縮め、テンキーの決定まで1画面に収める
+  document.body.classList.add('answering');
   $('#flashStage').innerHTML = '<div class="flash-hint">いくつになりましたか</div>';
   $('#answerArea').hidden = false;
   $('#answerBox').className = 'answer-box';
