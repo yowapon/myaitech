@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>パスキー入門 — 「別のPCから入れない」の正体</title>
+<style>
+:root{
+  --bg:#ffffff; --bg-sub:#f7f7f5; --bg-hover:#efefed;
+  --text:#37352f; --text-mute:#787774; --text-faint:#9b9a97;
+  --border:#e9e9e7; --border-strong:#d3d3d1;
+  --accent:#2383e2; --accent-soft:#e7f1fd;
+  --green:#0f7b6c; --green-soft:#e4f3f0;
+  --amber:#cb912f; --amber-soft:#faf1dd;
+  --red:#e03e3e;   --red-soft:#fbe9e9;
+  --purple:#6940a5; --purple-soft:#eee6f7;
+  --radius:8px;
+  --font: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif;
+}
+html[data-theme="dark"]{
+  --bg:#191919; --bg-sub:#202020; --bg-hover:#2a2a2a;
+  --text:#d4d4d4; --text-mute:#9b9b9b; --text-faint:#6f6f6f;
+  --border:#2f2f2f; --border-strong:#414141;
+  --accent:#5b9dd9; --accent-soft:#1c2f3f;
+  --green:#4dab9a; --green-soft:#1c2b28;
+  --amber:#e0b44a; --amber-soft:#332a1b;
+  --red:#ff7369;   --red-soft:#3a2323;
+  --purple:#9a76d1; --purple-soft:#2a2136;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font); font-size:16px; line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+  transition:background .2s,color .2s;
+}
+.layout{display:flex; align-items:flex-start; max-width:1180px; margin:0 auto}
+
+/* ---------- 目次サイドバー ---------- */
+#sidebar{
+  position:sticky; top:0; flex:0 0 250px; height:100vh;
+  padding:28px 14px 40px; overflow-y:auto;
+  border-right:1px solid var(--border); background:var(--bg-sub);
+}
+#sidebar .toc-label{
+  font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--text-faint); padding:0 10px; margin-bottom:10px; font-weight:600;
+}
+#toc a{
+  display:block; padding:6px 10px; margin:1px 0; border-radius:6px;
+  color:var(--text-mute); text-decoration:none; font-size:13.5px; line-height:1.45;
+  border-left:2px solid transparent; transition:background .15s,color .15s;
+}
+#toc a:hover{background:var(--bg-hover); color:var(--text)}
+#toc a.active{background:var(--accent-soft); color:var(--accent); font-weight:600; border-left-color:var(--accent)}
+#toc a.sub{padding-left:22px; font-size:12.5px}
+
+/* ---------- 本文 ---------- */
+main{flex:1 1 auto; min-width:0; padding:56px 60px 140px; max-width:860px}
+.hero-eyebrow{font-size:12px; letter-spacing:.1em; color:var(--accent); font-weight:700; text-transform:uppercase}
+h1{font-size:40px; line-height:1.25; margin:.25em 0 .35em; letter-spacing:-.01em; font-weight:800}
+h2{font-size:26px; margin:2.6em 0 .6em; padding-bottom:.3em; border-bottom:1px solid var(--border); font-weight:700; letter-spacing:-.005em}
+h3{font-size:18px; margin:1.8em 0 .4em; font-weight:700}
+p{margin:.7em 0}
+a{color:var(--accent)}
+.lead{font-size:18px; color:var(--text-mute); line-height:1.8}
+.meta{display:flex; flex-wrap:wrap; gap:8px; margin:20px 0 8px}
+.chip{
+  font-size:12.5px; padding:4px 11px; border-radius:999px;
+  background:var(--bg-sub); border:1px solid var(--border); color:var(--text-mute);
+}
+strong{font-weight:700}
+mark{background:var(--amber-soft); color:inherit; padding:0 3px; border-radius:3px}
+code{background:var(--bg-sub); border:1px solid var(--border); border-radius:4px; padding:1px 5px; font-size:.88em}
+hr{border:0; border-top:1px solid var(--border); margin:3em 0}
+ul,ol{padding-left:1.4em} li{margin:.3em 0}
+
+/* ---------- 図解ブロック ---------- */
+.figure{
+  margin:1.4em 0 1.2em; padding:24px; border:1px solid var(--border);
+  border-radius:var(--radius); background:var(--bg-sub);
+}
+.figure svg{display:block; width:100%; height:auto; max-width:100%}
+.figure figcaption{
+  margin-top:14px; padding-top:12px; border-top:1px solid var(--border);
+  font-size:13px; color:var(--text-mute); text-align:center;
+}
+.svg-label{font-family:var(--font); font-size:13px; fill:var(--text)}
+.svg-label-sm{font-family:var(--font); font-size:11px; fill:var(--text-mute)}
+.svg-title{font-family:var(--font); font-size:14px; font-weight:700; fill:var(--text)}
+.svg-box{fill:var(--bg); stroke:var(--border-strong); stroke-width:1.5}
+.svg-box-accent{fill:var(--accent-soft); stroke:var(--accent); stroke-width:1.5}
+.svg-arrow{stroke:var(--text-faint); stroke-width:1.8; fill:none}
+
+/* ---------- コールアウト ---------- */
+.callout{
+  display:flex; gap:12px; padding:16px 18px; margin:1.2em 0;
+  border-radius:var(--radius); background:var(--bg-sub); border-left:3px solid var(--text-faint);
+}
+.callout .ico{flex:0 0 auto; font-size:18px; line-height:1.5}
+.callout p:first-child{margin-top:0} .callout p:last-child{margin-bottom:0}
+.callout.tip{background:var(--accent-soft); border-left-color:var(--accent)}
+.callout.warn{background:var(--amber-soft); border-left-color:var(--amber)}
+.callout.key{background:var(--green-soft); border-left-color:var(--green)}
+
+/* ---------- カードグリッド ---------- */
+.cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin:1.2em 0}
+.card{padding:16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg)}
+.card h4{margin:0 0 6px; font-size:14.5px; font-weight:700}
+.card p{margin:0; font-size:13.5px; color:var(--text-mute); line-height:1.7}
+
+/* ---------- 表 ---------- */
+table{width:100%; border-collapse:collapse; margin:1.2em 0; font-size:14.5px}
+th,td{border:1px solid var(--border); padding:10px 12px; text-align:left; vertical-align:top}
+th{background:var(--bg-sub); font-weight:700}
+
+/* ---------- クイズ ---------- */
+.quiz{
+  margin:2em 0; padding:22px 24px; border:1px solid var(--border);
+  border-radius:var(--radius); background:var(--bg-sub);
+}
+.quiz .qtag{
+  display:inline-block; font-size:11px; font-weight:700; letter-spacing:.06em;
+  color:var(--purple); background:var(--purple-soft); padding:3px 9px; border-radius:999px; margin-bottom:10px;
+}
+.quiz .qtext{font-weight:700; font-size:16.5px; margin:0 0 14px; line-height:1.65}
+.quiz .opts{display:flex; flex-direction:column; gap:8px}
+.quiz button.opt{
+  text-align:left; font:inherit; font-size:14.5px; color:var(--text); cursor:pointer;
+  padding:12px 14px; border:1px solid var(--border-strong); border-radius:6px;
+  background:var(--bg); transition:background .15s,border-color .15s;
+  display:flex; gap:10px; align-items:flex-start; line-height:1.6;
+}
+.quiz button.opt:hover:not(:disabled){background:var(--bg-hover); border-color:var(--accent)}
+.quiz button.opt:disabled{cursor:default}
+.quiz button.opt .mark{flex:0 0 20px; font-weight:700; color:var(--text-faint)}
+.quiz button.opt.correct{background:var(--green-soft); border-color:var(--green)}
+.quiz button.opt.correct .mark{color:var(--green)}
+.quiz button.opt.wrong{background:var(--red-soft); border-color:var(--red)}
+.quiz button.opt.wrong .mark{color:var(--red)}
+.quiz .explain{
+  display:none; margin-top:14px; padding:14px 16px; border-radius:6px;
+  background:var(--bg); border:1px solid var(--border); font-size:14px; line-height:1.75;
+}
+.quiz .explain.show{display:block}
+.quiz .verdict{font-weight:700; margin-bottom:4px}
+.quiz .verdict.ok{color:var(--green)} .quiz .verdict.ng{color:var(--red)}
+
+/* ---------- 出典 ---------- */
+.sources{font-size:14px; color:var(--text-mute)}
+.sources li{margin:.5em 0}
+
+/* ---------- テーマ切替ボタン ---------- */
+#themeBtn{
+  position:fixed; top:18px; right:22px; z-index:50;
+  width:38px; height:38px; border-radius:8px; cursor:pointer;
+  border:1px solid var(--border-strong); background:var(--bg); color:var(--text);
+  font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;
+  transition:background .15s;
+}
+#themeBtn:hover{background:var(--bg-hover)}
+
+/* ---------- レスポンシブ ---------- */
+@media (max-width:900px){
+  #sidebar{display:none}
+  main{padding:40px 22px 100px}
+  h1{font-size:30px} h2{font-size:22px}
+}
+@media print{
+  #sidebar,#themeBtn{display:none} main{max-width:none;padding:0}
+  .quiz .explain{display:block}
+}
+</style>
+</head>
+<body>
+
+<button id="themeBtn" aria-label="ライト/ダーク切替">🌙</button>
+
+<div class="layout">
+
+  <aside id="sidebar">
+    <div class="toc-label">目次</div>
+    <nav id="toc">
+      <a href="#about">この教材について</a>
+      <a href="#s1">1. パスワードの弱点</a>
+      <a href="#s2">2. パスキーは2つで1組の鍵</a>
+      <a href="#s3">3. ログインの中で起きていること</a>
+      <a href="#s4">4. 秘密鍵は「保管庫」に入る</a>
+      <a href="#s5">5. Windows Hello と PIN</a>
+      <a href="#s6">6. iCloudキーチェーン</a>
+      <a href="#s7">7. なぜ別PCで「登録しろ」なのか</a>
+      <a href="#s8">8. 解決A: QRコードで借りる</a>
+      <a href="#s9">9. 解決B: そのPCにも登録する</a>
+      <a href="#s10">10. どちらを選ぶか</a>
+      <a href="#summary">まとめ</a>
+      <a href="#sources">出典</a>
+    </nav>
+  </aside>
+
+  <main>
+
+    <header>
+      <div class="hero-eyebrow">セキュリティ入門</div>
+      <h1>パスキー入門 —<br>「別のPCから入れない」の正体</h1>
+      <p class="lead">スマホでは指紋ひとつで入れるのに、別のパソコンからだと「パスキーを登録してください」と言われる。あの不親切なメッセージの意味を、仕組みから解く。</p>
+      <div class="meta">
+        <span class="chip">対象: 中学生〜高校生</span>
+        <span class="chip">レベル: 入門</span>
+        <span class="chip">所要 約15分</span>
+        <span class="chip">更新: 2026-08-10</span>
+      </div>
+    </header>
+
+    <section id="about">
+      <h2>この教材について</h2>
+      <div class="callout key">
+        <span class="ico">🎯</span>
+        <div>
+          <p><strong>読み終えるとできるようになること</strong></p>
+          <ol>
+            <li>パスキーの正体を「鍵と鍵穴」で説明できる</li>
+            <li>パスキー／Windows Hello／PIN／iCloudキーチェーンの関係を区別できる</li>
+            <li>別のPCから入りたいときの2つの解決策を自分で選べる</li>
+          </ol>
+        </div>
+      </div>
+      <p style="font-size:14px;color:var(--text-mute)">
+        主な参照元: <a href="https://fidoalliance.org/passkeys/">FIDO Alliance</a> / <a href="https://www.nomura.co.jp/onlineservice/help/common/auth_passkey.html">野村證券 オンラインサービス ヘルプ</a>（全出典は<a href="#sources">末尾</a>）
+      </p>
+    </section>
+
+    <!-- ============ 1 ============ -->
+    <section id="s1">
+      <h2>1. パスワードの弱点</h2>
+      <figure class="figure">
+        <svg viewBox="0 0 720 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="偽サイトでパスワードが盗まれ本物のサイトに入られるまでの流れ">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="var(--text-faint)"/>
+            </marker>
+          </defs>
+          <g><rect x="10" y="45" width="150" height="76" rx="8" class="svg-box"/>
+             <text x="85" y="80" text-anchor="middle" class="svg-title">① 偽メール</text>
+             <text x="85" y="102" text-anchor="middle" class="svg-label-sm">本物そっくり</text></g>
+          <path d="M165 83 H 185" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="190" y="45" width="150" height="76" rx="8" class="svg-box"/>
+             <text x="265" y="80" text-anchor="middle" class="svg-title">② 入力</text>
+             <text x="265" y="102" text-anchor="middle" class="svg-label-sm">IDとパスワード</text></g>
+          <path d="M345 83 H 365" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="370" y="45" width="150" height="76" rx="8" class="svg-box"/>
+             <text x="445" y="80" text-anchor="middle" class="svg-title">③ 盗まれる</text>
+             <text x="445" y="102" text-anchor="middle" class="svg-label-sm">そのまま使える形で</text></g>
+          <path d="M525 83 H 545" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="550" y="45" width="150" height="76" rx="8" fill="var(--red-soft)" stroke="var(--red)" stroke-width="1.5"/>
+             <text x="625" y="80" text-anchor="middle" class="svg-title">④ 乗っ取り</text>
+             <text x="625" y="102" text-anchor="middle" class="svg-label-sm">本物サイトにログイン</text></g>
+          <text x="360" y="20" text-anchor="middle" class="svg-label">パスワード＝知っていれば誰でも通れる「合言葉」</text>
+        </svg>
+        <figcaption>図1: 合言葉は、盗んだ人と本人を区別できない</figcaption>
+      </figure>
+      <p>パスワードは合言葉だ。だから一度盗まれると、サービス側から見て偽者と本人の区別がつかない。しかも人間は覚えきれないので使い回す。1か所漏れれば全部が開く。</p>
+      <div class="callout warn">
+        <span class="ico">📈</span>
+        <div><p>国内のフィッシング報告は<strong>2025年12月の1か月だけで190,500件</strong>（フィッシング対策協議会）。「気をつける」で防ぐには数が多すぎる。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section id="s2">
+      <h2>2. パスキーは2つで1組の鍵</h2>
+      <figure class="figure">
+        <svg viewBox="0 0 720 230" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="パスキーが秘密鍵と公開鍵に分かれる図">
+          <rect x="260" y="10" width="200" height="54" rx="8" class="svg-box-accent"/>
+          <text x="360" y="43" text-anchor="middle" class="svg-title">パスキー（鍵のペア）</text>
+          <path d="M360 64 V 90 M170 90 H 550 M170 90 V 116 M550 90 V 116" class="svg-arrow"/>
+          <g><rect x="40" y="116" width="260" height="96" rx="8" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.5"/>
+             <text x="170" y="150" text-anchor="middle" class="svg-title">🔑 秘密鍵</text>
+             <text x="170" y="176" text-anchor="middle" class="svg-label">自分の端末から出ない</text>
+             <text x="170" y="197" text-anchor="middle" class="svg-label-sm">これが「鍵」そのもの</text></g>
+          <g><rect x="420" y="116" width="260" height="96" rx="8" class="svg-box"/>
+             <text x="550" y="150" text-anchor="middle" class="svg-title">🕳 公開鍵</text>
+             <text x="550" y="176" text-anchor="middle" class="svg-label">サービスに預ける</text>
+             <text x="550" y="197" text-anchor="middle" class="svg-label-sm">「鍵穴」だけ盗んでも開かない</text></g>
+        </svg>
+        <figcaption>図2: 公開鍵は渡してよい。秘密鍵は絶対に渡さない</figcaption>
+      </figure>
+      <p>パスキーは覚える文字列ではなく、数学的にペアになった2本の鍵だ。公開鍵はサービスに預ける鍵穴なので、漏れても悪用できない。秘密鍵は端末の中から一度も外に出ない。だから「サービスが攻撃されてパスワードが流出」に相当する事故が原理的に起きない。</p>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section id="s3">
+      <h2>3. ログインの中で起きていること</h2>
+      <figure class="figure">
+        <svg viewBox="0 0 720 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="お題・本人確認・署名・照合の4ステップ">
+          <g><rect x="10" y="40" width="150" height="80" rx="8" class="svg-box"/>
+             <text x="85" y="75" text-anchor="middle" class="svg-title">① お題</text>
+             <text x="85" y="97" text-anchor="middle" class="svg-label-sm">サイトが毎回送る</text></g>
+          <path d="M165 80 H 185" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="190" y="40" width="150" height="80" rx="8" class="svg-box-accent"/>
+             <text x="265" y="75" text-anchor="middle" class="svg-title">② 本人確認</text>
+             <text x="265" y="97" text-anchor="middle" class="svg-label-sm">顔・指紋・PIN</text></g>
+          <path d="M345 80 H 365" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="370" y="40" width="150" height="80" rx="8" class="svg-box"/>
+             <text x="445" y="75" text-anchor="middle" class="svg-title">③ 署名</text>
+             <text x="445" y="97" text-anchor="middle" class="svg-label-sm">秘密鍵で計算</text></g>
+          <path d="M525 80 H 545" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="550" y="40" width="150" height="80" rx="8" class="svg-box"/>
+             <text x="625" y="75" text-anchor="middle" class="svg-title">④ 照合</text>
+             <text x="625" y="97" text-anchor="middle" class="svg-label-sm">公開鍵で確かめる</text></g>
+          <text x="360" y="145" text-anchor="middle" class="svg-label-sm">通信を流れるのは③の署名だけ。鍵は一度も流れない</text>
+        </svg>
+        <figcaption>図3: 「鍵を送る」のではなく「鍵を持っている証拠を送る」</figcaption>
+      </figure>
+      <p>顔や指紋はサイトに送られていない。端末のロックを開けるために使われるだけだ。さらに署名は「そのサイト専用」に作られるので、偽サイトに渡しても本物では通用しない。人間が見抜けなくても、機械が相手を間違えない。</p>
+    </section>
+
+    <!-- ============ 4 ============ -->
+    <section id="s4">
+      <h2>4. 秘密鍵は「保管庫」に入る</h2>
+      <figure class="figure">
+        <svg viewBox="0 0 720 275" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="サービス・パスキー保管庫・本人確認の3層構造">
+          <rect x="160" y="10" width="400" height="52" rx="6" class="svg-box-accent"/>
+          <text x="360" y="42" text-anchor="middle" class="svg-title">サービス（野村證券・Google など）</text>
+          <path d="M122 90 V 66" class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M360 90 V 66" class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M598 90 V 66" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="10" y="90" width="225" height="76" rx="8" class="svg-box"/>
+             <text x="122" y="122" text-anchor="middle" class="svg-title">Windows Hello</text>
+             <text x="122" y="145" text-anchor="middle" class="svg-label-sm">Microsoft の保管庫</text></g>
+          <g><rect x="247" y="90" width="226" height="76" rx="8" class="svg-box"/>
+             <text x="360" y="122" text-anchor="middle" class="svg-title">iCloudキーチェーン</text>
+             <text x="360" y="145" text-anchor="middle" class="svg-label-sm">Apple の保管庫</text></g>
+          <g><rect x="485" y="90" width="225" height="76" rx="8" class="svg-box"/>
+             <text x="598" y="122" text-anchor="middle" class="svg-title">Google</text>
+             <text x="598" y="145" text-anchor="middle" class="svg-label-sm">パスワードマネージャー</text></g>
+          <path d="M360 200 V 172" class="svg-arrow" marker-end="url(#ar)"/>
+          <rect x="160" y="200" width="400" height="52" rx="6" class="svg-box"/>
+          <text x="360" y="232" text-anchor="middle" class="svg-title">本人確認：顔 ・ 指紋 ・ PIN</text>
+          <text x="360" y="270" text-anchor="middle" class="svg-label-sm">保管庫の中で同期する。保管庫をまたいでは同期しない</text>
+        </svg>
+        <figcaption>図4: 秘密鍵が住んでいるのは「保管庫」。世界は3つに分かれている</figcaption>
+      </figure>
+      <p>混乱の原因は、4つの言葉を同じ仲間だと思ってしまうことにある。実際には階層が違う。</p>
+      <table>
+        <tr><th>言葉</th><th>正体</th><th>階層</th></tr>
+        <tr><td>パスキー</td><td>秘密鍵と公開鍵のペア</td><td>中身</td></tr>
+        <tr><td>iCloudキーチェーン</td><td>Apple製の保管庫</td><td>入れ物</td></tr>
+        <tr><td>Windows Hello</td><td>Microsoft製の保管庫</td><td>入れ物</td></tr>
+        <tr><td>Windows PIN</td><td>その保管庫を開ける暗証番号</td><td>開け方</td></tr>
+      </table>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 1</span>
+      <p class="qtext">パスキーの「秘密鍵」はどこにあるか。</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>サービスのサーバーに保管されている</span></button>
+        <button class="opt" data-correct><span class="mark">B</span><span>自分の端末の保管庫の中にあり、外に出ない</span></button>
+        <button class="opt"><span class="mark">C</span><span>ログインのたびにサービスへ送られる</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>秘密鍵は端末を出ないので、サービス側に置かれることも送られることもない。Aだとサービスの流出で全員の鍵が漏れてしまい、パスワードと同じ弱点になる。Cは通信を盗聴されれば終わりで、これも成立しない。サービスが持つのは公開鍵だけだ。</p>
+      </div>
+    </div>
+
+    <!-- ============ 5 ============ -->
+    <section id="s5">
+      <h2>5. Windows Hello と PIN</h2>
+      <figure class="figure">
+        <svg viewBox="0 0 720 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="パスワードとWindows PINの性質の対比">
+          <rect x="10" y="20" width="310" height="170" rx="8" fill="var(--bg)" stroke="var(--border-strong)" stroke-width="1.5"/>
+          <text x="165" y="52" text-anchor="middle" class="svg-title" fill="var(--text-mute)">パスワード</text>
+          <text x="165" y="88" text-anchor="middle" class="svg-label">どのPCからでも使える</text>
+          <text x="165" y="118" text-anchor="middle" class="svg-label">ネットを通って届く</text>
+          <text x="165" y="148" text-anchor="middle" class="svg-label">盗まれたら誰でも入れる</text>
+          <path d="M334 105 H 386" class="svg-arrow" stroke-width="2.5" marker-end="url(#ar)"/>
+          <rect x="400" y="20" width="310" height="170" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="555" y="52" text-anchor="middle" class="svg-title" fill="var(--accent)">Windows PIN</text>
+          <text x="555" y="88" text-anchor="middle" class="svg-label">そのPC 1台の中だけ</text>
+          <text x="555" y="118" text-anchor="middle" class="svg-label">ネットに出ていかない</text>
+          <text x="555" y="148" text-anchor="middle" class="svg-label">TPMが守り、間違えると停止</text>
+        </svg>
+        <figcaption>図5: PINが4桁でも大丈夫な理由は「外に出ない」から</figcaption>
+      </figure>
+      <p>Windows HelloはWindowsに内蔵された保管庫で、顔・指紋・PINで開ける。PINが短くてよいのは、そのPC以外では意味を持たない数字だからだ。TPMという専用チップが中で守り、連続で間違えるとロックされる。<mark>PINはパスキーの代わりではなく、保管庫の開け方</mark>にすぎない。</p>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section id="s6">
+      <h2>6. iCloudキーチェーン</h2>
+      <figure class="figure">
+        <svg viewBox="0 0 720 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Apple製品の間だけでパスキーが同期し、Windows PCには届かない図">
+          <rect x="20" y="20" width="420" height="200" rx="12" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="230" y="48" text-anchor="middle" class="svg-title" fill="var(--accent)">同じ Apple ID の世界</text>
+          <rect x="40" y="70" width="120" height="60" rx="8" class="svg-box"/>
+          <text x="100" y="106" text-anchor="middle" class="svg-title">iPhone</text>
+          <rect x="170" y="70" width="120" height="60" rx="8" class="svg-box"/>
+          <text x="230" y="106" text-anchor="middle" class="svg-title">iPad</text>
+          <rect x="300" y="70" width="120" height="60" rx="8" class="svg-box"/>
+          <text x="360" y="106" text-anchor="middle" class="svg-title">Mac</text>
+          <path d="M100 130 V 150 M100 150 H 360 M230 130 V 150 M360 130 V 150" class="svg-arrow"/>
+          <text x="230" y="175" text-anchor="middle" class="svg-label">iCloudキーチェーンが自動で同期</text>
+          <text x="230" y="200" text-anchor="middle" class="svg-label-sm">1台で作れば、他の2台にも同じパスキーが増える</text>
+          <path d="M448 120 H 478" class="svg-arrow" stroke-dasharray="5 5"/>
+          <text x="463" y="112" text-anchor="middle" class="svg-title" fill="var(--red)">✕</text>
+          <rect x="490" y="70" width="210" height="100" rx="8" fill="var(--bg)" stroke="var(--border-strong)" stroke-width="1.5" stroke-dasharray="6 4"/>
+          <text x="595" y="105" text-anchor="middle" class="svg-title">Windows PC</text>
+          <text x="595" y="130" text-anchor="middle" class="svg-label-sm">Appleの保管庫は開けない</text>
+          <text x="595" y="150" text-anchor="middle" class="svg-label-sm">＝ パスキーが1本もない</text>
+        </svg>
+        <figcaption>図6: 便利な同期は、Appleの輪の内側で完結している</figcaption>
+      </figure>
+      <p>iCloudキーチェーンはAppleの保管庫だ。同じApple IDのiPhone・iPad・Macなら、1台で作ったパスキーが自動で他にも現れる。ここまでは快適だが、この輪はAppleの外へは広がらない。Windowsから見ると、iPhoneの中のパスキーは存在しないのと同じだ。</p>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 2</span>
+      <p class="qtext">iPhoneで登録したパスキーが、Windows PCのログイン画面に出てこないのはなぜか。</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>登録から時間が経って期限が切れたから</span></button>
+        <button class="opt"><span class="mark">B</span><span>PCのブラウザがパスキーに対応していないから</span></button>
+        <button class="opt" data-correct><span class="mark">C</span><span>Appleの保管庫の中身は、Windowsの保管庫には同期されないから</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>保管庫はメーカーごとに分かれていて、その境界を越えて中身が移ることはない。Aは誤りで、パスキーに有効期限はない。Bも違って、Edge・Chrome・Firefoxはいずれも対応済み。対応していないのはブラウザではなく、保管庫どうしの関係だ。</p>
+      </div>
+    </div>
+
+    <!-- ============ 7 ============ -->
+    <section id="s7">
+      <h2>7. なぜ別PCで「登録しろ」なのか</h2>
+      <figure class="figure">
+        <svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="端末と保管庫の組み合わせ表。Windows側の保管庫だけが空になっている">
+          <text x="310" y="44" text-anchor="middle" class="svg-label">iCloudキーチェーン</text>
+          <text x="570" y="44" text-anchor="middle" class="svg-label">Windows Hello</text>
+          <text x="170" y="115" text-anchor="end" class="svg-label">iPhone</text>
+          <text x="170" y="215" text-anchor="end" class="svg-label">Windows PC</text>
+          <rect x="185" y="60" width="250" height="90" rx="8" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.5"/>
+          <text x="310" y="100" text-anchor="middle" class="svg-title">🔑 パスキーあり</text>
+          <text x="310" y="124" text-anchor="middle" class="svg-label-sm">ここで登録済み</text>
+          <rect x="445" y="60" width="250" height="90" rx="8" class="svg-box"/>
+          <text x="570" y="112" text-anchor="middle" class="svg-label-sm">Appleの鍵は入らない</text>
+          <rect x="185" y="160" width="250" height="90" rx="8" class="svg-box"/>
+          <text x="310" y="212" text-anchor="middle" class="svg-label-sm">PCからは開けられない</text>
+          <rect x="445" y="160" width="250" height="90" rx="8" fill="var(--red-soft)" stroke="var(--red)" stroke-width="1.5"/>
+          <text x="570" y="200" text-anchor="middle" class="svg-title">空っぽ</text>
+          <text x="570" y="224" text-anchor="middle" class="svg-label-sm">だから「登録して」と出る</text>
+          <text x="440" y="285" text-anchor="middle" class="svg-label-sm">サイトが見ているのは、いま目の前のPCの保管庫だけ</text>
+        </svg>
+        <figcaption>図7: 疑われているのではなく、このPCに鍵が1本もないだけ</figcaption>
+      </figure>
+      <p>これが冒頭の謎の答えだ。サイトはあなたを疑っているのではない。<strong>いま操作しているPCの保管庫に、鍵が1本も入っていない</strong>のを見ているだけ。だから「パスキーを登録してください」は「このPCにも合鍵を作ってください」という意味になる。</p>
+      <div class="callout tip">
+        <span class="ico">💡</span>
+        <div><p>そして合鍵を作らずに、<strong>iPhoneの鍵をその場だけ借りる</strong>道もある。次の2つが解決策だ。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ 8 ============ -->
+    <section id="s8">
+      <h2>8. 解決A: QRコードで借りる</h2>
+      <figure class="figure">
+        <svg viewBox="0 0 720 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="QRコードとBluetoothを使ったクロスデバイス認証の5ステップ">
+          <g><rect x="10" y="55" width="124" height="80" rx="8" class="svg-box"/>
+             <text x="72" y="90" text-anchor="middle" class="svg-title">QRを表示</text>
+             <text x="72" y="112" text-anchor="middle" class="svg-label-sm">PCの画面に</text></g>
+          <path d="M138 95 H 150" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="152" y="55" width="124" height="80" rx="8" class="svg-box"/>
+             <text x="214" y="90" text-anchor="middle" class="svg-title">スマホで読む</text>
+             <text x="214" y="112" text-anchor="middle" class="svg-label-sm">カメラでスキャン</text></g>
+          <path d="M280 95 H 292" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="294" y="55" width="124" height="80" rx="8" class="svg-box-accent"/>
+             <text x="356" y="90" text-anchor="middle" class="svg-title">近さを確認</text>
+             <text x="356" y="112" text-anchor="middle" class="svg-label-sm">Bluetooth</text></g>
+          <path d="M422 95 H 434" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="436" y="55" width="124" height="80" rx="8" class="svg-box"/>
+             <text x="498" y="90" text-anchor="middle" class="svg-title">顔で承認</text>
+             <text x="498" y="112" text-anchor="middle" class="svg-label-sm">iPhone側で</text></g>
+          <path d="M564 95 H 576" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="578" y="55" width="124" height="80" rx="8" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.5"/>
+             <text x="640" y="90" text-anchor="middle" class="svg-title">ログイン</text>
+             <text x="640" y="112" text-anchor="middle" class="svg-label-sm">PCに鍵は残らない</text></g>
+          <text x="360" y="30" text-anchor="middle" class="svg-label">秘密鍵はiPhoneから出ない。PCは「代理で頼む」だけ</text>
+          <text x="360" y="170" text-anchor="middle" class="svg-label-sm">QRは1回きり。使い回しも、写真のコピーも通らない</text>
+        </svg>
+        <figcaption>図8: クロスデバイス認証。PCは窓口、鍵を出すのはスマホ</figcaption>
+      </figure>
+      <p>PCの画面にQRコードを出し、iPhoneで読み取る方法だ。ここでのBluetoothはデータの通り道ではなく、<strong>2台が本当に近くにあることの証明</strong>に使う。遠くの誰かがQR画像だけ手に入れても成立しない。PCには何も残らないので、学校や家族共用のPCならこれが正解。</p>
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><p>両方の端末でBluetoothをオンにしておく必要がある（野村證券も同じ案内をしている）。</p></div>
+      </div>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 3</span>
+      <p class="qtext">QRコードでログインするとき、Bluetoothは何のために使われるか。</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>秘密鍵をスマホからPCへコピーするため</span></button>
+        <button class="opt" data-correct><span class="mark">B</span><span>2台が近くにあることを確かめるため</span></button>
+        <button class="opt"><span class="mark">C</span><span>ネットが無くてもログインできるようにするため</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>Bluetoothは近さの確認専用で、これがあるから遠隔地からの成りすましが防げる。Aは仕組みの根本に反する——秘密鍵は端末を出ないという約束が崩れてしまう。Cも違い、実際のやり取りは暗号化されたインターネット経由で行われる。</p>
+      </div>
+    </div>
+
+    <!-- ============ 9 ============ -->
+    <section id="s9">
+      <h2>9. 解決B: そのPCにも登録する</h2>
+      <figure class="figure">
+        <svg viewBox="0 0 720 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="1つの口座に複数のパスキーを登録できることを示す図">
+          <rect x="250" y="10" width="220" height="54" rx="8" class="svg-box-accent"/>
+          <text x="360" y="43" text-anchor="middle" class="svg-title">1つの口座</text>
+          <path d="M360 64 V 88 M72 88 H 640 M72 88 V 110 M214 88 V 110 M356 88 V 110 M498 88 V 110 M640 88 V 110" class="svg-arrow"/>
+          <g><rect x="10" y="110" width="124" height="66" rx="8" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.5"/>
+             <text x="72" y="140" text-anchor="middle" class="svg-title">① iPhone</text>
+             <text x="72" y="161" text-anchor="middle" class="svg-label-sm">登録済み</text></g>
+          <g><rect x="152" y="110" width="124" height="66" rx="8" class="svg-box-accent"/>
+             <text x="214" y="140" text-anchor="middle" class="svg-title">② 自宅PC</text>
+             <text x="214" y="161" text-anchor="middle" class="svg-label-sm">これから追加</text></g>
+          <g><rect x="294" y="110" width="124" height="66" rx="8" class="svg-box"/>
+             <text x="356" y="147" text-anchor="middle" class="svg-label-sm">③ 空き</text></g>
+          <g><rect x="436" y="110" width="124" height="66" rx="8" class="svg-box"/>
+             <text x="498" y="147" text-anchor="middle" class="svg-label-sm">④ 空き</text></g>
+          <g><rect x="578" y="110" width="124" height="66" rx="8" class="svg-box"/>
+             <text x="640" y="147" text-anchor="middle" class="svg-label-sm">⑤ 空き</text></g>
+          <text x="360" y="200" text-anchor="middle" class="svg-label-sm">野村證券の場合、1口座あたり5件まで登録できる</text>
+        </svg>
+        <figcaption>図9: パスキーは1つに絞らなくてよい。端末ごとに増やす</figcaption>
+      </figure>
+      <p>自分だけが使うPCなら、追加登録しておくと次からPINや指紋だけで入れる。登録の入口では保管先を選ぶことになる。EdgeやFirefoxならWindows Hello、ChromeならGoogleパスワードマネージャーが素直だ（後者はGoogleアカウントに紐づくので、別のPCのChromeでもそのまま使える）。</p>
+      <div class="callout tip">
+        <span class="ico">🔁</span>
+        <div><p>追加登録には、いま使えるパスキーなど既存の方法での本人確認が必要。「鍵が1本もない状態」を作らないため、<strong>予備は元気なうちに</strong>。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ 10 ============ -->
+    <section id="s10">
+      <h2>10. どちらを選ぶか</h2>
+      <figure class="figure">
+        <svg viewBox="0 0 720 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="そのPCを今後も使うか・自分専用かで選び方を分けたマトリクス">
+          <rect x="140" y="20" width="520" height="250" fill="none" stroke="var(--border-strong)"/>
+          <line x1="400" y1="20" x2="400" y2="270" stroke="var(--border)"/>
+          <line x1="140" y1="145" x2="660" y2="145" stroke="var(--border)"/>
+          <rect x="150" y="30" width="240" height="105" rx="6" fill="var(--accent-soft)"/>
+          <text x="270" y="80" text-anchor="middle" class="svg-title">PCにも登録する</text>
+          <text x="270" y="104" text-anchor="middle" class="svg-label-sm">毎回ワンタッチで速い</text>
+          <text x="530" y="80" text-anchor="middle" class="svg-title">QRで借りる</text>
+          <text x="530" y="104" text-anchor="middle" class="svg-label-sm">PCに何も残さない</text>
+          <text x="270" y="205" text-anchor="middle" class="svg-title">QRで借りる</text>
+          <text x="270" y="229" text-anchor="middle" class="svg-label-sm">1回きりなら十分</text>
+          <text x="530" y="205" text-anchor="middle" class="svg-title">QRで借りる</text>
+          <text x="530" y="229" text-anchor="middle" class="svg-label-sm">共用PCに鍵を置かない</text>
+          <text x="130" y="60" text-anchor="end" class="svg-label-sm">↑ 今後も使う</text>
+          <text x="130" y="245" text-anchor="end" class="svg-label-sm">↓ 今回だけ</text>
+          <text x="400" y="296" text-anchor="middle" class="svg-label-sm">← 自分専用のPC　　　　共用・他人のPC →</text>
+        </svg>
+        <figcaption>図10: 判断の軸は「そのPCが自分のものか」だけ</figcaption>
+      </figure>
+      <p>迷ったらQRで借りればいい。損をしないし、いつでも後から登録できる。逆に、共用PCに合鍵を作るのは避ける。パスキーは端末に住みつく鍵だからだ。</p>
+      <div class="callout warn">
+        <span class="ico">🧯</span>
+        <div><p>スマホを買い替える前に、必ずPCなど別の場所にもパスキーを用意しておく。1本しかない鍵を失くすと、書類の郵送などやり直しになる。</p></div>
+      </div>
+    </section>
+
+    <section id="summary">
+      <h2>まとめ</h2>
+      <div class="cards">
+        <div class="card"><h4>パスキー＝出ていかない鍵</h4><p>秘密鍵は端末の中。送られるのは署名だけなので、偽サイトに渡しても通用しない。</p></div>
+        <div class="card"><h4>Hello・キーチェーンは入れ物</h4><p>鍵をしまう保管庫。PINはその扉を開ける番号で、鍵そのものではない。</p></div>
+        <div class="card"><h4>「登録して」＝合鍵を作れ</h4><p>そのPCの保管庫が空なだけ。QRで借りるか、追加登録するかの二択。</p></div>
+      </div>
+    </section>
+
+    <section id="sources">
+      <h2>出典</h2>
+      <ul class="sources">
+        <li><a href="https://fidoalliance.org/passkeys/">Passkeys | FIDO Alliance</a> — 同期パスキーの定義、QRとBLE近接確認</li>
+        <li><a href="https://www.corbado.com/blog/webauthn-passkey-qr-code">WebAuthn Passkey QR Codes &amp; Bluetooth | Corbado</a> — BLEは近接確認のみ、QRは1回限り</li>
+        <li><a href="https://www.nomura.co.jp/onlineservice/help/common/auth_passkey.html">パスキー認証 | 野村證券</a> — 1口座5件、別端末利用時のBluetooth</li>
+        <li><a href="https://www.nomura.co.jp/support/procedure/online/passkey/">パスキーの登録 | 野村證券</a> — 保管先の選択肢とブラウザの推奨</li>
+        <li><a href="https://learn.microsoft.com/ja-jp/windows/security/identity-protection/hello-for-business/hello-why-pin-is-better-than-password">PINがパスワードより優れている理由 | Microsoft Learn</a> — ローカル限定とTPM</li>
+        <li><a href="https://learn.microsoft.com/ja-jp/windows/security/identity-protection/passkeys/">Windows でのパスキーのサポート | Microsoft Learn</a> — 保存先と他社プロバイダー</li>
+        <li><a href="https://www.antiphishing.jp/report/monthly/202512.html">フィッシング対策協議会 2025年12月報告</a> — 190,500件</li>
+      </ul>
+    </section>
+
+  </main>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement, btn=document.getElementById('themeBtn');
+  if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+    root.setAttribute('data-theme','dark');
+  }
+  var sync=function(){ btn.textContent = root.getAttribute('data-theme')==='dark' ? '☀️' : '🌙'; };
+  sync();
+  btn.addEventListener('click',function(){
+    root.setAttribute('data-theme', root.getAttribute('data-theme')==='dark'?'light':'dark');
+    sync();
+  });
+})();
+
+(function(){
+  var links=[].slice.call(document.querySelectorAll('#toc a'));
+  var map={}; links.forEach(function(a){ var el=document.querySelector(a.getAttribute('href')); if(el) map[el.id]=a; });
+  var targets=Object.keys(map).map(function(id){return document.getElementById(id);});
+  if(!targets.length) return;
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        links.forEach(function(a){a.classList.remove('active');});
+        map[e.target.id].classList.add('active');
+      }
+    });
+  },{rootMargin:'-15% 0px -70% 0px', threshold:0});
+  targets.forEach(function(t){io.observe(t);});
+})();
+
+(function(){
+  document.querySelectorAll('[data-quiz]').forEach(function(q){
+    var opts=[].slice.call(q.querySelectorAll('.opt'));
+    var box=q.querySelector('.explain'), verdict=q.querySelector('.verdict');
+    opts.forEach(function(btn){
+      btn.addEventListener('click',function(){
+        if(btn.disabled) return;
+        var ok=btn.hasAttribute('data-correct');
+        opts.forEach(function(o){
+          o.disabled=true;
+          if(o.hasAttribute('data-correct')) o.classList.add('correct');
+        });
+        if(!ok) btn.classList.add('wrong');
+        verdict.textContent = ok ? '正解！' : '惜しい — 正解は上の緑の選択肢です';
+        verdict.className = 'verdict ' + (ok?'ok':'ng');
+        box.classList.add('show');
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

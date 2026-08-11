@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>myaitech — オリジナル教材ライブラリ</title>
+<meta name="description" content="AIと一緒に作った、図解つきの学習教材コレクション。">
+<style>
+:root{
+  --bg:#ffffff; --bg-sub:#f7f7f5; --bg-hover:#efefed;
+  --text:#37352f; --text-mute:#787774; --text-faint:#9b9a97;
+  --border:#e9e9e7; --border-strong:#d3d3d1;
+  --accent:#2383e2; --accent-soft:#e7f1fd;
+  --green:#0f7b6c; --green-soft:#e4f3f0;
+  --amber:#cb912f; --amber-soft:#faf1dd;
+  --purple:#6940a5; --purple-soft:#eee6f7;
+  --radius:10px;
+  --font: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif;
+}
+html[data-theme="dark"]{
+  --bg:#191919; --bg-sub:#202020; --bg-hover:#2a2a2a;
+  --text:#d4d4d4; --text-mute:#9b9b9b; --text-faint:#6f6f6f;
+  --border:#2f2f2f; --border-strong:#414141;
+  --accent:#5b9dd9; --accent-soft:#1c2f3f;
+  --green:#4dab9a; --green-soft:#1c2b28;
+  --amber:#e0b44a; --amber-soft:#332a1b;
+  --purple:#9a76d1; --purple-soft:#2a2136;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font); font-size:16px; line-height:1.75;
+  -webkit-font-smoothing:antialiased; transition:background .2s,color .2s;
+}
+.wrap{max-width:880px; margin:0 auto; padding:64px 28px 120px}
+
+/* ---------- ヘッダー ---------- */
+.eyebrow{font-size:12px; letter-spacing:.12em; color:var(--accent); font-weight:700; text-transform:uppercase}
+h1{font-size:40px; line-height:1.22; margin:.28em 0 .3em; letter-spacing:-.015em; font-weight:800}
+.lead{font-size:17.5px; color:var(--text-mute); line-height:1.8; margin:0 0 22px; max-width:64ch}
+.meta{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px}
+.chip{
+  font-size:12.5px; padding:4px 11px; border-radius:999px;
+  background:var(--bg-sub); border:1px solid var(--border); color:var(--text-mute);
+}
+.chip.live{color:var(--green); background:var(--green-soft); border-color:transparent; font-weight:600}
+
+/* ---------- カテゴリ ---------- */
+.cat{margin-top:54px}
+.cat-head{display:flex; align-items:baseline; gap:12px; padding-bottom:.4em; border-bottom:1px solid var(--border)}
+.cat-head h2{font-size:22px; margin:0; font-weight:700; letter-spacing:-.005em}
+.cat-head .count{font-size:12.5px; color:var(--text-faint)}
+.cat-note{font-size:13.5px; color:var(--text-mute); margin:.7em 0 0}
+
+/* ---------- 教材カード ---------- */
+.list{display:grid; gap:14px; margin-top:20px}
+.item{
+  display:block; text-decoration:none; color:inherit;
+  border:1px solid var(--border); border-radius:var(--radius);
+  padding:20px 22px; background:var(--bg);
+  transition:border-color .15s, background .15s, transform .15s;
+}
+.item:hover{border-color:var(--accent); background:var(--bg-sub); transform:translateY(-1px)}
+.item .kicker{font-size:11.5px; letter-spacing:.08em; color:var(--accent); font-weight:700; text-transform:uppercase}
+.item h3{margin:.35em 0 .3em; font-size:19px; font-weight:700; line-height:1.45; letter-spacing:-.005em}
+.item p{margin:0 0 12px; font-size:14.5px; color:var(--text-mute); line-height:1.75}
+.tags{display:flex; flex-wrap:wrap; gap:7px}
+.tag{
+  font-size:11.5px; padding:3px 9px; border-radius:999px;
+  background:var(--bg-sub); border:1px solid var(--border); color:var(--text-faint);
+}
+html[data-theme="dark"] .item:hover{background:var(--bg-hover)}
+
+/* ---------- 予告カード ---------- */
+.soon{
+  border:1px dashed var(--border-strong); border-radius:var(--radius);
+  padding:18px 22px; color:var(--text-faint); font-size:14px; background:transparent;
+}
+
+/* ---------- フッター ---------- */
+footer{margin-top:64px; padding-top:24px; border-top:1px solid var(--border); font-size:13.5px; color:var(--text-mute)}
+footer a{color:var(--accent)}
+footer p{margin:.5em 0}
+
+/* ---------- テーマ切替 ---------- */
+#themeBtn{
+  position:fixed; top:18px; right:22px; z-index:50;
+  width:38px; height:38px; border-radius:8px; cursor:pointer;
+  border:1px solid var(--border-strong); background:var(--bg); color:var(--text);
+  font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;
+  transition:background .15s;
+}
+#themeBtn:hover{background:var(--bg-hover)}
+
+@media (max-width:640px){
+  .wrap{padding:44px 20px 90px}
+  h1{font-size:29px}
+  .cat-head h2{font-size:19px}
+}
+</style>
+</head>
+<body>
+
+<button id="themeBtn" aria-label="ライト/ダーク切替">🌙</button>
+
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">myaitech / kyozai</div>
+    <h1>オリジナル教材ライブラリ</h1>
+    <p class="lead">AIと一緒に作った、図解つきの学習教材コレクション。1ページ完結・インラインSVGの図解・理解度クイズつきで、ブラウザだけで読めます。分野ごとに並べてあるので、気になるところから開いてください。</p>
+    <div class="meta">
+      <span class="chip live">教材 3本</span>
+      <span class="chip">1ページ完結</span>
+      <span class="chip">図解＋3択クイズ</span>
+      <span class="chip">ダークモード対応</span>
+      <span class="chip">更新: 2026-08-11</span>
+    </div>
+  </header>
+
+  <!-- ============ IT・セキュリティ ============ -->
+  <section class="cat">
+    <div class="cat-head">
+      <h2>🔐 IT・セキュリティ</h2>
+      <span class="count">1本</span>
+    </div>
+    <p class="cat-note">「なんとなく使っているけど仕組みは知らない」技術を、図から解きほぐす。</p>
+
+    <div class="list">
+      <a class="item" href="02.kyozai/001.%E3%83%91%E3%82%B9%E3%82%AD%E3%83%BC%E5%85%A5%E9%96%80/%E3%83%91%E3%82%B9%E3%82%AD%E3%83%BC%E5%85%A5%E9%96%80_%E6%95%99%E6%9D%90.html">
+        <div class="kicker">セキュリティ入門</div>
+        <h3>パスキー入門 — 「別のPCから入れない」の正体</h3>
+        <p>スマホでは指紋ひとつで入れるのに、別のパソコンからだと「パスキーを登録してください」と言われる。あの不親切なメッセージの意味を、仕組みから解く。</p>
+        <div class="tags">
+          <span class="tag">対象: 中学生〜高校生</span>
+          <span class="tag">入門</span>
+          <span class="tag">約15分</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ============ お金・投資 ============ -->
+  <section class="cat">
+    <div class="cat-head">
+      <h2>💰 お金・投資</h2>
+      <span class="count">1本</span>
+    </div>
+    <p class="cat-note">数字の話を、自分でコントロールできる部分とできない部分に分けて理解する。</p>
+
+    <div class="list">
+      <a class="item" href="02.kyozai/002.%E6%A0%AA%E5%9F%BA%E7%A4%8E%E7%9F%A5%E8%AD%98/%E6%A0%AA%E5%BC%8F%E6%8A%95%E8%B3%87%E5%85%A5%E9%96%80_%E6%95%99%E6%9D%90.html">
+        <div class="kicker">Investing 101</div>
+        <h3>株のもうけは「5つの部品」でできている</h3>
+        <p>株価は上がるか下がるかの2択ではありません。もうけを部品に分解すると、自分でコントロールできる部分がはっきり見えます。</p>
+        <div class="tags">
+          <span class="tag">対象: まったくの初心者</span>
+          <span class="tag">入門</span>
+          <span class="tag">約20分</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ============ ものづくり・ビジネス ============ -->
+  <section class="cat">
+    <div class="cat-head">
+      <h2>🎮 ものづくり・ビジネス</h2>
+      <span class="count">1本</span>
+    </div>
+    <p class="cat-note">作ったものを世に出して、お金にするまでの手続き・期限・段取り。</p>
+
+    <div class="list">
+      <a class="item" href="02.kyozai/003.steam%E3%82%B2%E3%83%BC%E3%83%A0%E9%96%8B%E7%99%BA%E6%B5%81%E3%82%8C/Steam%E3%82%B2%E3%83%BC%E3%83%A0%E9%96%8B%E7%99%BA%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9_%E6%95%99%E6%9D%90.html">
+        <div class="kicker">ゲーム開発 / インディー</div>
+        <h3>AIと作る自作ゲームをSteamで売るまでの全ルート</h3>
+        <p>Codex や Claude Code に書かせて作ったゲームを、Steamで実際に売るまで。手続き・費用・税務・テスト・価格・宣伝・発売日の決め方を順番にたどります。</p>
+        <div class="tags">
+          <span class="tag">対象: 入門者</span>
+          <span class="tag">前提知識なし</span>
+          <span class="tag">約35分</span>
+          <span class="tag">全15章</span>
+        </div>
+      </a>
+
+      <div class="soon">このカテゴリは今後増えていきます。</div>
+    </div>
+  </section>
+
+  <footer>
+    <p>各教材は1枚のHTMLで完結しており、外部のCDNやライブラリを一切読み込みません。オフラインでも、ファイルをそのまま開けば読めます。</p>
+    <p>教材の設計メモ（企画マークダウン）は各フォルダに <code>*_企画.md</code> として置いてあります。リポジトリ: <a href="https://github.com/yowapon/myaitech">github.com/yowapon/myaitech</a></p>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement, btn=document.getElementById('themeBtn');
+  if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+    root.setAttribute('data-theme','dark');
+  }
+  var sync=function(){ btn.textContent = root.getAttribute('data-theme')==='dark' ? '☀️' : '🌙'; };
+  sync();
+  btn.addEventListener('click',function(){
+    root.setAttribute('data-theme', root.getAttribute('data-theme')==='dark'?'light':'dark');
+    sync();
+  });
+})();
+</script>
+</body>
+</html>

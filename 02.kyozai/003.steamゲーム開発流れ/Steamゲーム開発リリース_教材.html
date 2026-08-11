@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AIと作る自作ゲームをSteamで売るまでの全ルート</title>
+<style>
+:root{
+  --bg:#ffffff; --bg-sub:#f7f7f5; --bg-hover:#efefed;
+  --text:#37352f; --text-mute:#787774; --text-faint:#9b9a97;
+  --border:#e9e9e7; --border-strong:#d3d3d1;
+  --accent:#2383e2; --accent-soft:#e7f1fd;
+  --green:#0f7b6c; --green-soft:#e4f3f0;
+  --amber:#cb912f; --amber-soft:#faf1dd;
+  --red:#e03e3e;   --red-soft:#fbe9e9;
+  --purple:#6940a5; --purple-soft:#eee6f7;
+  --radius:8px;
+  --font: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif;
+}
+html[data-theme="dark"]{
+  --bg:#191919; --bg-sub:#202020; --bg-hover:#2a2a2a;
+  --text:#d4d4d4; --text-mute:#9b9b9b; --text-faint:#6f6f6f;
+  --border:#2f2f2f; --border-strong:#414141;
+  --accent:#5b9dd9; --accent-soft:#1c2f3f;
+  --green:#4dab9a; --green-soft:#1c2b28;
+  --amber:#e0b44a; --amber-soft:#332a1b;
+  --red:#ff7369;   --red-soft:#3a2323;
+  --purple:#9a76d1; --purple-soft:#2a2136;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font); font-size:16px; line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+  transition:background .2s,color .2s;
+}
+.layout{display:flex; align-items:flex-start; max-width:1180px; margin:0 auto}
+
+/* ---------- 目次サイドバー ---------- */
+#sidebar{
+  position:sticky; top:0; flex:0 0 250px; height:100vh;
+  padding:28px 14px 40px; overflow-y:auto;
+  border-right:1px solid var(--border); background:var(--bg-sub);
+}
+#sidebar .toc-label{
+  font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--text-faint); padding:0 10px; margin-bottom:10px; font-weight:600;
+}
+#toc a{
+  display:block; padding:6px 10px; margin:1px 0; border-radius:6px;
+  color:var(--text-mute); text-decoration:none; font-size:13.5px; line-height:1.45;
+  border-left:2px solid transparent; transition:background .15s,color .15s;
+}
+#toc a:hover{background:var(--bg-hover); color:var(--text)}
+#toc a.active{background:var(--accent-soft); color:var(--accent); font-weight:600; border-left-color:var(--accent)}
+#toc a.sub{padding-left:22px; font-size:12.5px}
+
+/* ---------- 本文 ---------- */
+main{flex:1 1 auto; min-width:0; padding:56px 60px 140px; max-width:860px}
+.hero-eyebrow{font-size:12px; letter-spacing:.1em; color:var(--accent); font-weight:700; text-transform:uppercase}
+h1{font-size:40px; line-height:1.25; margin:.25em 0 .35em; letter-spacing:-.01em; font-weight:800}
+h2{font-size:26px; margin:2.6em 0 .6em; padding-bottom:.3em; border-bottom:1px solid var(--border); font-weight:700; letter-spacing:-.005em}
+h3{font-size:18px; margin:1.8em 0 .4em; font-weight:700}
+p{margin:.7em 0}
+a{color:var(--accent)}
+.lead{font-size:18px; color:var(--text-mute); line-height:1.8}
+.meta{display:flex; flex-wrap:wrap; gap:8px; margin:20px 0 8px}
+.chip{
+  font-size:12.5px; padding:4px 11px; border-radius:999px;
+  background:var(--bg-sub); border:1px solid var(--border); color:var(--text-mute);
+}
+strong{font-weight:700}
+mark{background:var(--amber-soft); color:inherit; padding:0 3px; border-radius:3px}
+code{background:var(--bg-sub); border:1px solid var(--border); border-radius:4px; padding:1px 5px; font-size:.88em}
+hr{border:0; border-top:1px solid var(--border); margin:3em 0}
+ul,ol{padding-left:1.4em} li{margin:.3em 0}
+
+/* ---------- 図解ブロック（各セクションの先頭に置く） ---------- */
+.figure{
+  margin:1.4em 0 1.2em; padding:24px; border:1px solid var(--border);
+  border-radius:var(--radius); background:var(--bg-sub);
+}
+.figure svg{display:block; width:100%; height:auto; max-width:100%}
+.figure figcaption{
+  margin-top:14px; padding-top:12px; border-top:1px solid var(--border);
+  font-size:13px; color:var(--text-mute); text-align:center;
+}
+/* SVG内で使う共通クラス */
+.svg-label{font-family:var(--font); font-size:13px; fill:var(--text)}
+.svg-label-sm{font-family:var(--font); font-size:11px; fill:var(--text-mute)}
+.svg-title{font-family:var(--font); font-size:14px; font-weight:700; fill:var(--text)}
+.svg-box{fill:var(--bg); stroke:var(--border-strong); stroke-width:1.5}
+.svg-box-accent{fill:var(--accent-soft); stroke:var(--accent); stroke-width:1.5}
+.svg-arrow{stroke:var(--text-faint); stroke-width:1.8; fill:none}
+
+/* ---------- コールアウト ---------- */
+.callout{
+  display:flex; gap:12px; padding:16px 18px; margin:1.2em 0;
+  border-radius:var(--radius); background:var(--bg-sub); border-left:3px solid var(--text-faint);
+}
+.callout .ico{flex:0 0 auto; font-size:18px; line-height:1.5}
+.callout p:first-child{margin-top:0} .callout p:last-child{margin-bottom:0}
+.callout.tip{background:var(--accent-soft); border-left-color:var(--accent)}
+.callout.warn{background:var(--amber-soft); border-left-color:var(--amber)}
+.callout.key{background:var(--green-soft); border-left-color:var(--green)}
+
+/* ---------- カードグリッド ---------- */
+.cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin:1.2em 0}
+.card{padding:16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg)}
+.card h4{margin:0 0 6px; font-size:14.5px; font-weight:700}
+.card p{margin:0; font-size:13.5px; color:var(--text-mute); line-height:1.7}
+
+/* ---------- 表 ---------- */
+table{width:100%; border-collapse:collapse; margin:1.2em 0; font-size:14.5px}
+th,td{border:1px solid var(--border); padding:10px 12px; text-align:left; vertical-align:top}
+th{background:var(--bg-sub); font-weight:700}
+
+/* ---------- クイズ ---------- */
+.quiz{
+  margin:2em 0; padding:22px 24px; border:1px solid var(--border);
+  border-radius:var(--radius); background:var(--bg-sub);
+}
+.quiz .qtag{
+  display:inline-block; font-size:11px; font-weight:700; letter-spacing:.06em;
+  color:var(--purple); background:var(--purple-soft); padding:3px 9px; border-radius:999px; margin-bottom:10px;
+}
+.quiz .qtext{font-weight:700; font-size:16.5px; margin:0 0 14px; line-height:1.65}
+.quiz .opts{display:flex; flex-direction:column; gap:8px}
+.quiz button.opt{
+  text-align:left; font:inherit; font-size:14.5px; color:var(--text); cursor:pointer;
+  padding:12px 14px; border:1px solid var(--border-strong); border-radius:6px;
+  background:var(--bg); transition:background .15s,border-color .15s;
+  display:flex; gap:10px; align-items:flex-start; line-height:1.6;
+}
+.quiz button.opt:hover:not(:disabled){background:var(--bg-hover); border-color:var(--accent)}
+.quiz button.opt:disabled{cursor:default}
+.quiz button.opt .mark{flex:0 0 20px; font-weight:700; color:var(--text-faint)}
+.quiz button.opt.correct{background:var(--green-soft); border-color:var(--green)}
+.quiz button.opt.correct .mark{color:var(--green)}
+.quiz button.opt.wrong{background:var(--red-soft); border-color:var(--red)}
+.quiz button.opt.wrong .mark{color:var(--red)}
+.quiz .explain{
+  display:none; margin-top:14px; padding:14px 16px; border-radius:6px;
+  background:var(--bg); border:1px solid var(--border); font-size:14px; line-height:1.75;
+}
+.quiz .explain.show{display:block}
+.quiz .verdict{font-weight:700; margin-bottom:4px}
+.quiz .verdict.ok{color:var(--green)} .quiz .verdict.ng{color:var(--red)}
+
+/* ---------- 出典 ---------- */
+.sources{font-size:14px; color:var(--text-mute)}
+.sources li{margin:.5em 0}
+
+/* ---------- テーマ切替ボタン ---------- */
+#themeBtn{
+  position:fixed; top:18px; right:22px; z-index:50;
+  width:38px; height:38px; border-radius:8px; cursor:pointer;
+  border:1px solid var(--border-strong); background:var(--bg); color:var(--text);
+  font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;
+  transition:background .15s;
+}
+#themeBtn:hover{background:var(--bg-hover)}
+
+/* ---------- レスポンシブ ---------- */
+@media (max-width:900px){
+  #sidebar{display:none}
+  main{padding:40px 22px 100px}
+  h1{font-size:30px} h2{font-size:22px}
+}
+@media print{
+  #sidebar,#themeBtn{display:none} main{max-width:none;padding:0}
+  .quiz .explain{display:block}
+}
+</style>
+</head>
+<body>
+
+<button id="themeBtn" aria-label="ライト/ダーク切替">🌙</button>
+
+<div class="layout">
+
+  <aside id="sidebar">
+    <div class="toc-label">目次</div>
+    <nav id="toc">
+      <a href="#about">この教材について</a>
+      <a href="#s1">1. 全体像</a>
+      <a href="#s2">2. 必要なもの</a>
+      <a href="#s3">3. AIとの役割分担</a>
+      <a href="#s4">4. 登録〜ストア公開</a>
+      <a href="#s5">5. テストの4段階</a>
+      <a href="#s6">6. AI利用の開示ルール</a>
+      <a href="#s7">7. お金の流れ</a>
+      <a href="#s8">8. 価格をいくらにするか</a>
+      <a href="#s9">9. 割引とセールのルール</a>
+      <a href="#s10">10. ウィッシュリスト</a>
+      <a href="#s11">11. PRの手段</a>
+      <a href="#s12">12. 公開タイミング</a>
+      <a href="#s13">13. サンプルスケジュール</a>
+      <a href="#s14">14. 発売後の運営</a>
+      <a href="#s15">15. よくある失敗</a>
+      <a href="#summary">まとめ</a>
+      <a href="#sources">出典</a>
+    </nav>
+  </aside>
+
+  <main>
+
+    <header>
+      <div class="hero-eyebrow">ゲーム開発 / インディー</div>
+      <h1>AIと作る自作ゲームを<br>Steamで売るまでの全ルート</h1>
+      <p class="lead">Codex や Claude Code に書かせて作ったゲームを、Steamで実際に売るまで。手続き・費用・税務・テスト・価格・宣伝・発売日の決め方を順番にたどります。契約と納税を伴うため、実行するのは事業者（個人事業主または法人）が前提です。</p>
+      <div class="meta">
+        <span class="chip">対象: 入門者</span>
+        <span class="chip">レベル: 前提知識なし</span>
+        <span class="chip">実行主体: 事業者</span>
+        <span class="chip">所要 約35分</span>
+        <span class="chip">更新: 2026-08-11</span>
+      </div>
+    </header>
+
+    <section id="about">
+      <h2>この教材について</h2>
+      <div class="callout key">
+        <span class="ico">🎯</span>
+        <div>
+          <p><strong>読み終えるとできるようになること</strong></p>
+          <ol>
+            <li>Steamで売るまでの手続き・費用・税務・期限を、順番と数字で説明できる</li>
+            <li>テスト・価格・割引のルールを踏まえて、発売計画を自分で組める</li>
+            <li>Steamの公式イベント日程から逆算して、発売日と6か月スケジュールを引ける</li>
+          </ol>
+        </div>
+      </div>
+      <p style="font-size:14px;color:var(--text-mute)">
+        主な参照元: <a href="https://partner.steamgames.com/doc/gettingstarted?l=japanese">Steamworks公式ドキュメント</a> / <a href="https://partner.steamgames.com/doc/marketing/upcoming_events?l=japanese">Steam今後のイベント一覧</a>（全出典は<a href="#sources">末尾</a>）
+      </p>
+    </section>
+
+    <section id="s1">
+      <h2>1. 全体像 — 「作る」は5工程のうちの1つ</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 175" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="企画・開発・登録審査・宣伝・発売運営の5工程">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="var(--text-faint)"/>
+            </marker>
+          </defs>
+          <g><rect x="10" y="40" width="118" height="72" rx="8" class="svg-box"/>
+             <text x="69" y="72" text-anchor="middle" class="svg-title">① 企画</text>
+             <text x="69" y="93" text-anchor="middle" class="svg-label-sm">何を作るか</text></g>
+          <path d="M132 76 H 148" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="152" y="40" width="118" height="72" rx="8" class="svg-box-accent"/>
+             <text x="211" y="72" text-anchor="middle" class="svg-title">② 開発</text>
+             <text x="211" y="93" text-anchor="middle" class="svg-label-sm">AIが強い</text></g>
+          <path d="M274 76 H 290" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="294" y="40" width="118" height="72" rx="8" class="svg-box"/>
+             <text x="353" y="72" text-anchor="middle" class="svg-title">③ 登録・審査</text>
+             <text x="353" y="93" text-anchor="middle" class="svg-label-sm">事務手続き</text></g>
+          <path d="M416 76 H 432" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="436" y="40" width="118" height="72" rx="8" class="svg-box-accent"/>
+             <text x="495" y="72" text-anchor="middle" class="svg-title">④ 宣伝</text>
+             <text x="495" y="93" text-anchor="middle" class="svg-label-sm">差がつく所</text></g>
+          <path d="M558 76 H 574" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="578" y="40" width="118" height="72" rx="8" class="svg-box"/>
+             <text x="637" y="72" text-anchor="middle" class="svg-title">⑤ 発売・運営</text>
+             <text x="637" y="93" text-anchor="middle" class="svg-label-sm">修正と対応</text></g>
+          <text x="360" y="22" text-anchor="middle" class="svg-label-sm">AIに任せられるのは主に②。③と④は自分の時間が要る</text>
+          <text x="360" y="145" text-anchor="middle" class="svg-label">初心者は②だけを「開発」だと思っている</text>
+        </svg>
+        <figcaption>図1: 発売までの5工程。AIで速くなるのは②だけ</figcaption>
+      </figure>
+
+      <p>AIに任せられるのは主に②で、③の事務と④の宣伝は自分の時間が要ります。AIで誰でも作れるぶん新作は増え続けており、同じ完成度なら④に何か月かけたかで結果が変わります。</p>
+
+      <p>しかもこの5工程はきれいに並びません。③の周辺に、テスト・価格設定・AI利用の申告といった<strong>締切付きの作業</strong>がぶら下がっています。</p>
+    </section>
+
+    <section id="s2">
+      <h2>2. 必要なもの — 費用・本人確認・税務</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 220" role="img" aria-label="Steamで売るのに必要な3種類の準備">
+          <rect x="260" y="10" width="200" height="54" rx="8" class="svg-box-accent"/>
+          <text x="360" y="43" text-anchor="middle" class="svg-title">出す前に片付けるもの</text>
+          <path d="M360 64 V 90 M120 90 H 600 M120 90 V 116 M360 90 V 116 M600 90 V 116" class="svg-arrow"/>
+          <g><rect x="30" y="116" width="180" height="86" rx="8" class="svg-box"/>
+             <text x="120" y="146" text-anchor="middle" class="svg-title">費用</text>
+             <text x="120" y="168" text-anchor="middle" class="svg-label-sm">Steam Direct料金</text>
+             <text x="120" y="187" text-anchor="middle" class="svg-label-sm">1作品 $100</text></g>
+          <g><rect x="270" y="116" width="180" height="86" rx="8" class="svg-box"/>
+             <text x="360" y="146" text-anchor="middle" class="svg-title">本人確認</text>
+             <text x="360" y="168" text-anchor="middle" class="svg-label-sm">銀行口座・事業者情報</text>
+             <text x="360" y="187" text-anchor="middle" class="svg-label-sm">Valveの検証を通す</text></g>
+          <g><rect x="510" y="116" width="180" height="86" rx="8" class="svg-box"/>
+             <text x="600" y="146" text-anchor="middle" class="svg-title">税務</text>
+             <text x="600" y="168" text-anchor="middle" class="svg-label-sm">W-8BENの提出</text>
+             <text x="600" y="187" text-anchor="middle" class="svg-label-sm">日本はマイナンバー可</text></g>
+        </svg>
+        <figcaption>図2: この3つが通らないと、作っても出せない</figcaption>
+      </figure>
+
+      <p>Steam Direct料金は1作品100米ドル。返金はされませんが、調整後の総収益が1,000ドルに達した後の支払いで回収されます。登録では銀行口座・事業者情報・税務情報が求められ、Valveの検証を通らないとアプリを作れません。</p>
+
+      <p>税務は米国向けの手続きが要ります。<strong>W-8BEN</strong>を出して日米租税条約の適用を受ければ米国での源泉徴収は0%。出さないと約30%が向こうで引かれます。日本の個人開発者は納税者番号にマイナンバーが使えるので、米国のEINを取る必要はありません。</p>
+
+      <div class="callout tip">
+        <span class="ico">💡</span>
+        <div><p>Steamworksとの契約は<strong>事業としての契約</strong>です。日本側でも開業届や確定申告がついてきます。経費と売上の記録は最初から残します。</p></div>
+      </div>
+    </section>
+
+    <section id="s3">
+      <h2>3. AIとの役割分担 — 何を任せ、何を自分で決めるか</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 340" role="img" aria-label="AIに任せる領域と人間が決める領域のマトリクス">
+          <rect x="140" y="20" width="480" height="260" fill="none" stroke="var(--border-strong)"/>
+          <line x1="380" y1="20" x2="380" y2="280" stroke="var(--border)"/>
+          <line x1="140" y1="150" x2="620" y2="150" stroke="var(--border)"/>
+          <rect x="148" y="28" width="224" height="114" rx="6" fill="var(--accent-soft)" opacity=".55"/>
+          <rect x="388" y="28" width="224" height="114" rx="6" fill="var(--accent-soft)" opacity=".8"/>
+          <text x="260" y="74" text-anchor="middle" class="svg-title">仕様変更・小修正</text>
+          <text x="260" y="98" text-anchor="middle" class="svg-label-sm">AIに投げれば数分</text>
+          <text x="500" y="74" text-anchor="middle" class="svg-title">実装・バグ調査</text>
+          <text x="500" y="98" text-anchor="middle" class="svg-label-sm">AIの独壇場</text>
+          <text x="260" y="204" text-anchor="middle" class="svg-title">世界観・アート方針</text>
+          <text x="260" y="228" text-anchor="middle" class="svg-label-sm">人間が決める</text>
+          <text x="500" y="204" text-anchor="middle" class="svg-title">面白さの調整</text>
+          <text x="500" y="228" text-anchor="middle" class="svg-label-sm">遊んで判断するしかない</text>
+          <text x="380" y="308" text-anchor="middle" class="svg-label-sm">→ 作業量が多い</text>
+          <text x="128" y="80" text-anchor="end" class="svg-label-sm">↑ 言葉にできる</text>
+          <text x="128" y="215" text-anchor="end" class="svg-label-sm">↓ 言葉にならない</text>
+        </svg>
+        <figcaption>図3: 上半分はAIに任せてよい。下半分は代われない</figcaption>
+      </figure>
+
+      <p>AIが強いのは「言葉で仕様を書けるもの」。当たり判定もセーブ機能もバグ調査も、指示が具体的なら人間より速い。逆に「遊んで面白いか」は言葉にならず判断できません。毎日遊んで違和感を言語化しAIに渡す往復が、作業の本体になります。</p>
+
+      <p>もうひとつAIが面倒を見てくれないのが<strong>素材の権利</strong>です。拾ってきた画像・フォント・効果音をそのまま埋め込むと、商用利用が不可で発売直前に差し替えになります。入手元URLとライセンスの一覧を最初から並行して作ります。</p>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><p>中身が分からないまま量を増やすと、後から直せなくなります。1日1回は「このコードが何をしているか説明して」と聞く習慣を。</p></div>
+      </div>
+    </section>
+
+    <section id="s4">
+      <h2>4. Steamworks登録からストア公開まで</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 380" role="img" aria-label="Steamworks登録から近日登場ページ公開までの6ステップ">
+          <g><rect x="120" y="10" width="480" height="46" rx="7" class="svg-box"/>
+             <text x="360" y="39" text-anchor="middle" class="svg-title">① Steamworksに登録する</text></g>
+          <path d="M360 58 V 66" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="120" y="70" width="480" height="46" rx="7" class="svg-box"/>
+             <text x="360" y="99" text-anchor="middle" class="svg-title">② 銀行・税務・本人確認を通す</text></g>
+          <path d="M360 118 V 126" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="120" y="130" width="480" height="46" rx="7" class="svg-box-accent"/>
+             <text x="360" y="159" text-anchor="middle" class="svg-title">③ $100を払ってアプリを作成</text></g>
+          <path d="M360 178 V 186" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="120" y="190" width="480" height="46" rx="7" class="svg-box"/>
+             <text x="360" y="219" text-anchor="middle" class="svg-title">④ ストアページを作る（説明・画像・タグ）</text></g>
+          <path d="M360 238 V 246" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="120" y="250" width="480" height="46" rx="7" class="svg-box"/>
+             <text x="360" y="279" text-anchor="middle" class="svg-title">⑤ Valveの審査（ページ＋実ビルド）</text></g>
+          <path d="M360 298 V 306" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="120" y="310" width="480" height="46" rx="7" class="svg-box-accent"/>
+             <text x="360" y="339" text-anchor="middle" class="svg-title">⑥「近日登場」ページ公開 ← 発売の2週間以上前</text></g>
+          <text x="110" y="279" text-anchor="end" class="svg-label-sm">往復2〜3週間</text>
+          <text x="110" y="339" text-anchor="end" class="svg-label-sm">ここが締切</text>
+        </svg>
+        <figcaption>図4: 事務は直列。1つ詰まると全部止まる</figcaption>
+      </figure>
+
+      <p>$100を払うとアプリ枠が1つ増え、そこにストアページを作ります。説明文・スクショ・タグ・トレーラーを揃えて審査に出し、通ると「近日登場」ページが公開。差し戻しは普通に起きるので、往復2〜3週間の前提で組みます。</p>
+
+      <p>審査ではストアページとは別に<strong>実際に動くビルド</strong>も確認されます。起動しない、すぐ落ちる、対応言語の設定と中身が食い違う、が差し戻しの定番。提出前にまっさらな別PCで一度インストールしておくと事故が減ります。</p>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><p><strong>ストアページは発売の最低2週間前から公開されている必要があります。</strong>「思い立って明日リリース」はできません。</p></div>
+      </div>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 1</span>
+      <p class="qtext">「ゲームが完成したので、今日ストアページを作って明日発売したい」。これは可能？</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>可能。審査は自動なので即日通る</span></button>
+        <button class="opt" data-correct><span class="mark">B</span><span>不可能。ストアページは発売の2週間以上前から公開されている必要がある</span></button>
+        <button class="opt"><span class="mark">C</span><span>可能だが、追加料金を払う必要がある</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>「近日登場」ページの2週間公開が発売の条件です。審査は人が目視し差し戻しもあります（A）。早期発売オプションもありません（C）。</p>
+      </div>
+    </div>
+
+    <section id="s5">
+      <h2>5. テストの4段階 — Playtest / デモ / 早期アクセス / 正式版</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 260" role="img" aria-label="Playtest・デモ・早期アクセス・正式版の比較">
+          <g><rect x="10" y="46" width="160" height="150" rx="8" class="svg-box-accent"/>
+             <text x="90" y="76" text-anchor="middle" class="svg-title">① Playtest</text>
+             <text x="90" y="106" text-anchor="middle" class="svg-label-sm">非公開・無料</text>
+             <text x="90" y="130" text-anchor="middle" class="svg-label-sm">別IDで動く</text>
+             <text x="90" y="154" text-anchor="middle" class="svg-label-sm">評価が残らない</text>
+             <text x="90" y="180" text-anchor="middle" class="svg-label-sm">＝壊れてても安全</text></g>
+          <path d="M174 121 H 186" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="190" y="46" width="160" height="150" rx="8" class="svg-box-accent"/>
+             <text x="270" y="76" text-anchor="middle" class="svg-title">② デモ</text>
+             <text x="270" y="106" text-anchor="middle" class="svg-label-sm">公開・無料</text>
+             <text x="270" y="130" text-anchor="middle" class="svg-label-sm">Nextフェスの条件</text>
+             <text x="270" y="154" text-anchor="middle" class="svg-label-sm">第一印象が決まる</text>
+             <text x="270" y="180" text-anchor="middle" class="svg-label-sm">＝見せるためのもの</text></g>
+          <path d="M354 121 H 366" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="370" y="46" width="160" height="150" rx="8" class="svg-box"/>
+             <text x="450" y="76" text-anchor="middle" class="svg-title">③ 早期アクセス</text>
+             <text x="450" y="106" text-anchor="middle" class="svg-label-sm">公開・有料</text>
+             <text x="450" y="130" text-anchor="middle" class="svg-label-sm">未完成のまま販売</text>
+             <text x="450" y="154" text-anchor="middle" class="svg-label-sm">評価を先に消費</text>
+             <text x="450" y="180" text-anchor="middle" class="svg-label-sm">更新停止で警告表示</text></g>
+          <path d="M534 121 H 546" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="550" y="46" width="160" height="150" rx="8" class="svg-box"/>
+             <text x="630" y="76" text-anchor="middle" class="svg-title">④ 正式リリース</text>
+             <text x="630" y="106" text-anchor="middle" class="svg-label-sm">公開・有料</text>
+             <text x="630" y="130" text-anchor="middle" class="svg-label-sm">レビューが残る</text>
+             <text x="630" y="154" text-anchor="middle" class="svg-label-sm">やり直しがきかない</text></g>
+          <text x="10" y="28" class="svg-label-sm">完成度 低・リスク小</text>
+          <text x="710" y="28" text-anchor="end" class="svg-label-sm">完成度 高・リスク大 →</text>
+          <text x="360" y="238" text-anchor="middle" class="svg-label">最初の1本なら ① と ② の2段で十分</text>
+        </svg>
+        <figcaption>図5: 人に見せる順番。左ほど失敗のコストが小さい</figcaption>
+      </figure>
+
+      <p>面白いかどうかは、他人に触らせるまで分かりません。<strong>Steam Playtest</strong>は、キーを配らずに非公開テストができる機能です。本編とは別のIDで動くのでウィッシュリスト・プレイ時間・レビューに影響せず、<strong>壊れた状態を見せても評価が残りません</strong>。地域や人数を絞ることもできます。</p>
+
+      <p>デモは逆に「見せる」ためのもので、Nextフェスの参加条件でもあります。早期アクセスは未完成のまま有料で売る形式ですが、正式版の評価を先に消費し、更新が止まると警告表示の対象になります。最初の1本ならPlaytestとデモの2段で十分です。</p>
+
+      <div class="callout key">
+        <span class="ico">🧪</span>
+        <div><p>テストで見るのはバグだけではありません。<strong>「最初の5分で何をすればいいか分かるか」</strong>が、いちばんよく壊れています。黙って見て、口で説明したくなったら負けです。</p></div>
+      </div>
+    </section>
+
+    <section id="s6">
+      <h2>6. AI利用の開示ルール（2026年版）</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 230" role="img" aria-label="AI利用の申告が不要な範囲と必要な範囲の対比">
+          <rect x="10" y="20" width="330" height="180" rx="8" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.5"/>
+          <text x="175" y="50" text-anchor="middle" class="svg-title" fill="var(--green)">申告 不要</text>
+          <text x="175" y="78" text-anchor="middle" class="svg-label-sm">＝製品に「入らない」もの</text>
+          <text x="175" y="110" text-anchor="middle" class="svg-label">Codex / Claude Code でのコード生成</text>
+          <text x="175" y="138" text-anchor="middle" class="svg-label">バグ調査・リファクタ支援</text>
+          <text x="175" y="166" text-anchor="middle" class="svg-label">開発を速くするだけの用途</text>
+          <rect x="380" y="20" width="330" height="180" rx="8" fill="var(--amber-soft)" stroke="var(--amber)" stroke-width="1.5"/>
+          <text x="545" y="50" text-anchor="middle" class="svg-title" fill="var(--amber)">申告 必要</text>
+          <text x="545" y="78" text-anchor="middle" class="svg-label-sm">＝プレイヤーが体験するもの</text>
+          <text x="545" y="110" text-anchor="middle" class="svg-label">AI生成の絵・キャラ・背景</text>
+          <text x="545" y="138" text-anchor="middle" class="svg-label">AI生成のBGM・効果音・音声</text>
+          <text x="545" y="166" text-anchor="middle" class="svg-label">AIが書いた物語・AI翻訳</text>
+          <text x="360" y="222" text-anchor="middle" class="svg-label-sm">判断基準：最終製品に含まれ、プレイヤーが触れるかどうか</text>
+        </svg>
+        <figcaption>図6: 線引きはツールの種類ではなく「製品に入るか」</figcaption>
+      </figure>
+
+      <p>2026年1月にValveが線引きを明確にしました。Codexにコードを書かせてもプレイヤーが触れる形では出ないので申告は不要。一方でAIが描いた背景、作ったBGM、AI翻訳のセリフは申告が要ります。開示はストアページに表示され、未申告はページ削除の対象になり得ます。</p>
+
+      <p>申告は2種類に分かれます。製品に同梱した<strong>事前生成</strong>と、遊んでいる最中にAIがその場で作る<strong>実行時生成</strong>です。後者は内容を作者が予測できないため、不適切な出力を防ぐ仕組みの説明も求められます。会話が毎回変わるAIキャラを入れるなら、設計段階で織り込みます。</p>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 2</span>
+      <p class="qtext">Claude Codeにゲームのプログラムを全部書かせ、キャラの立ち絵だけ画像生成AIで作った。Steamへの申告は？</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>コードもAI生成なので、両方まとめて申告する</span></button>
+        <button class="opt"><span class="mark">B</span><span>どちらも開発ツールの利用なので申告は不要</span></button>
+        <button class="opt" data-correct><span class="mark">C</span><span>立ち絵だけ申告する。コード生成は申告不要</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>基準は「プレイヤーが体験するか」。立ち絵は画面に出るので対象、コードは対象外。Aは不要なものまで含め、Bはアートを見落としています。</p>
+      </div>
+    </div>
+
+    <section id="s7">
+      <h2>7. お金の流れ — 1,000円売れて手元にいくら残るか</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 175" role="img" aria-label="Steamの収益分配70対30と分配率のティア">
+          <text x="40" y="26" class="svg-label-sm">定価1,000円のゲームが1本売れたとき</text>
+          <rect x="40" y="40" width="448" height="46" rx="4" fill="var(--accent)"/>
+          <rect x="488" y="40" width="192" height="46" rx="4" fill="var(--text-faint)"/>
+          <text x="264" y="69" text-anchor="middle" class="svg-label" fill="#fff">開発者 70%（700円）</text>
+          <text x="584" y="69" text-anchor="middle" class="svg-label" fill="#fff">Valve 30%</text>
+          <text x="40" y="112" class="svg-label-sm">さらに引かれるもの：税金 ／ 最初の $100 の回収 ／ 返金された分 ／ 買った素材の代金</text>
+          <line x1="40" y1="126" x2="680" y2="126" stroke="var(--border)"/>
+          <text x="40" y="148" class="svg-label-sm">分配率が上がる条件（超過分のみ）：累計 $1,000万 超 → 75% ／ $5,000万 超 → 80%</text>
+          <text x="40" y="166" class="svg-label-sm">個人開発ではまず届かないので「70%固定」で見積もる</text>
+        </svg>
+        <figcaption>図7: 手取りは定価の7割。そこからさらに引かれる</figcaption>
+      </figure>
+
+      <p>定価の30%がValveの取り分。1,000円なら300円が引かれ、残り700円からさらに税金と$100の回収が引かれます。分配率が75%に上がるのは累計1,000万ドル超の分からなので、個人開発ではまず関係ありません。セール中も比率は同じです。</p>
+
+      <p>入金は月ごとに集計されて後からまとめて振り込まれ、返金分はそこから差し引かれます。<strong>発売直後に見える売上数字が、そのまま手元に来るわけではありません</strong>。回収計画は、入金が数か月遅れる前提で立てます。</p>
+    </section>
+
+    <section id="s8">
+      <h2>8. 価格をいくらにするか</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 215" role="img" aria-label="換算方式ごとの日本円推奨価格の違い">
+          <text x="20" y="24" class="svg-label-sm">基準価格 $15.99 のとき、日本円の推奨価格はどうなるか</text>
+          <line x1="210" y1="36" x2="210" y2="176" stroke="var(--border)"/>
+          <line x1="210" y1="176" x2="700" y2="176" stroke="var(--border-strong)"/>
+          <rect x="210" y="44" width="460" height="34" rx="4" fill="var(--accent)" opacity=".45"/>
+          <text x="202" y="66" text-anchor="end" class="svg-label">為替レート換算</text>
+          <text x="680" y="66" text-anchor="end" class="svg-label" fill="#fff">2,500円</text>
+          <rect x="210" y="90" width="377" height="34" rx="4" fill="var(--accent)"/>
+          <text x="202" y="112" text-anchor="end" class="svg-label">多変数換算</text>
+          <text x="597" y="112" class="svg-label-sm">2,050円（標準）</text>
+          <rect x="210" y="136" width="294" height="34" rx="4" fill="var(--accent)" opacity=".45"/>
+          <text x="202" y="158" text-anchor="end" class="svg-label">購買力換算</text>
+          <text x="514" y="158" class="svg-label-sm">1,600円</text>
+          <text x="210" y="200" class="svg-label-sm">出典: Steamworks 価格換算探索ツールの解説（4Gamer, 2026年3月）</text>
+        </svg>
+        <figcaption>図8: 同じドル価格でも、方式次第で日本円は900円違う</figcaption>
+      </figure>
+
+      <p>Steamの価格は37の通貨と4つの地域グループごとに設定します。基準となるドル価格を決めると各国の推奨価格が自動で出ます。国ごとに物価が違うため、同じ金額をそのまま換算すると高すぎたり安すぎたりするからです。</p>
+
+      <p>換算方式は3つあり、同じ$15.99でも日本円の推奨は2,500円から1,600円まで開きます。Valveは為替・購買力・同種商品の価格を合わせた<strong>多変数換算</strong>を標準に据えているので、迷うならこれをそのまま使います。</p>
+
+      <p>もうひとつ、<mark>価格の引き下げは自由だが、引き上げると30日間割引できない</mark>という制約があります。「安く出して後から上げる」作戦は、この制限と既に買った人の心証の両方で不利です。</p>
+    </section>
+
+    <section id="s9">
+      <h2>9. 割引とセールのルール</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 200" role="img" aria-label="発売日を基準にした割引の可否タイムライン">
+          <rect x="20" y="60" width="150" height="56" rx="6" class="svg-box"/>
+          <text x="95" y="86" text-anchor="middle" class="svg-label">発売前</text>
+          <text x="95" y="106" text-anchor="middle" class="svg-label-sm">ローンチ割引を設定</text>
+          <line x1="180" y1="34" x2="180" y2="140" stroke="var(--accent)" stroke-width="2"/>
+          <text x="180" y="26" text-anchor="middle" class="svg-title" fill="var(--accent)">発売日</text>
+          <rect x="190" y="60" width="150" height="56" rx="6" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.5"/>
+          <text x="265" y="86" text-anchor="middle" class="svg-label">ローンチ割引</text>
+          <text x="265" y="106" text-anchor="middle" class="svg-label-sm">7〜14日 / 10〜40%</text>
+          <rect x="350" y="60" width="170" height="56" rx="6" fill="var(--red-soft)" stroke="var(--red)" stroke-width="1.5"/>
+          <text x="435" y="86" text-anchor="middle" class="svg-label">発売から30日</text>
+          <text x="435" y="106" text-anchor="middle" class="svg-label-sm">ほかの割引は打てない</text>
+          <rect x="530" y="60" width="170" height="56" rx="6" class="svg-box-accent"/>
+          <text x="615" y="86" text-anchor="middle" class="svg-label">31日目以降</text>
+          <text x="615" y="106" text-anchor="middle" class="svg-label-sm">割引可（前回から30日）</text>
+          <text x="20" y="158" class="svg-label-sm">季節セール（サマー／オータム／ウィンター／スプリング）は、割引どうしの30日クールダウンの対象外</text>
+          <text x="20" y="180" class="svg-label-sm">ローンチ割引は発売日より前にしか設定できない ／ 出典: Steamworks「割引」</text>
+        </svg>
+        <figcaption>図9: 割引は「打ちたいとき」ではなく「打てるとき」しか打てない</figcaption>
+      </figure>
+
+      <p>ローンチ割引は<strong>発売日より前にしか設定できません</strong>。期間は7〜14日、割引率は10〜40%。後から追加はできず、新作の初動を押し上げる数少ない手段なので、ストアページを作る時点で決めておきます。</p>
+
+      <p>発売から30日間は、それ以外の割引を打てません。割引どうしにも30日の間隔が要ります。ただし季節セール（サマー／オータム／ウィンター／スプリング）はこのクールダウンの対象外で、参加自体が大きな露出になります。</p>
+
+      <p>つまり売れ行きが鈍っても、値下げで立て直す手はしばらく使えません。<strong>価格と割引は「発売前に決め切る」項目</strong>です。</p>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 3</span>
+      <p class="qtext">発売から3日、思ったより売れていない。今すぐ20%オフにできる？</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>できる。割引はいつでも自由に設定できる</span></button>
+        <button class="opt" data-correct><span class="mark">B</span><span>できない。発売から30日は割引不可。ローンチ割引は発売前にしか設定できない</span></button>
+        <button class="opt"><span class="mark">C</span><span>できるが、割引率の上限が10%に制限される</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>発売後30日は割引のクールダウン期間。値下げで立て直せないからこそ、ローンチ割引を発売前に仕込みます。AもCも実際のルールと異なります。</p>
+      </div>
+    </div>
+
+    <section id="s10">
+      <h2>10. ウィッシュリストが生命線</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 225" role="img" aria-label="ウィッシュリスト数と発売1週目の推定販売本数">
+          <line x1="180" y1="20" x2="180" y2="180" stroke="var(--border)"/>
+          <line x1="180" y1="180" x2="700" y2="180" stroke="var(--border-strong)"/>
+          <rect x="180" y="32" width="80" height="32" rx="4" fill="var(--accent)" opacity=".4"/>
+          <text x="172" y="54" text-anchor="end" class="svg-label">WL 5,000件</text>
+          <text x="270" y="54" class="svg-label-sm">1週目 500〜750本</text>
+          <rect x="180" y="84" width="224" height="32" rx="4" fill="var(--accent)" opacity=".7"/>
+          <text x="172" y="106" text-anchor="end" class="svg-label">WL 10,000件</text>
+          <text x="414" y="106" class="svg-label-sm">1週目 1,000〜2,500本</text>
+          <rect x="180" y="136" width="480" height="32" rx="4" fill="var(--accent)"/>
+          <text x="172" y="158" text-anchor="end" class="svg-label">WL 30,000件</text>
+          <text x="360" y="158" class="svg-label" fill="#fff">1週目 3,000〜4,500本</text>
+          <text x="180" y="203" class="svg-label-sm">目安の幅は非常に大きい。出典: steamforecast（2026年ベンチマーク）</text>
+          <text x="180" y="219" class="svg-label-sm">発売日までに 7,000〜10,000件 が最初の目標ライン</text>
+        </svg>
+        <figcaption>図10: ウィッシュリスト数が初動売上をほぼ決める</figcaption>
+      </figure>
+
+      <p>ウィッシュリストは「発売したら教えて」という予約リスト。発売時にSteamが登録者へ通知を出すため、初動がここで決まります。目安は発売日までに7,000〜10,000件。発売週に買う割合は10〜25%程度とされますが、ばらつきが大きく予測には使えません。効くのは、ストアページを早く公開して集める期間を長く取ることです。</p>
+
+      <p>注意したいのは、ウィッシュリストは<strong>削除もされる</strong>こと。1年前に登録して忘れられた枠は、通知が届いても動きません。累計を眺めるより<strong>月ごとの増え方が止まっていないか</strong>を見ます。伸びが平らになったら、宣伝を変える合図です。</p>
+    </section>
+
+    <section id="s11">
+      <h2>11. PRの手段 — 今日から打てる手</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 300" role="img" aria-label="コストの低い順に並べたPR手段5段">
+          <rect x="180" y="10" width="400" height="50" rx="6" class="svg-box-accent"/>
+          <text x="380" y="41" text-anchor="middle" class="svg-title">① SNSに毎週GIFを投稿</text>
+          <rect x="180" y="68" width="400" height="50" rx="6" class="svg-box-accent"/>
+          <text x="380" y="99" text-anchor="middle" class="svg-title">② Discordでコミュニティを作る</text>
+          <rect x="180" y="126" width="400" height="50" rx="6" class="svg-box"/>
+          <text x="380" y="157" text-anchor="middle" class="svg-title">③ 配信者にDM・キーを配る</text>
+          <rect x="180" y="184" width="400" height="50" rx="6" class="svg-box"/>
+          <text x="380" y="215" text-anchor="middle" class="svg-title">④ ゲームメディアにプレスリリース</text>
+          <rect x="180" y="242" width="400" height="50" rx="6" class="svg-box"/>
+          <text x="380" y="273" text-anchor="middle" class="svg-title">⑤ 即売会・展示会に出展</text>
+          <text x="170" y="41" text-anchor="end" class="svg-label-sm">コスト低・今日できる</text>
+          <text x="170" y="273" text-anchor="end" class="svg-label-sm">お金と移動が要る</text>
+          <text x="592" y="41" class="svg-label-sm">効果 大</text>
+          <text x="592" y="157" class="svg-label-sm">効果 大</text>
+        </svg>
+        <figcaption>図11: 上ほど安く、しかも効果は下と変わらない</figcaption>
+      </figure>
+
+      <p>全部やる必要はありません。最も費用対効果が高いのは、動いている場面のGIFを毎週1本SNSに出すこと。文章より動きのほうが伸びます。配信者へのDMは長文を避け、ゲーム名・ジャンル・魅力・ストアURLを4行で。</p>
+
+      <p>そして打った手の結果は必ず記録します。<strong>どの投稿の翌日にウィッシュリストが伸びたか</strong>を月単位で並べれば、次に何を出すべきかは自分のデータが教えてくれます。一般論を追うより早く上達します。</p>
+    </section>
+
+    <section id="s12">
+      <h2>12. 公開タイミング — 公式イベントから逆算する</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 180" role="img" aria-label="2026年秋から2027年春までのSteam公式イベント日程">
+          <line x1="30" y1="92" x2="700" y2="92" stroke="var(--border-strong)" stroke-width="2"/>
+          <g><circle cx="60" cy="92" r="7" fill="var(--text-faint)"/>
+             <text x="60" y="72" text-anchor="middle" class="svg-label-sm">10/1-8</text>
+             <text x="60" y="120" text-anchor="middle" class="svg-label-sm">オータム</text></g>
+          <g><circle cx="186" cy="92" r="10" fill="var(--green)"/>
+             <text x="186" y="70" text-anchor="middle" class="svg-label-sm">10/19-26</text>
+             <text x="186" y="120" text-anchor="middle" class="svg-title" fill="var(--green)">Nextフェス</text>
+             <text x="186" y="140" text-anchor="middle" class="svg-label-sm">登録期限 8/31</text></g>
+          <g><circle cx="312" cy="92" r="7" fill="var(--text-faint)"/>
+             <text x="312" y="72" text-anchor="middle" class="svg-label-sm">10/26-11/2</text>
+             <text x="312" y="120" text-anchor="middle" class="svg-label-sm">絶叫フェス</text></g>
+          <g><circle cx="438" cy="92" r="7" fill="var(--text-faint)"/>
+             <text x="438" y="72" text-anchor="middle" class="svg-label-sm">12/17-1/4</text>
+             <text x="438" y="120" text-anchor="middle" class="svg-label-sm">ウィンター</text></g>
+          <g><circle cx="564" cy="92" r="10" fill="var(--green)"/>
+             <text x="564" y="70" text-anchor="middle" class="svg-label-sm">2/22-3/1</text>
+             <text x="564" y="120" text-anchor="middle" class="svg-title" fill="var(--green)">Nextフェス</text></g>
+          <g><circle cx="680" cy="92" r="7" fill="var(--text-faint)"/>
+             <text x="680" y="72" text-anchor="middle" class="svg-label-sm">3/18-25</text>
+             <text x="680" y="120" text-anchor="middle" class="svg-label-sm">スプリング</text></g>
+          <text x="30" y="22" class="svg-label-sm">2026年10月 →</text>
+          <text x="700" y="22" text-anchor="end" class="svg-label-sm">→ 2027年3月</text>
+          <text x="360" y="168" text-anchor="middle" class="svg-label">Nextフェスは1作品につき生涯1回だけ使える</text>
+        </svg>
+        <figcaption>図12: 日程は公式に先出しされている。出典: Steamworks「今後のイベント」</figcaption>
+      </figure>
+
+      <p>中でも重要なのがSteam Nextフェス。発売前のゲームがデモを出して露出を得るイベントで、<strong>1作品につき参加は1回だけ</strong>。フェス終了後にリリースする条件もあります。登録期限は開催の約7週間前で、そこが実質の締切です。</p>
+
+      <p>細かい話ですが<strong>曜日</strong>も効きます。金曜発売は週末の遊ぶ時間と重なる一方、不具合対応が土日にずれ込みます。ひとりで運営するなら火曜〜木曜。時刻も、自分が起きて対応できる時間帯に。</p>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 4</span>
+      <p class="qtext">Steam Nextフェスの使い方として正しいものは？</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>毎回参加して露出を稼ぐ。回数制限はない</span></button>
+        <button class="opt"><span class="mark">B</span><span>発売直後に参加して、売れ行きを伸ばす</span></button>
+        <button class="opt" data-correct><span class="mark">C</span><span>デモが一番よくできた時期に1回だけ使う。参加後に発売する</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>参加は1回限りで、フェス終了後にリリースする必要があります。Aは回数制限を、Bは発売前限定という条件を見落としています。</p>
+      </div>
+    </div>
+
+    <section id="s13">
+      <h2>13. サンプルスケジュール（6か月・小規模作品）</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 290" role="img" aria-label="6か月の開発・テスト・PRのスケジュール">
+          <line x1="150" y1="46" x2="690" y2="46" stroke="var(--border)"/>
+          <text x="195" y="36" text-anchor="middle" class="svg-label-sm">1か月目</text>
+          <text x="285" y="36" text-anchor="middle" class="svg-label-sm">2か月目</text>
+          <text x="375" y="36" text-anchor="middle" class="svg-label-sm">3か月目</text>
+          <text x="465" y="36" text-anchor="middle" class="svg-label-sm">4か月目</text>
+          <text x="555" y="36" text-anchor="middle" class="svg-label-sm">5か月目</text>
+          <text x="645" y="36" text-anchor="middle" class="svg-label-sm">6か月目</text>
+          <line x1="240" y1="46" x2="240" y2="256" stroke="var(--border)"/>
+          <line x1="330" y1="46" x2="330" y2="256" stroke="var(--border)"/>
+          <line x1="420" y1="46" x2="420" y2="256" stroke="var(--border)"/>
+          <line x1="510" y1="46" x2="510" y2="256" stroke="var(--border)"/>
+          <line x1="600" y1="46" x2="600" y2="256" stroke="var(--border)"/>
+          <rect x="152" y="56" width="176" height="26" rx="4" fill="var(--accent)" opacity=".45"/>
+          <text x="142" y="75" text-anchor="end" class="svg-label">企画・試作</text>
+          <rect x="152" y="90" width="86" height="26" rx="4" fill="var(--green)" opacity=".8"/>
+          <text x="142" y="109" text-anchor="end" class="svg-label">登録・税務</text>
+          <rect x="242" y="124" width="356" height="26" rx="4" fill="var(--accent)" opacity=".85"/>
+          <text x="142" y="143" text-anchor="end" class="svg-label">開発の往復</text>
+          <rect x="332" y="158" width="176" height="26" rx="4" fill="var(--green)" opacity=".8"/>
+          <text x="142" y="177" text-anchor="end" class="svg-label">Playtest</text>
+          <rect x="422" y="192" width="266" height="26" rx="4" fill="var(--amber)" opacity=".8"/>
+          <text x="142" y="211" text-anchor="end" class="svg-label">ストア公開・PR</text>
+          <rect x="512" y="226" width="86" height="26" rx="4" fill="var(--green)"/>
+          <text x="142" y="245" text-anchor="end" class="svg-label">デモ・発売</text>
+          <rect x="602" y="226" width="86" height="26" rx="4" fill="var(--purple)"/>
+          <text x="645" y="245" text-anchor="middle" class="svg-label" fill="#fff">発売</text>
+          <text x="555" y="245" text-anchor="middle" class="svg-label" fill="#fff">Nextフェス</text>
+          <text x="150" y="280" class="svg-label-sm">逆算の起点は発売日ではなく「Nextフェスの登録期限」</text>
+        </svg>
+        <figcaption>図13: 事務は1か月目、Playtestは3〜4か月目、PRは4か月目から</figcaption>
+      </figure>
+
+      <p>逆算の起点は発売日ではなく、Nextフェスの登録期限です。デモはその時点で形になっている必要があり、ストアページはさらに前に公開。$100の支払いと本人確認・税務情報は1か月目に片付けます。</p>
+
+      <p>Playtestは3〜4か月目に挟みます。ここで出た「最初の5分」の問題を直してからデモを作ると、フェスでの見え方がまるで変わる。直っていないデモを出すのが、いちばんもったいない失敗です。開発期間は後から削れますが、<strong>宣伝期間は後から増やせません</strong>。</p>
+    </section>
+
+    <section id="s14">
+      <h2>14. 発売後の運営 — 評価が固まるまでが本番</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 300" role="img" aria-label="発売後の改善サイクル">
+          <g><rect x="270" y="10" width="190" height="60" rx="8" class="svg-box-accent"/>
+             <text x="365" y="38" text-anchor="middle" class="svg-title">① 声を読む</text>
+             <text x="365" y="58" text-anchor="middle" class="svg-label-sm">レビュー・返金理由</text></g>
+          <g><rect x="505" y="120" width="190" height="60" rx="8" class="svg-box"/>
+             <text x="600" y="148" text-anchor="middle" class="svg-title">② 直す</text>
+             <text x="600" y="168" text-anchor="middle" class="svg-label-sm">最初の2時間を優先</text></g>
+          <g><rect x="270" y="230" width="190" height="60" rx="8" class="svg-box"/>
+             <text x="365" y="258" text-anchor="middle" class="svg-title">③ 告知する</text>
+             <text x="365" y="278" text-anchor="middle" class="svg-label-sm">更新履歴・お知らせ</text></g>
+          <g><rect x="35" y="120" width="190" height="60" rx="8" class="svg-box"/>
+             <text x="130" y="148" text-anchor="middle" class="svg-title">④ 再び届く</text>
+             <text x="130" y="168" text-anchor="middle" class="svg-label-sm">ストアへの再流入</text></g>
+          <path d="M460 45 C 550 45, 600 70, 600 115" class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M600 185 C 600 230, 550 260, 465 260" class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M270 260 C 180 260, 130 230, 130 185" class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M130 115 C 130 70, 180 45, 265 45" class="svg-arrow" marker-end="url(#ar)"/>
+          <text x="365" y="155" text-anchor="middle" class="svg-label-sm">返金は「2週間以内かつ2時間未満」なら通る</text>
+        </svg>
+        <figcaption>図14: 発売後は、直して告知するたびに露出が戻ってくる</figcaption>
+      </figure>
+
+      <p>発売は終わりではなく、評価が固まるまでの数週間が本番です。Steamの返金は<strong>「購入から2週間以内かつプレイ2時間未満」なら理由を問わず通る</strong>ため、最初の2時間の体験がそのまま返金率に表れます。序盤の導入と難易度が最重要です。</p>
+
+      <p>返金時のコメントや低評価レビューは開発者向けの管理画面から読めます。ここに出るのはテストで拾えなかった本物のつまずき。読んで直し、更新履歴として告知すると、その告知自体がストアページへの再流入になります。</p>
+
+      <p>レビュー10件の壁もここで効きます。序盤に丁寧な修正を積むと評価の傾きが変わる。<strong>発売後1か月は開発期間の一部</strong>として予定に入れておきます。</p>
+    </section>
+
+    <section id="s15">
+      <h2>15. よくある失敗と、その対策</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 270" role="img" aria-label="よくある3つの失敗とその対策">
+          <rect x="10" y="20" width="300" height="66" rx="8" fill="var(--red-soft)" stroke="var(--red)" stroke-width="1.5"/>
+          <text x="160" y="48" text-anchor="middle" class="svg-title">レビューが10件未満</text>
+          <text x="160" y="70" text-anchor="middle" class="svg-label-sm">推薦枠に載らず露出が止まる</text>
+          <path d="M318 53 H 350" class="svg-arrow" marker-end="url(#ar)"/>
+          <rect x="360" y="20" width="350" height="66" rx="8" class="svg-box-accent"/>
+          <text x="535" y="48" text-anchor="middle" class="svg-title">Playtestとデモで先に遊んだ人を作る</text>
+          <text x="535" y="70" text-anchor="middle" class="svg-label-sm">発売直後にレビューが入る状態にしておく</text>
+          <rect x="10" y="105" width="300" height="66" rx="8" fill="var(--red-soft)" stroke="var(--red)" stroke-width="1.5"/>
+          <text x="160" y="133" text-anchor="middle" class="svg-title">日本語だけで発売</text>
+          <text x="160" y="155" text-anchor="middle" class="svg-label-sm">届く相手が桁で減る</text>
+          <path d="M318 138 H 350" class="svg-arrow" marker-end="url(#ar)"/>
+          <rect x="360" y="105" width="350" height="66" rx="8" class="svg-box-accent"/>
+          <text x="535" y="133" text-anchor="middle" class="svg-title">最低限、英語のストアページとUI</text>
+          <text x="535" y="155" text-anchor="middle" class="svg-label-sm">AI翻訳を使うなら開示が必要</text>
+          <rect x="10" y="190" width="300" height="66" rx="8" fill="var(--red-soft)" stroke="var(--red)" stroke-width="1.5"/>
+          <text x="160" y="218" text-anchor="middle" class="svg-title">発売直前に間に合わない</text>
+          <text x="160" y="240" text-anchor="middle" class="svg-label-sm">2週間前を切ると日付を動かせない</text>
+          <path d="M318 223 H 350" class="svg-arrow" marker-end="url(#ar)"/>
+          <rect x="360" y="190" width="350" height="66" rx="8" class="svg-box-accent"/>
+          <text x="535" y="218" text-anchor="middle" class="svg-title">最初から余裕のある日付を置く</text>
+          <text x="535" y="240" text-anchor="middle" class="svg-label-sm">早める方向の変更は後からできる</text>
+        </svg>
+        <figcaption>図15: どれも発売後に気づくと手遅れになる</figcaption>
+      </figure>
+
+      <p>レビューが10件に届かないと推薦機能に載りにくく、露出がそこで止まります。言語対応の有無で母数は桁が変わる。発売2週間前を切ると日付を変更できないため、「間に合わない」と分かった時点ではもう動かせません。</p>
+
+      <p>この3つに共通するのは、<strong>どれも発売の数か月前に決まってしまう</strong>ことです。発売直前にやることは、本来もう残っていないのが理想。直前にバタバタしているなら、前の月の計画が足りなかったサインです。</p>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 5</span>
+      <p class="qtext">発売10日前、バグが直りきらないと分かった。取れる行動は？</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>発売日を1か月後ろにずらす</span></button>
+        <button class="opt" data-correct><span class="mark">B</span><span>ずらせないので、その範囲で直して出し、発売後に修正版を配る</span></button>
+        <button class="opt"><span class="mark">C</span><span>ストアページを一度取り下げて作り直す</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>2週間前を切ると発売日は変更できません。Aはその制限に引っかかり、Cは集めたウィッシュリストを捨てることになります。</p>
+      </div>
+    </div>
+
+    <section id="summary">
+      <h2>まとめ</h2>
+      <div class="cards">
+        <div class="card"><h4>作るより知られるほうが難しい</h4><p>AIで②開発は速くなった。差がつくのは④宣伝に何か月かけたか。</p></div>
+        <div class="card"><h4>期限は全部「発売日から逆算」</h4><p>ストアページ2週間前、Nextフェス登録は約7週間前。締切は自分では動かせない。</p></div>
+        <div class="card"><h4>価格と割引は発売前に決め切る</h4><p>ローンチ割引は発売後に追加できず、30日は値下げもできない。</p></div>
+        <div class="card"><h4>最初の1本は完成させることが目的</h4><p>売上より、登録から発売・運営までを一周した経験のほうが次に効く。</p></div>
+      </div>
+    </section>
+
+    <section id="sources">
+      <h2>出典</h2>
+      <ul class="sources">
+        <li><a href="https://partner.steamgames.com/doc/gettingstarted/appfee?l=japanese">Steam Direct料金</a></li>
+        <li><a href="https://partner.steamgames.com/doc/gettingstarted?l=japanese">使用開始</a></li>
+        <li><a href="https://partner.steamgames.com/doc/store/releasing?l=japanese">リリースプロセス</a></li>
+        <li><a href="https://partner.steamgames.com/doc/store/testing?l=japanese">Steam上でのテスト（Playtest）</a></li>
+        <li><a href="https://partner.steamgames.com/doc/marketing/discounts?l=japanese">割引</a></li>
+        <li><a href="https://partner.steamgames.com/doc/store/pricing?l=japanese">価格設定</a></li>
+        <li><a href="https://partner.steamgames.com/doc/finance/taxfaq?l=japanese">税金に関するFAQ</a></li>
+        <li><a href="https://partner.steamgames.com/doc/marketing/upcoming_events/nextfest/2026october?l=japanese">Nextフェス 2026年10月</a></li>
+        <li><a href="https://partner.steamgames.com/doc/marketing/upcoming_events?l=japanese">今後のイベント</a></li>
+        <li><a href="https://store.steampowered.com/steam_refunds/?l=japanese">Steam返金</a></li>
+        <li><a href="https://automaton-media.com/articles/newsjp/steam-ai-20260117-407801/">生成AI開示基準の明確化（AUTOMATON）</a></li>
+        <li><a href="https://www.gamespark.jp/article/2018/12/02/85699.html">収益分配率のティア（Game*Spark）</a></li>
+        <li><a href="https://www.4gamer.net/games/038/G003821/20260331014/">価格管理ツール更新（4Gamer）</a></li>
+        <li><a href="https://www.4gamer.net/games/038/G003821/20210423052/">Steam Playtest 登場（4Gamer）</a></li>
+        <li><a href="https://www.4gamer.net/games/999/G999901/20250206054/">早期アクセスの警告表示（4Gamer）</a></li>
+        <li><a href="https://indiegamesjp.dev/?p=2826">マイナンバー可・EIN不要（IndieGamesJp.dev）</a></li>
+        <li><a href="https://steamforecast.app/guides/how-many-wishlists-before-steam-launch">How Many Wishlists Before Steam Launch?</a></li>
+        <li><a href="https://steamforecast.app/guides/steam-wishlist-conversion-rate">Steam Wishlist Conversion Rate</a></li>
+        <li><a href="https://note.com/akutaba/n/nb20274f28f0f">Steamで売る前のポイントBest10（みやこ出版）</a></li>
+        <li><a href="https://playbridge.jp/articles/game-haisin-irai">ゲーム配信を依頼する方法5選（PlayBridge）</a></li>
+      </ul>
+    </section>
+
+  </main>
+</div>
+
+<script>
+// ---- テーマ切替 ----
+(function(){
+  var root=document.documentElement, btn=document.getElementById('themeBtn');
+  if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+    root.setAttribute('data-theme','dark');
+  }
+  var sync=function(){ btn.textContent = root.getAttribute('data-theme')==='dark' ? '☀️' : '🌙'; };
+  sync();
+  btn.addEventListener('click',function(){
+    root.setAttribute('data-theme', root.getAttribute('data-theme')==='dark'?'light':'dark');
+    sync();
+  });
+})();
+
+// ---- 目次スクロール連動 ----
+(function(){
+  var links=[].slice.call(document.querySelectorAll('#toc a'));
+  var map={}; links.forEach(function(a){ var el=document.querySelector(a.getAttribute('href')); if(el) map[el.id]=a; });
+  var targets=Object.keys(map).map(function(id){return document.getElementById(id);});
+  if(!targets.length) return;
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        links.forEach(function(a){a.classList.remove('active');});
+        map[e.target.id].classList.add('active');
+      }
+    });
+  },{rootMargin:'-15% 0px -70% 0px', threshold:0});
+  targets.forEach(function(t){io.observe(t);});
+})();
+
+// ---- クイズ ----
+(function(){
+  document.querySelectorAll('[data-quiz]').forEach(function(q){
+    var opts=[].slice.call(q.querySelectorAll('.opt'));
+    var box=q.querySelector('.explain'), verdict=q.querySelector('.verdict');
+    opts.forEach(function(btn){
+      btn.addEventListener('click',function(){
+        if(btn.disabled) return;
+        var ok=btn.hasAttribute('data-correct');
+        opts.forEach(function(o){
+          o.disabled=true;
+          if(o.hasAttribute('data-correct')) o.classList.add('correct');
+        });
+        if(!ok) btn.classList.add('wrong');
+        verdict.textContent = ok ? '正解！' : '惜しい — 正解は上の緑の選択肢です';
+        verdict.className = 'verdict ' + (ok?'ok':'ng');
+        box.classList.add('show');
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
