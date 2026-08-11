@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>新しいチャットで文脈が失われる問題と、その解決策</title>
+<style>
+:root{
+  --bg:#ffffff; --bg-sub:#f7f7f5; --bg-hover:#efefed;
+  --text:#37352f; --text-mute:#787774; --text-faint:#9b9a97;
+  --border:#e9e9e7; --border-strong:#d3d3d1;
+  --accent:#2383e2; --accent-soft:#e7f1fd;
+  --green:#0f7b6c; --green-soft:#e4f3f0;
+  --amber:#cb912f; --amber-soft:#faf1dd;
+  --red:#e03e3e;   --red-soft:#fbe9e9;
+  --purple:#6940a5; --purple-soft:#eee6f7;
+  --radius:8px;
+  --font: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif;
+}
+html[data-theme="dark"]{
+  --bg:#191919; --bg-sub:#202020; --bg-hover:#2a2a2a;
+  --text:#d4d4d4; --text-mute:#9b9b9b; --text-faint:#6f6f6f;
+  --border:#2f2f2f; --border-strong:#414141;
+  --accent:#5b9dd9; --accent-soft:#1c2f3f;
+  --green:#4dab9a; --green-soft:#1c2b28;
+  --amber:#e0b44a; --amber-soft:#332a1b;
+  --red:#ff7369;   --red-soft:#3a2323;
+  --purple:#9a76d1; --purple-soft:#2a2136;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font); font-size:16px; line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+  transition:background .2s,color .2s;
+}
+.layout{display:flex; align-items:flex-start; max-width:1180px; margin:0 auto}
+
+/* ---------- 目次サイドバー ---------- */
+#sidebar{
+  position:sticky; top:0; flex:0 0 250px; height:100vh;
+  padding:28px 14px 40px; overflow-y:auto;
+  border-right:1px solid var(--border); background:var(--bg-sub);
+}
+#sidebar .toc-label{
+  font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--text-faint); padding:0 10px; margin-bottom:10px; font-weight:600;
+}
+#toc a{
+  display:block; padding:6px 10px; margin:1px 0; border-radius:6px;
+  color:var(--text-mute); text-decoration:none; font-size:13.5px; line-height:1.45;
+  border-left:2px solid transparent; transition:background .15s,color .15s;
+}
+#toc a:hover{background:var(--bg-hover); color:var(--text)}
+#toc a.active{background:var(--accent-soft); color:var(--accent); font-weight:600; border-left-color:var(--accent)}
+#toc a.sub{padding-left:22px; font-size:12.5px}
+
+/* ---------- 本文 ---------- */
+main{flex:1 1 auto; min-width:0; padding:56px 60px 140px; max-width:860px}
+.hero-eyebrow{font-size:12px; letter-spacing:.1em; color:var(--accent); font-weight:700; text-transform:uppercase}
+h1{font-size:40px; line-height:1.25; margin:.25em 0 .35em; letter-spacing:-.01em; font-weight:800}
+h2{font-size:26px; margin:2.6em 0 .6em; padding-bottom:.3em; border-bottom:1px solid var(--border); font-weight:700; letter-spacing:-.005em}
+h3{font-size:18px; margin:1.8em 0 .4em; font-weight:700}
+p{margin:.7em 0}
+a{color:var(--accent)}
+.lead{font-size:18px; color:var(--text-mute); line-height:1.8}
+.meta{display:flex; flex-wrap:wrap; gap:8px; margin:20px 0 8px}
+.chip{
+  font-size:12.5px; padding:4px 11px; border-radius:999px;
+  background:var(--bg-sub); border:1px solid var(--border); color:var(--text-mute);
+}
+strong{font-weight:700}
+mark{background:var(--amber-soft); color:inherit; padding:0 3px; border-radius:3px}
+code{background:var(--bg-sub); border:1px solid var(--border); border-radius:4px; padding:1px 5px; font-size:.88em}
+hr{border:0; border-top:1px solid var(--border); margin:3em 0}
+ul,ol{padding-left:1.4em} li{margin:.3em 0}
+
+/* ---------- 図解ブロック（各セクションの先頭に置く） ---------- */
+.figure{
+  margin:1.4em 0 1.2em; padding:24px; border:1px solid var(--border);
+  border-radius:var(--radius); background:var(--bg-sub);
+}
+.figure svg{display:block; width:100%; height:auto; max-width:100%}
+.figure figcaption{
+  margin-top:14px; padding-top:12px; border-top:1px solid var(--border);
+  font-size:13px; color:var(--text-mute); text-align:center;
+}
+/* SVG内で使う共通クラス */
+.svg-label{font-family:var(--font); font-size:13px; fill:var(--text)}
+.svg-label-sm{font-family:var(--font); font-size:11px; fill:var(--text-mute)}
+.svg-title{font-family:var(--font); font-size:14px; font-weight:700; fill:var(--text)}
+.svg-box{fill:var(--bg); stroke:var(--border-strong); stroke-width:1.5}
+.svg-box-accent{fill:var(--accent-soft); stroke:var(--accent); stroke-width:1.5}
+.svg-arrow{stroke:var(--text-faint); stroke-width:1.8; fill:none}
+
+/* ---------- コールアウト ---------- */
+.callout{
+  display:flex; gap:12px; padding:16px 18px; margin:1.2em 0;
+  border-radius:var(--radius); background:var(--bg-sub); border-left:3px solid var(--text-faint);
+}
+.callout .ico{flex:0 0 auto; font-size:18px; line-height:1.5}
+.callout p:first-child{margin-top:0} .callout p:last-child{margin-bottom:0}
+.callout.tip{background:var(--accent-soft); border-left-color:var(--accent)}
+.callout.warn{background:var(--amber-soft); border-left-color:var(--amber)}
+.callout.key{background:var(--green-soft); border-left-color:var(--green)}
+
+/* ---------- カードグリッド ---------- */
+.cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin:1.2em 0}
+.card{padding:16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg)}
+.card h4{margin:0 0 6px; font-size:14.5px; font-weight:700}
+.card p{margin:0; font-size:13.5px; color:var(--text-mute); line-height:1.7}
+
+/* ---------- 表 ---------- */
+table{width:100%; border-collapse:collapse; margin:1.2em 0; font-size:14.5px}
+th,td{border:1px solid var(--border); padding:10px 12px; text-align:left; vertical-align:top}
+th{background:var(--bg-sub); font-weight:700}
+
+/* ---------- クイズ ---------- */
+.quiz{
+  margin:2em 0; padding:22px 24px; border:1px solid var(--border);
+  border-radius:var(--radius); background:var(--bg-sub);
+}
+.quiz .qtag{
+  display:inline-block; font-size:11px; font-weight:700; letter-spacing:.06em;
+  color:var(--purple); background:var(--purple-soft); padding:3px 9px; border-radius:999px; margin-bottom:10px;
+}
+.quiz .qtext{font-weight:700; font-size:16.5px; margin:0 0 14px; line-height:1.65}
+.quiz .opts{display:flex; flex-direction:column; gap:8px}
+.quiz button.opt{
+  text-align:left; font:inherit; font-size:14.5px; color:var(--text); cursor:pointer;
+  padding:12px 14px; border:1px solid var(--border-strong); border-radius:6px;
+  background:var(--bg); transition:background .15s,border-color .15s;
+  display:flex; gap:10px; align-items:flex-start; line-height:1.6;
+}
+.quiz button.opt:hover:not(:disabled){background:var(--bg-hover); border-color:var(--accent)}
+.quiz button.opt:disabled{cursor:default}
+.quiz button.opt .mark{flex:0 0 20px; font-weight:700; color:var(--text-faint)}
+.quiz button.opt.correct{background:var(--green-soft); border-color:var(--green)}
+.quiz button.opt.correct .mark{color:var(--green)}
+.quiz button.opt.wrong{background:var(--red-soft); border-color:var(--red)}
+.quiz button.opt.wrong .mark{color:var(--red)}
+.quiz .explain{
+  display:none; margin-top:14px; padding:14px 16px; border-radius:6px;
+  background:var(--bg); border:1px solid var(--border); font-size:14px; line-height:1.75;
+}
+.quiz .explain.show{display:block}
+.quiz .verdict{font-weight:700; margin-bottom:4px}
+.quiz .verdict.ok{color:var(--green)} .quiz .verdict.ng{color:var(--red)}
+
+/* ---------- 出典 ---------- */
+.sources{font-size:14px; color:var(--text-mute)}
+.sources li{margin:.5em 0}
+
+/* ---------- テーマ切替ボタン ---------- */
+#themeBtn{
+  position:fixed; top:18px; right:22px; z-index:50;
+  width:38px; height:38px; border-radius:8px; cursor:pointer;
+  border:1px solid var(--border-strong); background:var(--bg); color:var(--text);
+  font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;
+  transition:background .15s;
+}
+#themeBtn:hover{background:var(--bg-hover)}
+
+/* ---------- レスポンシブ ---------- */
+@media (max-width:900px){
+  #sidebar{display:none}
+  main{padding:40px 22px 100px}
+  h1{font-size:30px} h2{font-size:22px}
+}
+@media print{
+  #sidebar,#themeBtn{display:none} main{max-width:none;padding:0}
+  .quiz .explain{display:block}
+}
+</style>
+</head>
+<body>
+
+<button id="themeBtn" aria-label="ライト/ダーク切替">🌙</button>
+
+<div class="layout">
+
+  <aside id="sidebar">
+    <div class="toc-label">目次</div>
+    <nav id="toc">
+      <a href="#about">この教材について</a>
+      <a href="#s1">1. 消えるものと、残るもの</a>
+      <a href="#s2">2. なぜ消えるのか</a>
+      <a href="#s3">3. 長く続ければいい、は成り立たない</a>
+      <a href="#s4">4. 位置の問題 — 真ん中は読まれにくい</a>
+      <a href="#s5">5. 圧縮は延命であって保存ではない</a>
+      <a href="#s6">6. 外に置くものは3層に分かれる</a>
+      <a href="#s7">7. 注意予算と、必要になってから読む</a>
+      <a href="#s8">8. 引き継ぎメモに書くこと・書かないこと</a>
+      <a href="#s9">9. スナップショットと履歴を分ける</a>
+      <a href="#s10">10. 置き場所の標準</a>
+      <a href="#s11">11. 運用ではなく仕組みにする</a>
+      <a href="#s12">12. 落とし穴</a>
+      <a href="#s13">13. 実装例 — 置き場所を決める</a>
+      <a href="#s14">14. 実装例 — メモの見出しを固定する</a>
+      <a href="#s15">15. 実装例 — スキルとフックで自動化する</a>
+      <a href="#summary">まとめ</a>
+      <a href="#sources">出典</a>
+    </nav>
+  </aside>
+
+  <main>
+
+    <header>
+      <div class="hero-eyebrow">AI / 開発ワークフロー</div>
+      <h1>新しいチャットで文脈が失われる問題と、その解決策</h1>
+      <p class="lead">AIコーディングエージェントは前回の会話を覚えていません。なぜ消えるのか、なぜ長い1本のチャットで粘っても解決しないのか、何をどこに書き残せば次のセッションが続きから始まるのかを扱います。</p>
+      <div class="meta">
+        <span class="chip">対象: エージェントを日常的に使う開発者</span>
+        <span class="chip">レベル: 中級</span>
+        <span class="chip">所要 約20分</span>
+        <span class="chip">更新: 2026-08-11</span>
+      </div>
+    </header>
+
+    <section id="about">
+      <h2>この教材について</h2>
+      <div class="callout key">
+        <span class="ico">🎯</span>
+        <div>
+          <p><strong>読み終えるとできるようになること</strong></p>
+          <ol>
+            <li>文脈が消える理由と、長いチャットでも品質が落ちる理由を説明できる</li>
+            <li>規約・手順・現在地の3つを分けて置き場所を設計できる</li>
+            <li>引き継ぎメモに何を書き、何を書かないかを判断できる</li>
+          </ol>
+        </div>
+      </div>
+      <p style="font-size:14px;color:var(--text-mute)">
+        主な参照元: <a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents">Effective context engineering for AI agents（Anthropic）</a> / <a href="https://www.trychroma.com/research/context-rot">Context Rot（Chroma）</a>（全出典は<a href="#sources">末尾</a>）
+      </p>
+    </section>
+
+    <section id="s1">
+      <h2>1. 消えるものと、残るもの</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="セッションの内側と外側。外側のファイルだけが次のセッションに残る">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="var(--text-faint)"/>
+            </marker>
+          </defs>
+          <rect x="20" y="70" width="210" height="150" rx="8" class="svg-box-accent"/>
+          <text x="125" y="100" text-anchor="middle" class="svg-title">永続層（ファイル）</text>
+          <text x="125" y="126" text-anchor="middle" class="svg-label-sm">規約</text>
+          <text x="125" y="148" text-anchor="middle" class="svg-label-sm">手順・スキル</text>
+          <text x="125" y="170" text-anchor="middle" class="svg-label-sm">現在地スナップショット</text>
+          <text x="125" y="200" text-anchor="middle" class="svg-label-sm">終わっても残る</text>
+
+          <rect x="330" y="40" width="370" height="210" rx="8" class="svg-box" stroke-dasharray="6 4"/>
+          <text x="515" y="70" text-anchor="middle" class="svg-title">セッション（コンテキストウィンドウ）</text>
+          <rect x="350" y="85" width="330" height="38" rx="5" class="svg-box"/>
+          <text x="515" y="109" text-anchor="middle" class="svg-label">システム指示・規約</text>
+          <rect x="350" y="131" width="330" height="38" rx="5" class="svg-box"/>
+          <text x="515" y="155" text-anchor="middle" class="svg-label">会話履歴</text>
+          <rect x="350" y="177" width="330" height="38" rx="5" class="svg-box"/>
+          <text x="515" y="201" text-anchor="middle" class="svg-label">ツール出力・試行錯誤</text>
+          <text x="515" y="238" text-anchor="middle" class="svg-label-sm">終了と同時に、まるごと消える</text>
+
+          <path d="M236 120 H 322" class="svg-arrow" marker-end="url(#ar)"/>
+          <text x="279" y="110" text-anchor="middle" class="svg-label-sm">開始時に読む</text>
+          <path d="M322 195 H 238" class="svg-arrow" marker-end="url(#ar)"/>
+          <text x="280" y="185" text-anchor="middle" class="svg-label-sm">終了前に書く</text>
+        </svg>
+        <figcaption>図1: 外に置いたものだけが次に渡る</figcaption>
+      </figure>
+
+      <p>エージェントは前回の会話を覚えていません。覚えているように見えるのは、毎回ファイルを読み直しているからです。セッションの中身は終了と同時に消え、外に書いたものだけが次に渡ります。設計すべきは「どう記憶させるか」ではなく、<strong>何を外に置き、いつ読ませるか</strong>です。</p>
+    </section>
+
+    <section id="s2">
+      <h2>2. なぜ消えるのか</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ターンごとに送信する履歴が積み上がり、新しいセッションで空に戻る">
+          <text x="360" y="24" text-anchor="middle" class="svg-label-sm">毎ターン、それまでの履歴をまるごと送り直している</text>
+          <rect x="20" y="120" width="120" height="40" rx="4" class="svg-box-accent"/>
+          <text x="80" y="145" text-anchor="middle" class="svg-label">A</text>
+          <rect x="190" y="90" width="120" height="70" rx="4" class="svg-box-accent"/>
+          <text x="250" y="130" text-anchor="middle" class="svg-label">A + B</text>
+          <rect x="360" y="50" width="120" height="110" rx="4" class="svg-box-accent"/>
+          <text x="420" y="110" text-anchor="middle" class="svg-label">A + B + C</text>
+          <rect x="530" y="140" width="120" height="20" rx="4" class="svg-box" stroke-dasharray="5 4"/>
+          <text x="590" y="132" text-anchor="middle" class="svg-label-sm">空</text>
+          <line x1="10" y1="160" x2="700" y2="160" stroke="var(--border-strong)" stroke-width="1.5"/>
+          <text x="80" y="180" text-anchor="middle" class="svg-label-sm">ターン1</text>
+          <text x="250" y="180" text-anchor="middle" class="svg-label-sm">ターン2</text>
+          <text x="420" y="180" text-anchor="middle" class="svg-label-sm">ターン3</text>
+          <text x="590" y="180" text-anchor="middle" class="svg-label-sm">新しいセッション</text>
+        </svg>
+        <figcaption>図2: 送信量は積み上がり、閉じるとゼロに戻る</figcaption>
+      </figure>
+
+      <p>モデルの側に状態はありません。1ターンごとに、それまでの全履歴を入力として送り直しています。3ターン目に1ターン目を参照できたのは記憶ではなく、履歴が入力に含まれていたからです。新しいチャットではこの入力が空になります。文脈が失われるのは不具合ではなく、仕様です。</p>
+    </section>
+
+    <section id="s3">
+      <h2>3. 長く続ければいい、は成り立たない</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="入力が長くなるほど精度が下がり、劣化は上限のずっと手前から始まる">
+          <line x1="80" y1="20" x2="80" y2="200" stroke="var(--border-strong)"/>
+          <line x1="80" y1="200" x2="690" y2="200" stroke="var(--border-strong)"/>
+          <path d="M80 45 C 220 55, 300 100, 400 128 S 560 180, 660 196"
+                fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+          <line x1="640" y1="20" x2="640" y2="200" stroke="var(--red)" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <text x="634" y="36" text-anchor="end" class="svg-label-sm">ウィンドウ上限</text>
+          <text x="70" y="48" text-anchor="end" class="svg-label-sm">高</text>
+          <text x="70" y="200" text-anchor="end" class="svg-label-sm">低</text>
+          <text x="34" y="120" text-anchor="middle" class="svg-label">精度</text>
+          <text x="80" y="222" class="svg-label-sm">入力が短い</text>
+          <text x="600" y="222" text-anchor="middle" class="svg-label-sm">入力が長い</text>
+          <text x="300" y="160" class="svg-label-sm">上限のずっと手前から劣化が始まる</text>
+          <text x="80" y="252" class="svg-label-sm">出典: Chroma「Context Rot」(2025-07) — 18モデルで確認</text>
+        </svg>
+        <figcaption>図3: 難易度が同じでも入力が長いだけで落ちる</figcaption>
+      </figure>
+
+      <p>では長い1本のチャットで粘ればよいかというと、そうはなりません。Chroma が18モデルを評価した2025年7月のレポートでは、難易度を変えずに入力を長くするだけで全モデルの精度が落ちました。しかも劣化は上限のずっと手前から始まります。<mark>上限に収まっていれば大丈夫、は成り立ちません</mark>。</p>
+    </section>
+
+    <section id="s4">
+      <h2>4. 位置の問題 — 真ん中は読まれにくい</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="関連情報を置いた位置と正答率。先頭と末尾が高く中央が低いU字">
+          <text x="360" y="26" text-anchor="middle" class="svg-label-sm">関連情報を置いた位置と、正答率</text>
+          <rect x="65" y="55" width="90" height="145" rx="4" fill="var(--accent)"/>
+          <rect x="185" y="105" width="90" height="95" rx="4" fill="var(--accent)" opacity=".6"/>
+          <rect x="305" y="140" width="90" height="60" rx="4" fill="var(--red)" opacity=".8"/>
+          <rect x="425" y="100" width="90" height="100" rx="4" fill="var(--accent)" opacity=".6"/>
+          <rect x="545" y="62" width="90" height="138" rx="4" fill="var(--accent)" opacity=".9"/>
+          <text x="350" y="132" text-anchor="middle" class="svg-label-sm">最も落ちる</text>
+          <line x1="40" y1="200" x2="690" y2="200" stroke="var(--border-strong)" stroke-width="1.5"/>
+          <text x="110" y="220" text-anchor="middle" class="svg-label-sm">先頭</text>
+          <text x="230" y="220" text-anchor="middle" class="svg-label-sm">前半</text>
+          <text x="350" y="220" text-anchor="middle" class="svg-label-sm">中央</text>
+          <text x="470" y="220" text-anchor="middle" class="svg-label-sm">後半</text>
+          <text x="590" y="220" text-anchor="middle" class="svg-label-sm">末尾</text>
+          <text x="40" y="248" class="svg-label-sm">出典: Lost in the Middle (TACL 2024) の傾向を模式化</text>
+        </svg>
+        <figcaption>図4: 同じ情報でも置いた位置で読まれ方が変わる</figcaption>
+      </figure>
+
+      <p>長さとは別に、位置の問題もあります。TACL 2024 の Lost in the Middle は、20件の文書のうち答えを含む1件を1番目から10番目に動かすだけで正答率が30%以上落ちることを示しました。<strong>入れておけば読まれる、ではありません。</strong></p>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 1</span>
+      <p class="qtext">コンテキストウィンドウが100万トークンあるなら履歴を全部入れておけばよい。この考えの何が誤りですか。</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>100万トークンという値は理論上の最大で、実際にはその半分しか使えないから</span></button>
+        <button class="opt" data-correct><span class="mark">B</span><span>上限内でも入力が長くなること自体で精度が落ち、中央の情報は特に読まれにくいから</span></button>
+        <button class="opt"><span class="mark">C</span><span>長い入力はモデルが自動で要約するので、結局そのままでは渡らないから</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>劣化は「総量」と「位置」の2つで起きます。A: 上限値は実際に使えますが、使えることと精度が保たれることは別です。C: 要約は劣化の理由ではなく、対処のほうです。</p>
+      </div>
+    </div>
+
+    <section id="s5">
+      <h2>5. 圧縮は延命であって保存ではない</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="コンテキスト管理の有無によるピークトークン数の比較">
+          <line x1="190" y1="20" x2="190" y2="195" stroke="var(--border-strong)"/>
+          <line x1="190" y1="195" x2="690" y2="195" stroke="var(--border-strong)"/>
+          <rect x="190" y="30" width="420" height="28" rx="4" fill="var(--accent)"/>
+          <text x="182" y="49" text-anchor="end" class="svg-label">管理なし</text>
+          <text x="618" y="49" class="svg-label-sm">335,279</text>
+          <rect x="190" y="72" width="212" height="28" rx="4" fill="var(--accent)" opacity=".7"/>
+          <text x="182" y="91" text-anchor="end" class="svg-label">圧縮のみ</text>
+          <text x="410" y="91" class="svg-label-sm">169,164</text>
+          <rect x="190" y="114" width="217" height="28" rx="4" fill="var(--accent)" opacity=".55"/>
+          <text x="182" y="133" text-anchor="end" class="svg-label">ツール結果の削除</text>
+          <text x="415" y="133" class="svg-label-sm">173,137</text>
+          <rect x="190" y="156" width="216" height="28" rx="4" fill="var(--green)" opacity=".8"/>
+          <text x="182" y="175" text-anchor="end" class="svg-label">メモリあり（2回目）</text>
+          <text x="414" y="175" class="svg-label-sm">172,623</text>
+          <text x="20" y="222" class="svg-label-sm">単位: ピーク時のトークン数 / 出典: Claude Cookbook (2026-03)</text>
+        </svg>
+        <figcaption>図5: 約33万トークンの資料を扱わせた場合</figcaption>
+      </figure>
+
+      <p>上限が近づいた会話を要約し、新しいウィンドウで再開する仕組みがあります。Anthropic の実験では、約33万トークンの資料を読ませたエージェントのピークが、圧縮で半分近くまで下がりました。ただし<strong>何を捨てるかは自動で決まります</strong>。後で効いてくる細かい判断は要約からこぼれます。</p>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><p>圧縮は延命であって保存ではありません。消えては困るものは、自分の手で外に書き出しておきます。</p></div>
+      </div>
+    </section>
+
+    <section id="s6">
+      <h2>6. 外に置くものは3層に分かれる</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="規約・手順・現在地の3層と、それぞれが読まれるタイミング">
+          <rect x="170" y="15" width="400" height="60" rx="6" class="svg-box-accent"/>
+          <text x="370" y="42" text-anchor="middle" class="svg-title">規約</text>
+          <text x="370" y="62" text-anchor="middle" class="svg-label-sm">守らせたい決まりごと</text>
+          <text x="160" y="49" text-anchor="end" class="svg-label-sm">めったに変わらない</text>
+          <text x="580" y="49" class="svg-label-sm">毎回読まれる</text>
+
+          <rect x="170" y="85" width="400" height="60" rx="6" class="svg-box"/>
+          <text x="370" y="112" text-anchor="middle" class="svg-title">手順・スキル</text>
+          <text x="370" y="132" text-anchor="middle" class="svg-label-sm">やり方のまとまり</text>
+          <text x="160" y="119" text-anchor="end" class="svg-label-sm">たまに変わる</text>
+          <text x="580" y="112" class="svg-label-sm">呼ばれたときだけ</text>
+          <text x="580" y="130" class="svg-label-sm">読まれる</text>
+
+          <rect x="170" y="155" width="400" height="60" rx="6" class="svg-box"/>
+          <text x="370" y="182" text-anchor="middle" class="svg-title">現在地スナップショット</text>
+          <text x="370" y="202" text-anchor="middle" class="svg-label-sm">残作業と次の一手</text>
+          <text x="160" y="189" text-anchor="end" class="svg-label-sm">毎回変わる</text>
+          <text x="580" y="182" text-anchor="start" class="svg-label-sm">開始時に読まれる</text>
+          <text x="370" y="238" text-anchor="middle" class="svg-label-sm">分ける基準は内容ではなく「いつ読まれてほしいか」</text>
+        </svg>
+        <figcaption>図6: 読まれるタイミングが違うものは混ぜない</figcaption>
+      </figure>
+
+      <p>外に置くものは性質で3つに分かれます。めったに変わらない規約、必要なときだけ要る手順、毎回変わる現在地です。混ぜると、規約を直すたびに現在地が汚れ、現在地を書き足すたびに規約が埋もれます。分ける基準は内容ではなく、いつ読まれてほしいかです。</p>
+    </section>
+
+    <section id="s7">
+      <h2>7. 注意予算と、必要になってから読む</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="全部を先読みした窓と、必要なときに読む窓の対比">
+          <text x="175" y="28" text-anchor="middle" class="svg-title">全部を先に読ませる</text>
+          <rect x="20" y="40" width="310" height="180" rx="8" class="svg-box"/>
+          <rect x="35" y="55" width="280" height="30" rx="4" fill="var(--text-faint)" opacity=".35"/>
+          <text x="175" y="75" text-anchor="middle" class="svg-label-sm">規約</text>
+          <rect x="35" y="90" width="280" height="45" rx="4" fill="var(--text-faint)" opacity=".35"/>
+          <text x="175" y="118" text-anchor="middle" class="svg-label-sm">手順・テンプレートすべて</text>
+          <rect x="35" y="140" width="280" height="50" rx="4" fill="var(--text-faint)" opacity=".35"/>
+          <text x="175" y="170" text-anchor="middle" class="svg-label-sm">過去ログすべて</text>
+          <rect x="35" y="195" width="280" height="18" rx="4" fill="var(--green)" opacity=".55"/>
+          <text x="175" y="208" text-anchor="middle" class="svg-label-sm">残った余地</text>
+
+          <text x="545" y="28" text-anchor="middle" class="svg-title">必要になってから読む</text>
+          <rect x="390" y="40" width="310" height="180" rx="8" class="svg-box-accent"/>
+          <rect x="405" y="55" width="280" height="30" rx="4" fill="var(--text-faint)" opacity=".35"/>
+          <text x="545" y="75" text-anchor="middle" class="svg-label-sm">規約</text>
+          <rect x="405" y="90" width="280" height="30" rx="4" fill="var(--text-faint)" opacity=".35"/>
+          <text x="545" y="110" text-anchor="middle" class="svg-label-sm">現在地スナップショット</text>
+          <rect x="405" y="125" width="280" height="18" rx="4" fill="var(--text-faint)" opacity=".2"/>
+          <text x="545" y="138" text-anchor="middle" class="svg-label-sm">手順はパスだけ持つ</text>
+          <rect x="405" y="148" width="280" height="65" rx="4" fill="var(--green)" opacity=".55"/>
+          <text x="545" y="185" text-anchor="middle" class="svg-label-sm">作業に使える余地</text>
+        </svg>
+        <figcaption>図7: 先読みで埋めた分だけ余地が減る</figcaption>
+      </figure>
+
+      <p>手順もログも全部読ませたくなりますが、それは3節・4節の劣化を自分で招きます。コンテキストは有限の注意予算で、埋めた分だけ作業に使える余地が減ります。人が全部を暗記せず置き場所だけ覚えているのと同じで、<strong>パスだけ持たせ、必要になった時点で読ませます</strong>。</p>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 2</span>
+      <p class="qtext">規約・手順・現在地を別々のファイルに分ける、いちばんの理由はどれですか。</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>ファイルが小さいほうがエージェントの読み込みが速く、応答時間が短くなるから</span></button>
+        <button class="opt"><span class="mark">B</span><span>内容の種類ごとに整理しておくと、人間があとで探しやすいから</span></button>
+        <button class="opt" data-correct><span class="mark">C</span><span>読まれてほしいタイミングと更新頻度が違い、混ぜると不要なものまで毎回読ませるから</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>基準は「いつ読まれてほしいか」です。A: 速度も関わりますが、本質は注意予算の配分です。B: 人間の探しやすさが理由なら、1ファイル内の見出し分けで足ります。</p>
+      </div>
+    </div>
+
+    <section id="s8">
+      <h2>8. 引き継ぎメモに書くこと・書かないこと</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="次の判断に使うかと再現できるかの2軸で、書く内容を仕分けるマトリクス">
+          <rect x="140" y="20" width="480" height="260" fill="none" stroke="var(--border-strong)"/>
+          <rect x="141" y="21" width="238" height="128" fill="var(--accent-soft)"/>
+          <line x1="380" y1="20" x2="380" y2="280" stroke="var(--border)"/>
+          <line x1="140" y1="150" x2="620" y2="150" stroke="var(--border)"/>
+          <text x="260" y="56" text-anchor="middle" class="svg-title">書く</text>
+          <text x="260" y="82" text-anchor="middle" class="svg-label-sm">決定と、その理由</text>
+          <text x="260" y="104" text-anchor="middle" class="svg-label-sm">却下した案と、その理由</text>
+          <text x="260" y="126" text-anchor="middle" class="svg-label-sm">未解決の課題／次の一手</text>
+          <text x="500" y="66" text-anchor="middle" class="svg-title">場所だけ書く</text>
+          <text x="500" y="92" text-anchor="middle" class="svg-label-sm">変更したファイルは</text>
+          <text x="500" y="114" text-anchor="middle" class="svg-label-sm">差分を見れば分かる</text>
+          <text x="260" y="196" text-anchor="middle" class="svg-title">書かない</text>
+          <text x="260" y="222" text-anchor="middle" class="svg-label-sm">行き止まりだった試行</text>
+          <text x="500" y="196" text-anchor="middle" class="svg-title">書かない</text>
+          <text x="500" y="222" text-anchor="middle" class="svg-label-sm">会話の逐語録</text>
+          <text x="380" y="306" text-anchor="middle" class="svg-label-sm">→ コードや差分を見れば分かる</text>
+          <text x="128" y="150" text-anchor="end" class="svg-label-sm">↑ 次の判断に使う</text>
+        </svg>
+        <figcaption>図8: 残すのは再現できず、次の判断に使うもの</figcaption>
+      </figure>
+
+      <p>引き継ぎメモに書くのは、決定と<strong>その理由</strong>です。理由の抜けた決定は次のセッションで簡単にひっくり返され、同じ議論を繰り返すことになります。却下した案も同様です。変更したファイルや会話のやりとりは差分と履歴を見れば分かるので、書きません。</p>
+    </section>
+
+    <section id="s9">
+      <h2>9. スナップショットと履歴を分ける</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 230" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="1枚のスナップショットと、追記のみの履歴の役割分担">
+          <rect x="30" y="50" width="250" height="130" rx="8" class="svg-box-accent"/>
+          <text x="155" y="80" text-anchor="middle" class="svg-title">スナップショット</text>
+          <text x="155" y="106" text-anchor="middle" class="svg-label-sm">常に1枚・上書きしてよい</text>
+          <text x="155" y="128" text-anchor="middle" class="svg-label-sm">残作業／次の一手</text>
+          <text x="155" y="150" text-anchor="middle" class="svg-label-sm">未解決の課題だけ</text>
+
+          <rect x="460" y="40" width="230" height="120" rx="8" class="svg-box"/>
+          <rect x="450" y="55" width="230" height="120" rx="8" class="svg-box"/>
+          <rect x="440" y="70" width="230" height="120" rx="8" class="svg-box"/>
+          <text x="555" y="108" text-anchor="middle" class="svg-title">履歴</text>
+          <text x="555" y="134" text-anchor="middle" class="svg-label-sm">追記のみ・消さない</text>
+          <text x="555" y="156" text-anchor="middle" class="svg-label-sm">課題ログ／得た知見</text>
+
+          <path d="M290 112 H 428" class="svg-arrow" marker-end="url(#ar)"/>
+          <text x="358" y="102" text-anchor="middle" class="svg-label-sm">解決したら</text>
+          <text x="358" y="136" text-anchor="middle" class="svg-label-sm">履歴へ落とす</text>
+        </svg>
+        <figcaption>図9: 現在地は上書き、時系列は追記</figcaption>
+      </figure>
+
+      <p>引き継ぎメモは履歴ではなく、現在地のスナップショットです。常に1枚で、上書きして構いません。時系列で残したいものは課題ログや知見ログに追記し、解決した課題は履歴側へ落とします。この区別が無いとメモは際限なく育ち、読ませるほど精度が落ちる状態になります。</p>
+    </section>
+
+    <section id="s10">
+      <h2>10. 置き場所の標準</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 235" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="リポジトリに置く3種類のファイルの役割分担">
+          <rect x="270" y="10" width="180" height="54" rx="8" class="svg-box-accent"/>
+          <text x="360" y="43" text-anchor="middle" class="svg-title">リポジトリ</text>
+          <path d="M360 64 V 90 M120 90 H 600 M120 90 V 116 M360 90 V 116 M600 90 V 116"
+                class="svg-arrow" fill="none"/>
+          <rect x="30" y="116" width="180" height="94" rx="8" class="svg-box"/>
+          <text x="120" y="146" text-anchor="middle" class="svg-title">AGENTS.md</text>
+          <text x="120" y="170" text-anchor="middle" class="svg-label-sm">ツール横断の標準</text>
+          <text x="120" y="190" text-anchor="middle" class="svg-label-sm">6万以上のリポジトリ</text>
+          <rect x="270" y="116" width="180" height="94" rx="8" class="svg-box"/>
+          <text x="360" y="146" text-anchor="middle" class="svg-title">ツール固有ファイル</text>
+          <text x="360" y="170" text-anchor="middle" class="svg-label-sm">CLAUDE.md など</text>
+          <text x="360" y="190" text-anchor="middle" class="svg-label-sm">そのツール専用</text>
+          <rect x="510" y="116" width="180" height="94" rx="8" class="svg-box"/>
+          <text x="600" y="146" text-anchor="middle" class="svg-title">作業ログ</text>
+          <text x="600" y="170" text-anchor="middle" class="svg-label-sm">現在地と履歴を</text>
+          <text x="600" y="190" text-anchor="middle" class="svg-label-sm">置くディレクトリ</text>
+        </svg>
+        <figcaption>図10: 規約は共通の入れ物へ</figcaption>
+      </figure>
+
+      <p>置き場所には共通の入れ物があります。AGENTS.md は20を超えるツールが自動で読む設定ファイルで、6万以上のリポジトリが採用し、Linux Foundation 傘下の Agentic AI Foundation が管理しています。複数のツールを使うなら規約はここに置き、ツール固有ファイルはそのツールの作法だけに絞ります。</p>
+    </section>
+
+    <section id="s11">
+      <h2>11. 運用ではなく仕組みにする</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="開始時に読み、作業し、区切りで書き出すサイクル">
+          <rect x="270" y="10" width="180" height="60" rx="8" class="svg-box-accent"/>
+          <text x="360" y="38" text-anchor="middle" class="svg-title">① 開始時に読む</text>
+          <text x="360" y="58" text-anchor="middle" class="svg-label-sm">自動で読み込ませる</text>
+          <rect x="510" y="120" width="180" height="60" rx="8" class="svg-box"/>
+          <text x="600" y="148" text-anchor="middle" class="svg-title">② 作業する</text>
+          <text x="600" y="168" text-anchor="middle" class="svg-label-sm">前回の続きから</text>
+          <rect x="270" y="230" width="180" height="60" rx="8" class="svg-box"/>
+          <text x="360" y="258" text-anchor="middle" class="svg-title">③ 区切りで書く</text>
+          <text x="360" y="278" text-anchor="middle" class="svg-label-sm">決定が出たとき</text>
+          <rect x="30" y="120" width="180" height="60" rx="8" class="svg-box"/>
+          <text x="120" y="148" text-anchor="middle" class="svg-title">④ 次の一手を残す</text>
+          <text x="120" y="168" text-anchor="middle" class="svg-label-sm">離れる前に1行</text>
+          <path d="M450 45  C 540 45, 600 70, 600 115"  class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M600 185 C 600 230, 540 260, 455 260" class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M270 260 C 180 260, 120 230, 120 185" class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M120 115 C 120 70, 180 45, 265 45"    class="svg-arrow" marker-end="url(#ar)"/>
+          <text x="360" y="145" text-anchor="middle" class="svg-label-sm">人の記憶に</text>
+          <text x="360" y="167" text-anchor="middle" class="svg-label-sm">依存させない</text>
+        </svg>
+        <figcaption>図11: 読み込みと書き出しを手順に埋め込む</figcaption>
+      </figure>
+
+      <p>読ませるのも書き出すのも、手作業だと必ず忘れます。開始時にスナップショットを読み込ませ、区切りで書き出させるところまでを手順として固定します。書き出しは毎ターンではなく、決定が出たときと作業を離れるときで十分です。忘れが常態化したら、運用ではなく仕組みを直します。</p>
+
+      <div class="callout tip">
+        <span class="ico">💡</span>
+        <div><p>ここまでが考え方です。13〜15節では、実際のディレクトリ・メモの見出し・自動化の分担を、ひとつの実装例として示します。</p></div>
+      </div>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 3</span>
+      <p class="qtext">引き継ぎメモに残す価値がいちばん高いのは、次のうちどれですか。</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>今回変更したファイルの一覧と、それぞれの変更行数</span></button>
+        <button class="opt"><span class="mark">B</span><span>やりとりの流れが分かるよう、会話をできるだけ忠実に要約したもの</span></button>
+        <button class="opt" data-correct><span class="mark">C</span><span>採用した方針と却下した案、それぞれを選んだ／捨てた理由</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>理由はコードにも履歴にも残らないので、書かなければ失われます。A: 変更内容は差分を見れば分かります。B: 逐語に近い要約はメモを肥大させ、精度を下げます。</p>
+      </div>
+    </div>
+
+    <section id="s12">
+      <h2>12. 落とし穴</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 215" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="放置したメモと手入れしたメモの対比">
+          <rect x="10" y="25" width="310" height="170" rx="8" fill="var(--bg)" stroke="var(--border-strong)" stroke-width="1.5"/>
+          <text x="165" y="53" text-anchor="middle" class="svg-title" fill="var(--text-mute)">放置したメモ</text>
+          <text x="165" y="88" text-anchor="middle" class="svg-label">追記だけで肥大する</text>
+          <text x="165" y="120" text-anchor="middle" class="svg-label">認証情報が紛れ込む</text>
+          <text x="165" y="152" text-anchor="middle" class="svg-label">同じ名前で上書きされる</text>
+          <path d="M334 110 H 386" class="svg-arrow" stroke-width="2.5" marker-end="url(#ar)"/>
+          <rect x="400" y="25" width="310" height="170" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="555" y="53" text-anchor="middle" class="svg-title" fill="var(--accent)">手入れしたメモ</text>
+          <text x="555" y="88" text-anchor="middle" class="svg-label">解決済みは履歴へ落とす</text>
+          <text x="555" y="120" text-anchor="middle" class="svg-label">公開範囲を前提に書く</text>
+          <text x="555" y="152" text-anchor="middle" class="svg-label">名前に時刻まで入れる</text>
+        </svg>
+        <figcaption>図12: 手入れして初めて資産になる</figcaption>
+      </figure>
+
+      <p>最後に3つ。追記しかしないメモは、いずれ読まれないコストに変わります。共有リポジトリに置くなら、認証情報や個人情報は書かない前提で運用します。ファイル名が日付だけだと1日に2回書いたときに古いほうが残ることがあるので、時刻まで入れます。</p>
+    </section>
+
+    <section id="s13">
+      <h2>13. 実装例 — 置き場所を決める</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="規約・スキル・フック定義・作業ログのディレクトリ構成と、それぞれが読まれるタイミング">
+          <line x1="365" y1="18" x2="365" y2="320" stroke="var(--border)"/>
+          <text x="380" y="14" class="svg-label-sm">いつ読まれるか</text>
+
+          <text x="20" y="34" class="svg-title">リポジトリ/</text>
+          <path d="M40 42 V 208 M40 62 H 56 M40 112 H 56 M40 208 H 56" class="svg-arrow" fill="none"/>
+
+          <text x="60" y="66" class="svg-label">CLAUDE.md</text>
+          <text x="60" y="84" class="svg-label-sm">Codex CLI などは AGENTS.md</text>
+          <text x="380" y="66" class="svg-label-sm">毎回、最初から読まれる</text>
+
+          <text x="60" y="116" class="svg-label">.claude/</text>
+          <path d="M75 124 V 176 M75 144 H 91 M75 176 H 91" class="svg-arrow" fill="none"/>
+          <text x="95" y="148" class="svg-label">skills/&lt;名前&gt;/SKILL.md</text>
+          <text x="380" y="148" class="svg-label-sm">呼ばれたときだけ読まれる</text>
+          <text x="95" y="180" class="svg-label">settings.json</text>
+          <text x="380" y="180" class="svg-label-sm">フックの定義を書く場所</text>
+
+          <text x="60" y="212" class="svg-label">00.worklog/</text>
+          <path d="M75 220 V 304 M75 240 H 91 M75 272 H 91 M75 304 H 91" class="svg-arrow" fill="none"/>
+          <text x="95" y="244" class="svg-label">handoff/</text>
+          <text x="380" y="244" class="svg-label-sm">開始時に、最新の1枚だけ</text>
+          <text x="95" y="276" class="svg-label">issues/</text>
+          <text x="380" y="276" class="svg-label-sm">課題ログ。索引だけ読む</text>
+          <text x="95" y="308" class="svg-label">knowledge/</text>
+          <text x="380" y="308" class="svg-label-sm">知見ログ。索引だけ読む</text>
+        </svg>
+        <figcaption>図13: 3層をディレクトリに落とした例</figcaption>
+      </figure>
+
+      <p>規約は、そのツールが自動で読む規約ファイルに置きます。Claude Code なら <code>CLAUDE.md</code>、Codex CLI のように <code>AGENTS.md</code> を読むツールならそちらです（複数を行き来するなら10節のとおり <code>AGENTS.md</code> に寄せます）。手順はスキルとして <code>.claude/skills/</code> に置いて呼ばれたときだけ読ませ、現在地と履歴は作業ログのディレクトリにまとめます。フォルダ名を <code>00.</code> から始めるのは、一覧の先頭に固定して見落とさないためです。<code>issues/</code> と <code>knowledge/</code> には索引ファイルを置き、本文を読まずに「開くべきか」を判断できるようにします。これが7節の「パスだけ持つ」の実装にあたります。</p>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div>
+          <p>スナップショットのファイル名は <code>YYYY-MM-DD-HHMM.md</code> のように<strong>時刻まで</strong>入れます。日付だけだと、同じ日に2回書いたときに上書きされます。さらに厄介なのは辞書順で <code>-</code> が <code>.</code> より前に来ることで、<code>2026-08-11.md</code> は <code>2026-08-11-1428.md</code> より<strong>後ろ</strong>に並びます。時刻なしのファイルが1枚混ざると、そちらが「最新」と判定されます。</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="s14">
+      <h2>14. 実装例 — メモの見出しを固定する</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="引き継ぎメモの見出しと、それぞれの役割">
+          <rect x="20" y="20" width="310" height="32" rx="5" class="svg-box"/>
+          <text x="34" y="41" class="svg-label">今回やったこと</text>
+          <text x="350" y="41" class="svg-label-sm">事実だけ。3〜5行に収める</text>
+
+          <rect x="20" y="56" width="310" height="32" rx="5" class="svg-box-accent"/>
+          <text x="34" y="77" class="svg-label">決定事項と、その理由</text>
+          <text x="350" y="77" class="svg-label-sm">メモの本体。理由を必ず添える</text>
+
+          <rect x="20" y="92" width="310" height="32" rx="5" class="svg-box"/>
+          <text x="34" y="113" class="svg-label">課題と、行ったこと</text>
+          <text x="350" y="113" class="svg-label-sm">課題ログへのリンクを張る</text>
+
+          <rect x="20" y="128" width="310" height="32" rx="5" class="svg-box"/>
+          <text x="34" y="149" class="svg-label">ナレッジ</text>
+          <text x="350" y="149" class="svg-label-sm">知見ログへのリンクだけ</text>
+
+          <rect x="20" y="164" width="310" height="32" rx="5" class="svg-box-accent"/>
+          <text x="34" y="185" class="svg-label">残作業（優先度順）</text>
+          <text x="350" y="185" class="svg-label-sm">次のセッションが最初に見る</text>
+
+          <rect x="20" y="200" width="310" height="32" rx="5" class="svg-box"/>
+          <text x="34" y="221" class="svg-label">今後予定している作業</text>
+          <text x="350" y="221" class="svg-label-sm">見出しだけ。詳細は書かない</text>
+
+          <rect x="20" y="236" width="310" height="32" rx="5" class="svg-box-accent"/>
+          <text x="34" y="257" class="svg-label">次に着手する最初の一手</text>
+          <text x="350" y="257" class="svg-label-sm">1〜3行。コマンドまで書く</text>
+
+          <rect x="20" y="272" width="310" height="32" rx="5" class="svg-box"/>
+          <text x="34" y="293" class="svg-label">注意点・ハマりどころ</text>
+          <text x="350" y="293" class="svg-label-sm">壊すと痛いものだけ</text>
+
+          <text x="20" y="322" class="svg-label-sm">色を付けた3つが、次のセッションが真っ先に読む節</text>
+        </svg>
+        <figcaption>図14: 見出しを固定すると、書く側も読む側も迷わない</figcaption>
+      </figure>
+
+      <p>見出しを固定すると、書く側は何を書くか迷わず、読む側は必要な節だけ拾えます。とくに「決定事項と、その理由」と「次に着手する最初の一手」は独立させます。前者は8節のとおりコードにも履歴にも残らない情報で、後者は次のセッションが最初に実行することを1つに絞るためです。逆に「今後予定している作業」は見出しだけにします。着手していない作業の詳細は、着手するころには変わっています。</p>
+
+      <div class="callout tip">
+        <span class="ico">💡</span>
+        <div><p>「残作業」は優先度順に並べ、片付いたものはその場で消して課題ログへ移します。9節の上書きと追記の分担が、ここで効いてきます。</p></div>
+      </div>
+    </section>
+
+    <section id="s15">
+      <h2>15. 実装例 — スキルとフックで自動化する</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="セッション開始時にフックが読み込み、終わりの合図でスキルが書き出すまでの流れ">
+          <text x="20" y="30" class="svg-label-sm">自動 — フック</text>
+          <rect x="55" y="42" width="200" height="54" rx="6" class="svg-box-accent"/>
+          <text x="155" y="66" text-anchor="middle" class="svg-title">SessionStart</text>
+          <text x="155" y="86" text-anchor="middle" class="svg-label-sm">最新の1枚を読み込む</text>
+          <path d="M155 98 V 120" class="svg-arrow" marker-end="url(#ar)"/>
+
+          <line x1="40" y1="130" x2="690" y2="130" stroke="var(--border-strong)" stroke-width="2"/>
+          <circle cx="155" cy="130" r="7" fill="var(--accent)"/>
+          <text x="155" y="152" text-anchor="middle" class="svg-label-sm">セッション開始</text>
+          <circle cx="340" cy="130" r="6" fill="var(--text-faint)"/>
+          <text x="340" y="152" text-anchor="middle" class="svg-label-sm">作業</text>
+          <circle cx="545" cy="130" r="7" fill="var(--accent)"/>
+          <text x="545" y="118" text-anchor="middle" class="svg-label-sm">「今日はここまで」</text>
+
+          <path d="M545 158 V 138" class="svg-arrow" marker-end="url(#ar)"/>
+          <rect x="430" y="162" width="230" height="54" rx="6" class="svg-box-accent"/>
+          <text x="545" y="186" text-anchor="middle" class="svg-title">引き継ぎスキル</text>
+          <text x="545" y="206" text-anchor="middle" class="svg-label-sm">現在地を書き出す</text>
+          <text x="20" y="238" class="svg-label-sm">意図で起動 — スキル</text>
+        </svg>
+        <figcaption>図15: 読み込みはイベントで、書き出しは意図で</figcaption>
+      </figure>
+
+      <p>スキルの本文は、使われるときにだけ読み込まれます。公式ドキュメントも「規約ファイルと違い、スキルの本文は使われたときにだけ読み込まれるので、長い参照資料も必要になるまでほぼコストがかからない」と説明しています。だから起動条件は説明文（description）の側に書きます。「引き継ぎを書いて」だけでなく、「新しくチャットしたい」「今日はここまで」のようにセッションを終える意図を示す言い回しまで並べておくと、明示的に呼ばなくても起動します。フックは <code>SessionStart</code> のようなイベントに紐づけ、最新のスナップショットを読ませます。人間が「前回の続きです」と説明する手間は、ここで消えます。</p>
+
+      <table>
+        <thead>
+          <tr><th>置き方</th><th>読み込まれるタイミング</th><th>向いている中身</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>規約ファイル</td><td>毎回、最初から</td><td>守らせたい決まりごと</td></tr>
+          <tr><td>スキル</td><td>名前か意図が一致したとき</td><td>手順・チェックリスト・テンプレート</td></tr>
+          <tr><td>フック</td><td>決まったイベントの発生時</td><td>必ず起こしたい定型処理</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><p>応答完了時のような毎ターン走るイベントにリマインダーを仕込むと、条件を絞らない限り毎回出てうるさくなります。まず説明文の拡充で足りるかを試してから、フックに落とします。</p></div>
+      </div>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 4</span>
+      <p class="qtext">手順書をスキルとして置くのと、規約ファイルに直接書くのとで、いちばん大きな違いはどれですか。</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>スキルはスラッシュコマンドで直接呼び出せるが、規約ファイルは呼び出せないこと</span></button>
+        <button class="opt" data-correct><span class="mark">B</span><span>規約ファイルは毎回コンテキストに載るが、スキルの本文は使われるときにだけ載ること</span></button>
+        <button class="opt"><span class="mark">C</span><span>スキルは他のツールとも共有できるが、規約ファイルはツール固有になること</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>違いはコンテキストを消費するタイミングです。A: 直接呼べるのは事実ですが、それだけなら規約ファイルに手順を書いても結果は同じです。C: 規約の側にこそ AGENTS.md という横断標準があり、共有しやすさはスキル固有の利点ではありません。</p>
+      </div>
+    </div>
+
+    <section id="summary">
+      <h2>まとめ</h2>
+      <div class="cards">
+        <div class="card"><h4>消えるのは仕様</h4><p>エージェントに状態はなく、履歴を毎回送り直しているだけです。</p></div>
+        <div class="card"><h4>長さは解決策ではない</h4><p>総量でも位置でも精度は落ちます。情報は増やすのではなく選びます。</p></div>
+        <div class="card"><h4>決定と理由と次の一手</h4><p>再現できないものだけを1枚の現在地に。時系列は別ファイルへ追記します。</p></div>
+        <div class="card"><h4>規約・スキル・フック</h4><p>毎回読ませるもの、呼ばれたら読むもの、イベントで自動実行するものに分けます。</p></div>
+      </div>
+    </section>
+
+    <section id="sources">
+      <h2>出典</h2>
+      <ul class="sources">
+        <li><a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents">Effective context engineering for AI agents（Anthropic）</a> — 注意予算、圧縮、外部メモ、必要時に読む方式</li>
+        <li><a href="https://www.trychroma.com/research/context-rot">Context Rot: How Increasing Input Tokens Impacts LLM Performance（Chroma, 2025-07-14）</a> — 18モデルで確認</li>
+        <li><a href="https://github.com/chroma-core/context-rot">chroma-core/context-rot（GitHub）</a> — 再現用ツールキット</li>
+        <li><a href="https://aclanthology.org/2024.tacl-1.9/">Lost in the Middle: How Language Models Use Long Contexts（TACL 2024）</a> — 位置によるU字型の精度差</li>
+        <li><a href="https://platform.claude.com/cookbook/tool-use-context-engineering-context-engineering-tools">Context engineering: memory, compaction, and tool clearing（Claude Cookbook, 2026-03）</a> — 図5の数値</li>
+        <li><a href="https://agents.md/">AGENTS.md</a> — 対応ツールと採用数</li>
+        <li><a href="https://code.claude.com/docs/en/skills">Extend Claude with skills（Claude Code Docs）</a> — スキル本文は使われたときにだけ読み込まれる</li>
+        <li><a href="https://code.claude.com/docs/en/hooks">Hooks reference（Claude Code Docs）</a> — SessionStart などの発火イベント</li>
+        <li><a href="https://atmarkit.itmedia.co.jp/ait/articles/2512/04/news016.html">コンテキストの腐敗（Context Rot）とは？（@IT）</a> — 日本語の用語解説</li>
+      </ul>
+    </section>
+
+  </main>
+</div>
+
+<script>
+// ---- テーマ切替（OS設定を初期値にし、選択はlocalStorageではなくセッション内変数で保持） ----
+(function(){
+  var root=document.documentElement, btn=document.getElementById('themeBtn');
+  if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+    root.setAttribute('data-theme','dark');
+  }
+  var sync=function(){ btn.textContent = root.getAttribute('data-theme')==='dark' ? '☀️' : '🌙'; };
+  sync();
+  btn.addEventListener('click',function(){
+    root.setAttribute('data-theme', root.getAttribute('data-theme')==='dark'?'light':'dark');
+    sync();
+  });
+})();
+
+// ---- 目次スクロール連動 ----
+(function(){
+  var links=[].slice.call(document.querySelectorAll('#toc a'));
+  var map={}; links.forEach(function(a){ var el=document.querySelector(a.getAttribute('href')); if(el) map[el.id]=a; });
+  var targets=Object.keys(map).map(function(id){return document.getElementById(id);});
+  if(!targets.length) return;
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        links.forEach(function(a){a.classList.remove('active');});
+        map[e.target.id].classList.add('active');
+      }
+    });
+  },{rootMargin:'-15% 0px -70% 0px', threshold:0});
+  targets.forEach(function(t){io.observe(t);});
+})();
+
+// ---- クイズ：3択・即時採点・解説表示 ----
+(function(){
+  document.querySelectorAll('[data-quiz]').forEach(function(q){
+    var opts=[].slice.call(q.querySelectorAll('.opt'));
+    var box=q.querySelector('.explain'), verdict=q.querySelector('.verdict');
+    opts.forEach(function(btn){
+      btn.addEventListener('click',function(){
+        if(btn.disabled) return;
+        var ok=btn.hasAttribute('data-correct');
+        opts.forEach(function(o){
+          o.disabled=true;
+          if(o.hasAttribute('data-correct')) o.classList.add('correct');
+        });
+        if(!ok) btn.classList.add('wrong');
+        verdict.textContent = ok ? '正解！' : '惜しい — 正解は上の緑の選択肢です';
+        verdict.className = 'verdict ' + (ok?'ok':'ng');
+        box.classList.add('show');
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
