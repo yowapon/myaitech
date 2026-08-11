@@ -1,0 +1,5 @@
+# 改行コードは LF に固定する。Windows のツールが CRLF で書いても、git が add の時点で正規化する
+* text=auto eol=lf
+
+# zip をテキスト扱いさせない
+*.zip binary
