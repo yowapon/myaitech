@@ -342,7 +342,7 @@ footer p{margin:.5em 0}
   </section>
 
   <!-- ============ あたまのトレーニング ============ -->
-  <section class="cat" id="cat-brain">
+  <section class="cat" id="cat-brain" data-nav-first>
     <div class="cat-head">
       <h2>🧠 あたまのトレーニング</h2>
       <span class="count">1本</span>
@@ -374,10 +374,14 @@ footer p{margin:.5em 0}
 
 <script>
 // ---- スマホ用の分野ジャンプを、分野セクションから自動で組み立てる ----
+// data-nav-first を付けた分野だけチップを先頭に出す。ページ内の並び順は変えない
 (function(){
   var nav = document.getElementById('quicknav');
   if(!nav) return;
-  [].slice.call(document.querySelectorAll('section.cat')).forEach(function(sec){
+  var secs = [].slice.call(document.querySelectorAll('section.cat'));
+  var first = secs.filter(function(s){ return s.hasAttribute('data-nav-first'); });
+  var rest  = secs.filter(function(s){ return !s.hasAttribute('data-nav-first'); });
+  first.concat(rest).forEach(function(sec){
     var h2 = sec.querySelector('.cat-head h2');
     if(!h2 || !sec.id) return;
     var a = document.createElement('a');
