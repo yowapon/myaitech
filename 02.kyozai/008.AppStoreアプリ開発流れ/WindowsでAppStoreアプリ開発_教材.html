@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Macを持たないWindowsユーザーが、App Storeにアプリを出すまで</title>
+<style>
+:root{
+  --bg:#ffffff; --bg-sub:#f7f7f5; --bg-hover:#efefed;
+  --text:#37352f; --text-mute:#787774; --text-faint:#9b9a97;
+  --border:#e9e9e7; --border-strong:#d3d3d1;
+  --accent:#2383e2; --accent-soft:#e7f1fd;
+  --green:#0f7b6c; --green-soft:#e4f3f0;
+  --amber:#cb912f; --amber-soft:#faf1dd;
+  --red:#e03e3e;   --red-soft:#fbe9e9;
+  --purple:#6940a5; --purple-soft:#eee6f7;
+  --radius:8px;
+  --font: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif;
+}
+html[data-theme="dark"]{
+  --bg:#191919; --bg-sub:#202020; --bg-hover:#2a2a2a;
+  --text:#d4d4d4; --text-mute:#9b9b9b; --text-faint:#6f6f6f;
+  --border:#2f2f2f; --border-strong:#414141;
+  --accent:#5b9dd9; --accent-soft:#1c2f3f;
+  --green:#4dab9a; --green-soft:#1c2b28;
+  --amber:#e0b44a; --amber-soft:#332a1b;
+  --red:#ff7369;   --red-soft:#3a2323;
+  --purple:#9a76d1; --purple-soft:#2a2136;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font); font-size:16px; line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+  transition:background .2s,color .2s;
+}
+.layout{display:flex; align-items:flex-start; max-width:1180px; margin:0 auto}
+
+/* ---------- 目次サイドバー ---------- */
+#sidebar{
+  position:sticky; top:0; flex:0 0 250px; height:100vh;
+  padding:28px 14px 40px; overflow-y:auto;
+  border-right:1px solid var(--border); background:var(--bg-sub);
+}
+#sidebar .toc-label{
+  font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--text-faint); padding:0 10px; margin-bottom:10px; font-weight:600;
+}
+#toc a{
+  display:block; padding:6px 10px; margin:1px 0; border-radius:6px;
+  color:var(--text-mute); text-decoration:none; font-size:13.5px; line-height:1.45;
+  border-left:2px solid transparent; transition:background .15s,color .15s;
+}
+#toc a:hover{background:var(--bg-hover); color:var(--text)}
+#toc a.active{background:var(--accent-soft); color:var(--accent); font-weight:600; border-left-color:var(--accent)}
+#toc a.sub{padding-left:22px; font-size:12.5px}
+#toc .toc-grp{
+  font-size:10.5px; letter-spacing:.08em; color:var(--text-faint);
+  padding:12px 10px 3px; font-weight:700;
+}
+
+/* ---------- 本文 ---------- */
+main{flex:1 1 auto; min-width:0; padding:56px 60px 140px; max-width:860px}
+.hero-eyebrow{font-size:12px; letter-spacing:.1em; color:var(--accent); font-weight:700; text-transform:uppercase}
+h1{font-size:40px; line-height:1.25; margin:.25em 0 .35em; letter-spacing:-.01em; font-weight:800}
+h2{font-size:26px; margin:2.6em 0 .6em; padding-bottom:.3em; border-bottom:1px solid var(--border); font-weight:700; letter-spacing:-.005em}
+h3{font-size:18px; margin:1.8em 0 .4em; font-weight:700}
+p{margin:.7em 0}
+a{color:var(--accent)}
+.lead{font-size:18px; color:var(--text-mute); line-height:1.8}
+.meta{display:flex; flex-wrap:wrap; gap:8px; margin:20px 0 8px}
+.chip{
+  font-size:12.5px; padding:4px 11px; border-radius:999px;
+  background:var(--bg-sub); border:1px solid var(--border); color:var(--text-mute);
+}
+strong{font-weight:700}
+mark{background:var(--amber-soft); color:inherit; padding:0 3px; border-radius:3px}
+code{background:var(--bg-sub); border:1px solid var(--border); border-radius:4px; padding:1px 5px; font-size:.88em}
+hr{border:0; border-top:1px solid var(--border); margin:3em 0}
+ul,ol{padding-left:1.4em} li{margin:.3em 0}
+
+/* ---------- 図解ブロック（各セクションの先頭に置く） ---------- */
+.figure{
+  margin:1.4em 0 1.2em; padding:24px; border:1px solid var(--border);
+  border-radius:var(--radius); background:var(--bg-sub);
+}
+.figure svg{display:block; width:100%; height:auto; max-width:100%}
+.figure figcaption{
+  margin-top:14px; padding-top:12px; border-top:1px solid var(--border);
+  font-size:13px; color:var(--text-mute); text-align:center;
+}
+/* SVG内で使う共通クラス */
+.svg-label{font-family:var(--font); font-size:13px; fill:var(--text)}
+.svg-label-sm{font-family:var(--font); font-size:11px; fill:var(--text-mute)}
+.svg-title{font-family:var(--font); font-size:14px; font-weight:700; fill:var(--text)}
+.svg-box{fill:var(--bg); stroke:var(--border-strong); stroke-width:1.5}
+.svg-box-accent{fill:var(--accent-soft); stroke:var(--accent); stroke-width:1.5}
+.svg-arrow{stroke:var(--text-faint); stroke-width:1.8; fill:none}
+
+/* ---------- コールアウト ---------- */
+.callout{
+  display:flex; gap:12px; padding:16px 18px; margin:1.2em 0;
+  border-radius:var(--radius); background:var(--bg-sub); border-left:3px solid var(--text-faint);
+}
+.callout .ico{flex:0 0 auto; font-size:18px; line-height:1.5}
+.callout p:first-child{margin-top:0} .callout p:last-child{margin-bottom:0}
+.callout.tip{background:var(--accent-soft); border-left-color:var(--accent)}
+.callout.warn{background:var(--amber-soft); border-left-color:var(--amber)}
+.callout.key{background:var(--green-soft); border-left-color:var(--green)}
+
+/* ---------- カードグリッド ---------- */
+.cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin:1.2em 0}
+.card{padding:16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg)}
+.card h4{margin:0 0 6px; font-size:14.5px; font-weight:700}
+.card p{margin:0; font-size:13.5px; color:var(--text-mute); line-height:1.7}
+
+/* ---------- 表 ---------- */
+.tablewrap{overflow-x:auto; margin:1.2em 0}
+table{width:100%; border-collapse:collapse; margin:1.2em 0; font-size:14.5px}
+.tablewrap table{margin:0; min-width:520px}
+th,td{border:1px solid var(--border); padding:10px 12px; text-align:left; vertical-align:top}
+th{background:var(--bg-sub); font-weight:700}
+
+/* ---------- クイズ ---------- */
+.quiz{
+  margin:2em 0; padding:22px 24px; border:1px solid var(--border);
+  border-radius:var(--radius); background:var(--bg-sub);
+}
+.quiz .qtag{
+  display:inline-block; font-size:11px; font-weight:700; letter-spacing:.06em;
+  color:var(--purple); background:var(--purple-soft); padding:3px 9px; border-radius:999px; margin-bottom:10px;
+}
+.quiz .qtext{font-weight:700; font-size:16.5px; margin:0 0 14px; line-height:1.65}
+.quiz .opts{display:flex; flex-direction:column; gap:8px}
+.quiz button.opt{
+  text-align:left; font:inherit; font-size:14.5px; color:var(--text); cursor:pointer;
+  padding:12px 14px; border:1px solid var(--border-strong); border-radius:6px;
+  background:var(--bg); transition:background .15s,border-color .15s;
+  display:flex; gap:10px; align-items:flex-start; line-height:1.6;
+}
+.quiz button.opt:hover:not(:disabled){background:var(--bg-hover); border-color:var(--accent)}
+.quiz button.opt:disabled{cursor:default}
+.quiz button.opt .mark{flex:0 0 20px; font-weight:700; color:var(--text-faint)}
+.quiz button.opt.correct{background:var(--green-soft); border-color:var(--green)}
+.quiz button.opt.correct .mark{color:var(--green)}
+.quiz button.opt.wrong{background:var(--red-soft); border-color:var(--red)}
+.quiz button.opt.wrong .mark{color:var(--red)}
+.quiz .explain{
+  display:none; margin-top:14px; padding:14px 16px; border-radius:6px;
+  background:var(--bg); border:1px solid var(--border); font-size:14px; line-height:1.75;
+}
+.quiz .explain.show{display:block}
+.quiz .verdict{font-weight:700; margin-bottom:4px}
+.quiz .verdict.ok{color:var(--green)} .quiz .verdict.ng{color:var(--red)}
+
+/* ---------- 出典 ---------- */
+.sources{font-size:14px; color:var(--text-mute)}
+.sources li{margin:.5em 0}
+.sources h3{font-size:15px; margin:1.4em 0 .3em}
+
+/* ---------- テーマ切替ボタン ---------- */
+#themeBtn{
+  position:fixed; top:18px; right:22px; z-index:50;
+  width:38px; height:38px; border-radius:8px; cursor:pointer;
+  border:1px solid var(--border-strong); background:var(--bg); color:var(--text);
+  font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;
+  transition:background .15s;
+}
+#themeBtn:hover{background:var(--bg-hover)}
+
+/* ---------- レスポンシブ ---------- */
+@media (max-width:900px){
+  #sidebar{display:none}
+  main{padding:40px 22px 100px}
+  h1{font-size:30px} h2{font-size:22px}
+}
+@media print{
+  #sidebar,#themeBtn{display:none} main{max-width:none;padding:0}
+  .quiz .explain{display:block}
+}
+</style>
+</head>
+<body>
+
+<button id="themeBtn" aria-label="ライト/ダーク切替">🌙</button>
+
+<div class="layout">
+
+  <aside id="sidebar">
+    <div class="toc-label">目次</div>
+    <nav id="toc">
+      <a href="#about">この教材について</a>
+      <div class="toc-grp">MACの壁</div>
+      <a href="#s1" class="sub">1. 工程を3レーンに分ける</a>
+      <a href="#s2" class="sub">2. Windowsだけで完結するか</a>
+      <a href="#s3" class="sub">3. なぜその4工程だけか</a>
+      <a href="#s4" class="sub">4. やってはいけない回避策</a>
+      <a href="#s5" class="sub">5. Macの調達方法4つ</a>
+      <a href="#s6" class="sub">6. 必要な性能はパターン別</a>
+      <a href="#s7" class="sub">7. 何で作るか</a>
+      <div class="toc-grp">手続きとお金</div>
+      <a href="#s8" class="sub">8. Developer Program登録</a>
+      <a href="#s9" class="sub">9. お金を受け取る準備</a>
+      <a href="#s10" class="sub">10. 手数料 30% / 15%</a>
+      <div class="toc-grp">提出と審査</div>
+      <a href="#s11" class="sub">11. 提出前に揃える要件</a>
+      <a href="#s12" class="sub">12. TestFlight</a>
+      <a href="#s13" class="sub">13. 審査とリジェクト</a>
+      <a href="#s14" class="sub">14. 実際に詰まる4か所</a>
+      <a href="#s15" class="sub">15. 接続時間を減らす設計</a>
+      <div class="toc-grp">知的財産</div>
+      <a href="#s16" class="sub">16. アイデアは特許にならない</a>
+      <a href="#s17" class="sub">17. 公開したら原則アウト</a>
+      <a href="#s18" class="sub">18. 個人開発者の現実解</a>
+      <div class="toc-grp">まとめ</div>
+      <a href="#s19" class="sub">19. サンプルスケジュール</a>
+      <a href="#summary">まとめ</a>
+      <a href="#sources">出典</a>
+    </nav>
+  </aside>
+
+  <main>
+
+    <header>
+      <div class="hero-eyebrow">アプリ開発 / 個人開発</div>
+      <h1>Macを持たないWindowsユーザーが、App Storeにアプリを出すまで</h1>
+      <p class="lead">iOSアプリにMacが要るのは事実ですが、要るのは全工程のうち4つだけです。どこで止まるのか、どんなMacをどう調達するのか、そして発売前に決めておくべき特許の判断までを、数字と日付で整理します。</p>
+      <div class="meta">
+        <span class="chip">対象: Mac未経験のWindowsユーザー</span>
+        <span class="chip">レベル: 入門</span>
+        <span class="chip">所要 約45分</span>
+        <span class="chip">更新: 2026-08-11</span>
+      </div>
+    </header>
+
+    <section id="about">
+      <h2>この教材について</h2>
+      <div class="callout key">
+        <span class="ico">🎯</span>
+        <div>
+          <p><strong>読み終えるとできるようになること</strong></p>
+          <ol>
+            <li>Windowsで完結する範囲とmacOSが要る範囲を工程単位で線引きし、必要なMacの性能を作るアプリから逆算できる</li>
+            <li>Macの調達方法4つを費用と手間で比較し、自分の本数に合う方法を選べる</li>
+            <li>登録・税務・審査・SDK期限に加えて、特許を「とる／とらない」の判断を発売日より前に下せる</li>
+          </ol>
+        </div>
+      </div>
+      <p style="font-size:14px;color:var(--text-mute)">
+        主な参照元: <a href="https://developer.apple.com/jp/support/enrollment/">Apple Developer Program 登録</a> /
+        <a href="https://developer.apple.com/news/upcoming-requirements/">SDK minimum requirements</a> /
+        <a href="https://www.jpo.go.jp/system/laws/rule/guideline/patent/hatumei_reigai.html">特許庁 新規性喪失の例外</a>（全出典は<a href="#sources">末尾</a>）
+      </p>
+    </section>
+
+    <section id="s1">
+      <h2>1. 工程を「どのOSでやるか」で3レーンに分ける</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 268" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="工程をWindows・macOS・Apple側の3レーンに分けた図">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="var(--text-faint)"/>
+            </marker>
+          </defs>
+
+          <rect x="6" y="26" width="106" height="62" rx="6" class="svg-box"/>
+          <text x="59" y="52" text-anchor="middle" class="svg-title">Windows</text>
+          <text x="59" y="72" text-anchor="middle" class="svg-label-sm">あなたのPC</text>
+          <rect x="124" y="26" width="180" height="62" rx="6" class="svg-box"/>
+          <text x="214" y="62" text-anchor="middle" class="svg-label">企画・実装</text>
+          <rect x="314" y="26" width="180" height="62" rx="6" class="svg-box"/>
+          <text x="404" y="62" text-anchor="middle" class="svg-label">Android実機で確認</text>
+          <rect x="504" y="26" width="210" height="62" rx="6" class="svg-box"/>
+          <text x="609" y="55" text-anchor="middle" class="svg-label">登録・税務・メタデータ</text>
+          <text x="609" y="74" text-anchor="middle" class="svg-label-sm">すべてブラウザ</text>
+
+          <rect x="6" y="104" width="106" height="62" rx="6" class="svg-box-accent"/>
+          <text x="59" y="130" text-anchor="middle" class="svg-title">macOS</text>
+          <text x="59" y="150" text-anchor="middle" class="svg-label-sm">借りるか買う</text>
+          <rect x="124" y="104" width="180" height="62" rx="6" class="svg-box-accent"/>
+          <text x="214" y="140" text-anchor="middle" class="svg-label">コード署名</text>
+          <rect x="314" y="104" width="180" height="62" rx="6" class="svg-box-accent"/>
+          <text x="404" y="140" text-anchor="middle" class="svg-label">アーカイブ</text>
+          <rect x="504" y="104" width="210" height="62" rx="6" class="svg-box-accent"/>
+          <text x="609" y="140" text-anchor="middle" class="svg-label">アップロード</text>
+
+          <rect x="6" y="182" width="106" height="62" rx="6" class="svg-box"/>
+          <text x="59" y="208" text-anchor="middle" class="svg-title">Apple側</text>
+          <text x="59" y="228" text-anchor="middle" class="svg-label-sm">審査・配信</text>
+          <rect x="124" y="182" width="284" height="62" rx="6" class="svg-box"/>
+          <text x="266" y="218" text-anchor="middle" class="svg-label">App Review</text>
+          <rect x="418" y="182" width="296" height="62" rx="6" class="svg-box"/>
+          <text x="566" y="218" text-anchor="middle" class="svg-label">App Store で公開</text>
+
+          <path d="M214 90 V 100" class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M609 168 V 178" class="svg-arrow" marker-end="url(#ar)"/>
+          <text x="6" y="16" class="svg-label-sm">レーンの色が濃い1本＝macOSが必要な区間</text>
+        </svg>
+        <figcaption>図1: 全工程のうち、macOSレーンに置かれるのは3つの箱だけ</figcaption>
+      </figure>
+
+      <p>「iOSアプリを作るにはMacが要る」は正しい命題ですが、「Macで全部やる」は誤りです。実際にmacOSでしかできないのは、真ん中のレーンに並ぶ署名・アーカイブ・アップロードの区間だけです。</p>
+      <p>この図がこの教材全体の地図になります。以降の章は、上のレーンを厚くして真ん中のレーンを薄くするための話だと考えてください。</p>
+    </section>
+
+    <section id="s2">
+      <h2>2. Windowsだけで完結できるのか</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 296" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="工程ごとにWindowsだけでできるかを分けた対比図">
+          <rect x="6" y="10" width="342" height="268" rx="8" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.5"/>
+          <text x="26" y="40" class="svg-title" fill="var(--green)">Windowsだけでできる</text>
+          <text x="330" y="42" text-anchor="end" class="svg-title" fill="var(--green)" font-size="26">7</text>
+          <text x="26" y="78" class="svg-label">・企画・設計</text>
+          <text x="26" y="106" class="svg-label">・コードを書く</text>
+          <text x="26" y="134" class="svg-label">・Android実機で動作確認</text>
+          <text x="26" y="162" class="svg-label">・アイコン／スクショ素材</text>
+          <text x="26" y="190" class="svg-label">・Developer Program の登録</text>
+          <text x="26" y="218" class="svg-label">・メタデータ・価格の入力</text>
+          <text x="26" y="246" class="svg-label">・審査のやり取り</text>
+          <text x="26" y="268" class="svg-label-sm">下3つはブラウザだけで完結</text>
+
+          <line x1="360" y1="10" x2="360" y2="278" stroke="var(--border-strong)" stroke-width="2" stroke-dasharray="6 5"/>
+
+          <rect x="372" y="10" width="342" height="268" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="392" y="40" class="svg-title" fill="var(--accent)">macOSが必要</text>
+          <text x="696" y="42" text-anchor="end" class="svg-title" fill="var(--accent)" font-size="26">4</text>
+          <text x="392" y="78" class="svg-label">・iOSシミュレータで確認</text>
+          <text x="392" y="106" class="svg-label">・コード署名</text>
+          <text x="392" y="134" class="svg-label">・アーカイブ（.ipa生成）</text>
+          <text x="392" y="162" class="svg-label">・App Store Connect へ送信</text>
+          <text x="392" y="200" class="svg-label-sm">4つとも Xcode 同梱のツールが必要</text>
+          <text x="392" y="224" class="svg-label-sm">連続した1本の作業なので、</text>
+          <text x="392" y="246" class="svg-label-sm">慣れれば通しで30分〜1時間</text>
+        </svg>
+        <figcaption>図2: 11工程のうち、Windowsで完結しないのは4つだけ</figcaption>
+      </figure>
+
+      <p>結論を先に言います。<strong>「アプリを作る」だけならWindowsで完結します。「App Storeに出す」なら完結しません。</strong></p>
+      <p>ただし止まるのは4工程だけで、しかもそれは連続した1本の作業です。登録も税務情報の提出もメタデータの入力も審査のやり取りも、すべてブラウザで済みます。Macが必要なのは「ビルドを作って送る」瞬間だけです。</p>
+
+      <div class="callout key">
+        <span class="ico">🔑</span>
+        <div><p>問いを立て直します。<strong>「Macを買うか」ではなく「Xcodeを1時間だけどこで動かすか」</strong>。こう置き換えると、選択肢は4つに増えます。</p></div>
+      </div>
+    </section>
+
+    <section id="s3">
+      <h2>3. なぜその4工程だけがmacOSなのか</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 186" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ビルドパイプラインのうち後半3工程がXcodeツールチェーンであることを示す図">
+          <rect x="272" y="34" width="440" height="112" rx="8" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <text x="492" y="26" text-anchor="middle" class="svg-title" fill="var(--accent)">Xcode ツールチェーン（macOS専用）</text>
+
+          <rect x="6" y="62" width="122" height="60" rx="8" class="svg-box"/>
+          <text x="67" y="90" text-anchor="middle" class="svg-label">コードを</text>
+          <text x="67" y="108" text-anchor="middle" class="svg-label">書く</text>
+          <path d="M132 92 H 148" class="svg-arrow" marker-end="url(#ar)"/>
+          <rect x="152" y="62" width="112" height="60" rx="8" class="svg-box"/>
+          <text x="208" y="98" text-anchor="middle" class="svg-label">コンパイル</text>
+          <path d="M268 92 H 284" class="svg-arrow" marker-end="url(#ar)"/>
+
+          <rect x="288" y="62" width="126" height="60" rx="8" class="svg-box-accent"/>
+          <text x="351" y="90" text-anchor="middle" class="svg-label">コード署名</text>
+          <text x="351" y="110" text-anchor="middle" class="svg-label-sm">codesign</text>
+          <path d="M418 92 H 434" class="svg-arrow" marker-end="url(#ar)"/>
+          <rect x="438" y="62" width="126" height="60" rx="8" class="svg-box-accent"/>
+          <text x="501" y="90" text-anchor="middle" class="svg-label">アーカイブ</text>
+          <text x="501" y="110" text-anchor="middle" class="svg-label-sm">xcodebuild</text>
+          <path d="M568 92 H 584" class="svg-arrow" marker-end="url(#ar)"/>
+          <rect x="588" y="62" width="124" height="60" rx="8" class="svg-box-accent"/>
+          <text x="650" y="90" text-anchor="middle" class="svg-label">アップロード</text>
+          <text x="650" y="110" text-anchor="middle" class="svg-label-sm">署名済みが前提</text>
+
+          <text x="6" y="172" class="svg-label-sm">署名されていないアプリは、実機でもストアでも動かない</text>
+        </svg>
+        <figcaption>図3: 止まるのは「Xcodeに同梱されたツールを使う」区間</figcaption>
+      </figure>
+
+      <p>Xcodeは macOS 専用で、Windows版もLinux版もありません。そしてiOSアプリは署名されていないと実機でもストアでも動かず、署名を行う <code>codesign</code> も提出形式を作る <code>xcodebuild</code> も Xcode 同梱です。</p>
+      <p>つまり「Macが要る」の正体は<strong>Xcodeのツールチェーンが要る</strong>ということです。Flutter公式のセットアップ手順にも、iOSビルドには macOS と Xcode が必要だと明記されています。ここを外す抜け道はありません。</p>
+    </section>
+
+    <section id="s4">
+      <h2>4. やってはいけない回避策</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 244" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="macOSライセンスで許される仮想化と違反になる仮想化の対比">
+          <rect x="6" y="34" width="336" height="150" rx="8" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.5"/>
+          <text x="174" y="62" text-anchor="middle" class="svg-title" fill="var(--green)">許される</text>
+          <text x="174" y="94" text-anchor="middle" class="svg-label">Apple製ハードウェアの上で</text>
+          <text x="174" y="118" text-anchor="middle" class="svg-label">macOSを仮想化する</text>
+          <text x="174" y="150" text-anchor="middle" class="svg-label-sm">追加2インスタンスまで／開発・テスト等の用途</text>
+
+          <rect x="378" y="34" width="336" height="150" rx="8" fill="var(--red-soft)" stroke="var(--red)" stroke-width="1.5"/>
+          <text x="546" y="62" text-anchor="middle" class="svg-title" fill="var(--red)">ライセンス違反</text>
+          <text x="546" y="94" text-anchor="middle" class="svg-label">Windows PC に macOS を</text>
+          <text x="546" y="118" text-anchor="middle" class="svg-label">入れる／仮想化する</text>
+          <text x="546" y="150" text-anchor="middle" class="svg-label-sm">Hackintosh・PC上のVMはどちらも対象外</text>
+
+          <text x="360" y="212" text-anchor="middle" class="svg-label-sm">macOS SLA：インストール先は “Apple-branded computer” に限定</text>
+          <text x="360" y="232" text-anchor="middle" class="svg-label-sm">「動くかどうか」と「やっていいか」は別の話</text>
+        </svg>
+        <figcaption>図4: 仮想化そのものは禁止されていない。禁止されているのは非Apple製ハードウェア上での実行</figcaption>
+      </figure>
+
+      <p>macOSのソフトウェア使用許諾契約（SLA）は、インストール先を Apple-branded computer に限定しています。仮想化が認められるのは「すでに macOS が動いている Apple 製ハードウェア上」で追加2インスタンスまでという条件付きで、PC上のVMやHackintoshはこの例外に入りません。</p>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><p>手順を解説した記事は検索すれば出てきますが、契約違反であることは変わりません。Apple Developer Program という契約を並行して結ぶ立場では、リスクの取り方として釣り合いません。</p></div>
+      </div>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 1</span>
+      <p class="qtext">macOSのライセンス上、認められているのはどれですか。</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>Windows PC上の仮想マシンにmacOSを入れて、iOSビルド専用に使う</span></button>
+        <button class="opt" data-correct><span class="mark">B</span><span>手持ちのMacの上で、macOSをもう1つ仮想マシンとして動かして開発に使う</span></button>
+        <button class="opt"><span class="mark">C</span><span>個人利用かつ非商用であれば、どのハードウェアでもmacOSを動かしてよい</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>SLAが限定しているのは「ハードウェアがApple製かどうか」です。Bのように<strong>Apple製ハードウェア上でなら仮想化は認められており、追加2インスタンスまで</strong>使えます。AはPCが非Apple製なので違反。Cは「個人・非商用なら何でもよい」という条件は存在しないため誤りで、用途が限定されるのはApple製ハードウェア上での仮想化の場合の話です。</p>
+      </div>
+    </div>
+
+    <section id="s5">
+      <h2>5. Macの調達方法4つ</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 336" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="初期費用と毎回の手間で4つの調達方法を配置したマトリクス">
+          <rect x="112" y="18" width="512" height="248" fill="none" stroke="var(--border-strong)"/>
+          <line x1="368" y1="18" x2="368" y2="266" stroke="var(--border)"/>
+          <line x1="112" y1="142" x2="624" y2="142" stroke="var(--border)"/>
+
+          <rect x="122" y="28" width="236" height="104" rx="6" fill="var(--accent-soft)" opacity=".55"/>
+          <text x="240" y="66" text-anchor="middle" class="svg-title">新品Mac を買う</text>
+          <text x="240" y="90" text-anchor="middle" class="svg-label-sm">Mac mini 最小構成 134,800円</text>
+          <text x="240" y="112" text-anchor="middle" class="svg-label-sm">買えばあとは何も要らない</text>
+
+          <text x="496" y="66" text-anchor="middle" class="svg-title">中古Mac を買う</text>
+          <text x="496" y="90" text-anchor="middle" class="svg-label-sm">初期費用は下がるが</text>
+          <text x="496" y="112" text-anchor="middle" class="svg-label-sm">Xcode 26 が動く機種か要確認</text>
+
+          <text x="240" y="186" text-anchor="middle" class="svg-title">CIサービスに任せる</text>
+          <text x="240" y="210" text-anchor="middle" class="svg-label-sm">Codemagic / EAS / GitHub Actions</text>
+          <text x="240" y="232" text-anchor="middle" class="svg-label-sm">最初の設定は重い。以後ほぼ自動</text>
+
+          <rect x="378" y="152" width="236" height="104" rx="6" fill="var(--green-soft)" opacity=".7"/>
+          <text x="496" y="186" text-anchor="middle" class="svg-title">クラウドMac を借りる</text>
+          <text x="496" y="210" text-anchor="middle" class="svg-label-sm">$1/時〜、$4/日〜</text>
+          <text x="496" y="232" text-anchor="middle" class="svg-label-sm">出すたびにログインして作業</text>
+
+          <text x="368" y="292" text-anchor="middle" class="svg-label-sm">→ 出すたびの手間が多い</text>
+          <text x="98" y="146" text-anchor="end" class="svg-label-sm">↑ 初期費用が高い</text>
+          <text x="6" y="322" class="svg-label-sm">出典: Apple Store 日本 / MacinCloud Pay-as-You-Go</text>
+        </svg>
+        <figcaption>図5: 初期費用と、リリースのたびに発生する手間の2軸で置くと選びやすい</figcaption>
+      </figure>
+
+      <p>年に1〜2本なら時間課金が圧倒的に安く済みます。実例として、Unity製のパズルゲームを個人リリースした開発者はクラウドMacの利用<strong>約15時間</strong>で完了しています。逆に週次でビルドを回すなら、実機かCIに寄せたほうが総額もストレスも下がります。</p>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><p>Mac mini の最小構成は2026年6月24日の価格改定で <strong>94,800円から134,800円</strong> になりました。「とりあえずMacを買う」の判断コストが上がっているのが2026年の前提です。</p></div>
+      </div>
+    </section>
+
+    <section id="s6">
+      <h2>6. どれだけの性能が要るか — 作るアプリのパターン別</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="4つのアプリパターンごとに必要なMacの性能が段階的に上がることを示す階段図">
+          <line x1="6" y1="290" x2="714" y2="290" stroke="var(--border-strong)"/>
+
+          <rect x="10" y="230" width="166" height="60" rx="6" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.5"/>
+          <text x="93" y="254" text-anchor="middle" class="svg-title" fill="var(--green)">A ビルド専用</text>
+          <text x="93" y="276" text-anchor="middle" class="svg-label-sm">8GB可 / クラウド◎</text>
+
+          <rect x="186" y="182" width="166" height="108" rx="6" class="svg-box-accent"/>
+          <text x="269" y="208" text-anchor="middle" class="svg-title">B ネイティブ</text>
+          <text x="269" y="232" text-anchor="middle" class="svg-label-sm">16GB / SSD 512GB</text>
+          <text x="269" y="254" text-anchor="middle" class="svg-label-sm">SwiftUIの小物アプリ</text>
+          <text x="269" y="276" text-anchor="middle" class="svg-label-sm">クラウド○</text>
+
+          <rect x="362" y="134" width="166" height="156" rx="6" class="svg-box"/>
+          <text x="445" y="160" text-anchor="middle" class="svg-title">C ゲーム・3D</text>
+          <text x="445" y="184" text-anchor="middle" class="svg-label-sm">24〜32GB / SSD 1TB</text>
+          <text x="445" y="206" text-anchor="middle" class="svg-label-sm">Unity / Unreal</text>
+          <text x="445" y="228" text-anchor="middle" class="svg-label-sm">クラウド△</text>
+
+          <rect x="538" y="86" width="166" height="204" rx="6" class="svg-box"/>
+          <text x="621" y="112" text-anchor="middle" class="svg-title">D ML・動画</text>
+          <text x="621" y="136" text-anchor="middle" class="svg-label-sm">32GB〜 / SSD 1TB〜</text>
+          <text x="621" y="158" text-anchor="middle" class="svg-label-sm">Core ML / visionOS</text>
+          <text x="621" y="180" text-anchor="middle" class="svg-label-sm">実機推奨</text>
+
+          <text x="6" y="26" class="svg-label-sm">共通の下限：Xcode 26 が動くこと（macOS Tahoe のインストールだけで35.5GBの空き）</text>
+          <text x="6" y="48" class="svg-label-sm">メモリもSSDも後から増設できない。買うときに決め切る</text>
+          <text x="6" y="316" class="svg-label-sm">→ 右にいくほど「借りる」が成立しにくくなる</text>
+        </svg>
+        <figcaption>図6: 必要な性能は「何を作るか」で決まる。Aなら性能の議論そのものが不要になる</figcaption>
+      </figure>
+
+      <p>全パターンに共通する下限は「Xcode 26 が動くこと」です。Xcode 26 は macOS Sequoia 15.6 以降、26.4 以降は macOS Tahoe 26.2 以降を要求します。</p>
+      <p>メモリの基準線が16GBに上がった根拠は Apple 自身が示しています。Xcode 16 の予測コード補完の動作要件に「Apple Silicon＋16GB以上の統合メモリ」を指定し、8GBでは足りない領域があることを公式に認めた形です。ストレージはXcode本体だけで約20GB、これにDerivedDataとシミュレータが積み上がるので、256GBは数か月で枯渇します。</p>
+
+      <div class="callout key">
+        <span class="ico">🔑</span>
+        <div><p>悩む前にまず「自分はパターンAでいけないか」を検討してください。<strong>Aで済むなら、この性能表を読む必要そのものがなくなります。</strong></p></div>
+      </div>
+    </section>
+
+    <section id="s7">
+      <h2>7. 何で作るか — Windowsで書けるフレームワーク</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 264" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="フレームワークごとにWindowsで進められる範囲を比較したバー">
+          <text x="6" y="22" class="svg-label-sm">Windowsで進められる範囲 →</text>
+
+          <text x="152" y="62" text-anchor="end" class="svg-label">Flutter</text>
+          <rect x="162" y="44" width="404" height="26" rx="4" fill="var(--green)" opacity=".75"/>
+          <line x1="566" y1="36" x2="566" y2="78" stroke="var(--accent)" stroke-width="3"/>
+          <text x="578" y="62" class="svg-label-sm">パターンA</text>
+
+          <text x="152" y="110" text-anchor="end" class="svg-label">React Native</text>
+          <rect x="162" y="92" width="404" height="26" rx="4" fill="var(--green)" opacity=".75"/>
+          <line x1="566" y1="84" x2="566" y2="126" stroke="var(--accent)" stroke-width="3"/>
+          <text x="578" y="110" class="svg-label-sm">パターンA</text>
+
+          <text x="152" y="158" text-anchor="end" class="svg-label">Unity</text>
+          <rect x="162" y="140" width="376" height="26" rx="4" fill="var(--green)" opacity=".6"/>
+          <line x1="538" y1="132" x2="538" y2="174" stroke="var(--accent)" stroke-width="3"/>
+          <text x="550" y="158" class="svg-label-sm">A〜C</text>
+
+          <text x="152" y="206" text-anchor="end" class="svg-label">ネイティブ Swift</text>
+          <rect x="162" y="188" width="96" height="26" rx="4" fill="var(--amber)" opacity=".8"/>
+          <line x1="258" y1="180" x2="258" y2="222" stroke="var(--accent)" stroke-width="3"/>
+          <text x="270" y="206" class="svg-label-sm">書く段階からmacOSが要る＝パターンB以上</text>
+
+          <text x="162" y="246" class="svg-label-sm">縦線＝macOSに切り替わる地点。どれを選んでも最終ビルドにmacOSが要る点は同じ</text>
+        </svg>
+        <figcaption>図7: 違いは「macOSの壁に当たるまでにWindowsでどこまで進めるか」</figcaption>
+      </figure>
+
+      <p>最終ビルドに macOS が要る点はどれも同じで、違うのはその手前をWindowsでどこまで進められるかです。クロスプラットフォーム系はWindows上で書いてAndroid実機やエミュレータで動作確認まで進められるため、前章のパターンAに収まります。</p>
+      <p>一方でネイティブSwiftを選ぶと書く段階から macOS が必要になり、パターンB以上に上がってクラウドMacの接続時間がそのまま膨らみます。Mac未経験者の1本目には向きません。</p>
+
+      <div class="callout key">
+        <span class="ico">🔑</span>
+        <div><p>選ぶ基準は「どの言語が好きか」より<strong>「macOSに触る時間を何分に抑えられるか」</strong>です。</p></div>
+      </div>
+    </section>
+
+    <section id="s8">
+      <h2>8. Apple Developer Program — 個人と組織の分かれ道</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 262" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Apple Developer Programの個人登録と組織登録で必要なものを分解したツリー">
+          <rect x="230" y="10" width="260" height="62" rx="8" class="svg-box-accent"/>
+          <text x="360" y="36" text-anchor="middle" class="svg-title">年会費 99米ドル</text>
+          <text x="360" y="58" text-anchor="middle" class="svg-label-sm">Apple Account ＋ 2ファクタ認証</text>
+          <path d="M360 72 V 96 M180 96 H 540 M180 96 V 118 M540 96 V 118" class="svg-arrow" fill="none"/>
+
+          <rect x="20" y="118" width="320" height="130" rx="8" class="svg-box"/>
+          <text x="180" y="146" text-anchor="middle" class="svg-title">個人</text>
+          <text x="42" y="176" class="svg-label-sm">・法的な成人年齢に達していること</text>
+          <text x="42" y="200" class="svg-label-sm">・正式な個人名（屋号・企業名は不可）</text>
+          <text x="42" y="224" class="svg-label-sm">・本人名義のクレジットカード</text>
+
+          <rect x="380" y="118" width="320" height="130" rx="8" class="svg-box"/>
+          <text x="540" y="146" text-anchor="middle" class="svg-title">組織</text>
+          <text x="402" y="172" class="svg-label-sm">・法人格（屋号・支店名は不可）</text>
+          <text x="402" y="194" class="svg-label-sm">・D-U-N-S番号（必須・無料取得可）</text>
+          <text x="402" y="216" class="svg-label-sm">・組織ドメインの仕事用メール</text>
+          <text x="402" y="238" class="svg-label-sm">・公開されていて正常に動くWebサイト</text>
+        </svg>
+        <figcaption>図8: 年会費は同じ。分かれるのは「何を証明する必要があるか」</figcaption>
+      </figure>
+
+      <p>年会費は99米ドル（現地通貨の同等額）です。日本円の請求額は為替で動くので、公式表記の米ドルを基準に考えます。</p>
+      <p>組織登録はD-U-N-S番号の取得とWebサイトの用意で数日から数週間かかります。<strong>発売日から逆算して最初に着手する項目</strong>だと考えてください。</p>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><p>個人登録すると、App Storeの販売者名として<strong>本名が公開されます</strong>。ペンネームで出したいなら法人化が必要という構造で、後から変更が効きません。登録前に決めてください。</p></div>
+      </div>
+    </section>
+
+    <section id="s9">
+      <h2>9. お金を受け取る準備 — 順番を間違えると詰まる</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 176" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="有料アプリの入金設定を行う4ステップの順序">
+          <rect x="6" y="46" width="158" height="68" rx="8" class="svg-box"/>
+          <text x="85" y="74" text-anchor="middle" class="svg-label">① Legal Entity</text>
+          <text x="85" y="94" text-anchor="middle" class="svg-label-sm">情報を更新</text>
+          <path d="M168 80 H 186" class="svg-arrow" marker-end="url(#ar)"/>
+          <rect x="190" y="46" width="158" height="68" rx="8" class="svg-box"/>
+          <text x="269" y="74" text-anchor="middle" class="svg-label">② 有料App契約</text>
+          <text x="269" y="94" text-anchor="middle" class="svg-label-sm">に同意</text>
+          <path d="M352 80 H 370" class="svg-arrow" marker-end="url(#ar)"/>
+          <rect x="374" y="46" width="158" height="68" rx="8" class="svg-box"/>
+          <text x="453" y="74" text-anchor="middle" class="svg-label">③ 銀行口座</text>
+          <text x="453" y="94" text-anchor="middle" class="svg-label-sm">を登録</text>
+          <path d="M536 80 H 554" class="svg-arrow" marker-end="url(#ar)"/>
+          <rect x="558" y="46" width="156" height="68" rx="8" class="svg-box-accent"/>
+          <text x="636" y="74" text-anchor="middle" class="svg-label">④ W-8BEN</text>
+          <text x="636" y="94" text-anchor="middle" class="svg-label-sm">米国税務フォーム</text>
+
+          <text x="6" y="26" class="svg-label-sm">この順序は固定。飛ばして先に進むことはできない</text>
+          <text x="453" y="140" text-anchor="middle" class="svg-label-sm">③を済ませないと④の画面に進めない</text>
+          <text x="714" y="164" text-anchor="end" class="svg-label-sm">30%の米国源泉徴収を外すための書類</text>
+        </svg>
+        <figcaption>図9: 入金設定は順序が決まっている</figcaption>
+      </figure>
+
+      <p>W-8BENは「米国居住者ではない」ことを申告して米国の30%源泉徴収を外すための書類です。日本の個人事業主が出すのは W-8BEN-E ではなく <strong>W-8BEN</strong>で、米国税法上は個人事業主も個人として扱われるためです。郵便番号をハイフン付き（<code>100-0001</code>）で入力する必要があるなど、細かい書式で足止めされやすい箇所でもあります。</p>
+      <p>無料アプリだけなら有料App契約も銀行口座も不要ですが、アプリ内課金を後から足すなら結局必要になります。</p>
+    </section>
+
+    <section id="s10">
+      <h2>10. 手数料 — 30% / 15%、そして日本のスマホ新法</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 244" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="標準手数料30%とSmall Business Programの15%を比較した比率バーと、スマホ新法の年表">
+          <text x="6" y="24" class="svg-label">標準</text>
+          <rect x="90" y="10" width="186" height="34" rx="4" fill="var(--amber)"/>
+          <rect x="276" y="10" width="434" height="34" rx="4" fill="var(--green)" opacity=".55"/>
+          <text x="183" y="33" text-anchor="middle" class="svg-label" fill="#fff">Apple 30%</text>
+          <text x="493" y="33" text-anchor="middle" class="svg-label" fill="#fff">開発者 70%</text>
+
+          <text x="6" y="82" class="svg-label">SBP</text>
+          <rect x="90" y="68" width="93" height="34" rx="4" fill="var(--amber)"/>
+          <rect x="183" y="68" width="527" height="34" rx="4" fill="var(--green)" opacity=".8"/>
+          <text x="136" y="91" text-anchor="middle" class="svg-label-sm" fill="#fff">15%</text>
+          <text x="446" y="91" text-anchor="middle" class="svg-label" fill="#fff">開発者 85%</text>
+          <text x="90" y="124" class="svg-label-sm">Small Business Program＝前暦年の収益が100万米ドル以下なら対象。ただし申請制</text>
+
+          <line x1="60" y1="186" x2="690" y2="186" stroke="var(--border-strong)" stroke-width="2"/>
+          <circle cx="180" cy="186" r="8" fill="var(--accent)"/>
+          <text x="180" y="168" text-anchor="middle" class="svg-title">2025.12.18</text>
+          <text x="180" y="212" text-anchor="middle" class="svg-label-sm">スマホ新法 全面施行</text>
+          <circle cx="420" cy="186" r="8" fill="var(--accent)" opacity=".8"/>
+          <text x="420" y="168" text-anchor="middle" class="svg-title">外部決済へ誘導可</text>
+          <text x="420" y="212" text-anchor="middle" class="svg-label-sm">代替アプリストアも解禁</text>
+          <circle cx="640" cy="186" r="9" fill="var(--amber)"/>
+          <text x="640" y="168" text-anchor="middle" class="svg-title">2026</text>
+          <text x="640" y="212" text-anchor="middle" class="svg-label-sm">外部決済の手数料に不満</text>
+          <text x="60" y="236" class="svg-label-sm">出典: Apple / BUSINESS LAWYERS / 日経ビジネス</text>
+        </svg>
+        <figcaption>図10: 15%は自動では適用されない。そして「外部決済＝手数料ゼロ」でもない</figcaption>
+      </figure>
+
+      <p>Small Business Program は前暦年の全アプリ合計収益が100万米ドル以下なら対象で、新規デベロッパも含まれます。<strong>申請しないと適用されません。</strong>適用開始は「登録が承認された会計月の末日から15日後」なので、登録直後に申し込みます。100万ドルを超えたらその年の残りは30%に戻り、翌年以降に下回れば再び15%の対象になります。</p>
+      <p>日本では2025年12月18日にスマホソフトウェア競争促進法が全面施行され、アプリ内から外部の決済ページへ誘導できるようになりました。ただし外部決済にもApple側の手数料がかかり、施行4か月後には水準への不満が報じられています。</p>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 2</span>
+      <p class="qtext">はじめてアプリを出す個人開発者が、手数料15%の適用を受けるにはどうすればよいですか。</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>前年の売上が100万ドル以下なら、何もしなくても自動的に15%になる</span></button>
+        <button class="opt"><span class="mark">B</span><span>売上が実際に発生してから、100万ドル以下だったことを証明して申請する</span></button>
+        <button class="opt" data-correct><span class="mark">C</span><span>新規デベロッパも対象なので、登録したらすぐ Small Business Program に申し込む</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>Small Business Program は<strong>申請制</strong>で、新規デベロッパも対象です。適用は「承認された会計月の末日から15日後」に始まるため、Cのように登録直後に申し込むのが正解です。Aは自動適用されると誤解している点が誤り。Bは売上実績を待つ必要はなく、待つぶん高い手数料の期間が延びるだけです。</p>
+      </div>
+    </div>
+
+    <section id="s11">
+      <h2>11. 提出前に揃える技術要件</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 244" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="提出前に必要な署名・プライバシー・ビルド環境の3レイヤー">
+          <rect x="140" y="14" width="440" height="60" rx="6" class="svg-box"/>
+          <text x="360" y="40" text-anchor="middle" class="svg-title">① 署名まわり</text>
+          <text x="360" y="62" text-anchor="middle" class="svg-label-sm">証明書 → App ID → プロビジョニングプロファイル</text>
+
+          <rect x="140" y="84" width="440" height="60" rx="6" class="svg-box"/>
+          <text x="360" y="110" text-anchor="middle" class="svg-title">② プライバシー</text>
+          <text x="360" y="132" text-anchor="middle" class="svg-label-sm">PrivacyInfo.xcprivacy ＋ App Privacy の申告</text>
+
+          <rect x="140" y="154" width="440" height="72" rx="6" class="svg-box-accent"/>
+          <text x="360" y="180" text-anchor="middle" class="svg-title">③ ビルド環境</text>
+          <text x="360" y="202" text-anchor="middle" class="svg-label-sm">2026年4月28日以降、Xcode 26 以降＋iOS 26 SDK</text>
+          <text x="360" y="220" text-anchor="middle" class="svg-label-sm">満たさないとアップロードで弾かれる</text>
+
+          <text x="130" y="44" text-anchor="end" class="svg-label-sm">自分で作る</text>
+          <text x="130" y="190" text-anchor="end" class="svg-label-sm">借りるMacに依存</text>
+          <text x="590" y="190" class="svg-label-sm">← ここが盲点</text>
+        </svg>
+        <figcaption>図11: 3つ目だけは「自分の環境」ではなく「借りたMacの環境」の問題になる</figcaption>
+      </figure>
+
+      <p>プライバシーマニフェストは2024年から必須です。理由の申告が要るAPIを使っていると未対応で弾かれます。サードパーティSDKが持つマニフェストは自動でマージされます。</p>
+      <p>SDKの必須期限はクラウドMac選びに直結します。<strong>借りたMacのXcodeが古いとアップロードで落ちる</strong>ため、契約前に「Xcodeのバージョンを選べるか、更新されるか」を確認してください。中古Macを買う場合も同じで、Xcode 26 が動くOSまで上げられる機種かが実質的な最低条件になります。</p>
+    </section>
+
+    <section id="s12">
+      <h2>12. TestFlight — Macも実機もない人ほど使う</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 226" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="TestFlightの内部テストと外部テストの違いの比較">
+          <rect x="6" y="14" width="344" height="164" rx="8" class="svg-box"/>
+          <text x="178" y="46" text-anchor="middle" class="svg-title">内部テスト</text>
+          <text x="178" y="80" text-anchor="middle" class="svg-label">最大 100人</text>
+          <text x="178" y="106" text-anchor="middle" class="svg-label-sm">App Store Connect のロール保持者</text>
+          <text x="178" y="136" text-anchor="middle" class="svg-label" fill="var(--green)">審査なし・即配布</text>
+          <text x="178" y="162" text-anchor="middle" class="svg-label-sm">自分のiPhoneで確認するならこれで足りる</text>
+
+          <rect x="370" y="14" width="344" height="164" rx="8" class="svg-box-accent"/>
+          <text x="542" y="46" text-anchor="middle" class="svg-title">外部テスト</text>
+          <text x="542" y="80" text-anchor="middle" class="svg-label">最大 10,000人</text>
+          <text x="542" y="106" text-anchor="middle" class="svg-label-sm">メールやリンクで招待</text>
+          <text x="542" y="136" text-anchor="middle" class="svg-label" fill="var(--amber)">初回ビルドは Beta App Review</text>
+          <text x="542" y="162" text-anchor="middle" class="svg-label-sm">そのバージョンの最初のビルドだけ審査</text>
+
+          <text x="360" y="208" text-anchor="middle" class="svg-label-sm">クラウドMacにはiPhoneを物理接続できない。実機確認はTestFlight経由になる</text>
+        </svg>
+        <figcaption>図12: 内部テストは審査なしで即配れる。確認サイクルは思ったより回る</figcaption>
+      </figure>
+
+      <p>Mac無し開発で一番効いてくる制約がこれです。<strong>クラウドMacにはiPhoneを物理接続できない</strong>ため、Xcodeから実機を繋いでデバッグという定番の手が使えません。</p>
+      <p>代わりにTestFlightで自分のiPhoneに配って確認します。ログはXcodeのコンソールで拾えないので、画面にログを出す仕組みをアプリ側に仕込んでおきます。実例でも同じ対処が取られています。</p>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 3</span>
+      <p class="qtext">クラウドMacを使っていて、手元のiPhoneで動作を確認したい。最も手早い方法はどれですか。</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>外部テストで自分を招待する。10,000人まで配れるので自由度が高い</span></button>
+        <button class="opt" data-correct><span class="mark">B</span><span>内部テストで自分を招待する。審査がないので即座に配布できる</span></button>
+        <button class="opt"><span class="mark">C</span><span>クラウドMacにiPhoneを接続し、Xcodeから実機デバッグする</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>内部テストは最大100人で<strong>審査なし・即配布</strong>なので、自分1人が確認する用途には最速です。Aの外部テストは、そのバージョンの最初のビルドで Beta App Review を通す必要があり待ち時間が生まれます。Cはクラウド上のMacに物理的な端末を接続できないため、そもそも成立しません。</p>
+      </div>
+    </div>
+
+    <section id="s13">
+      <h2>13. 審査 — 期間と、リジェクトの三大理由</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="App Storeのリジェクト理由の代表格3つと審査期間">
+          <rect x="470" y="8" width="244" height="52" rx="8" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.5"/>
+          <text x="592" y="32" text-anchor="middle" class="svg-title" fill="var(--green)">90%が24時間以内</text>
+          <text x="592" y="50" text-anchor="middle" class="svg-label-sm">ただし新規アカウントの初回は2〜3日</text>
+
+          <line x1="188" y1="76" x2="188" y2="206" stroke="var(--border)"/>
+          <rect x="188" y="86" width="330" height="30" rx="4" fill="var(--accent)"/>
+          <text x="180" y="106" text-anchor="end" class="svg-label">2.1 完全性</text>
+          <text x="528" y="106" class="svg-label-sm">未解決の問題の40%超</text>
+          <text x="196" y="132" class="svg-label-sm">クラッシュ・プレースホルダ・情報不足</text>
+
+          <rect x="188" y="146" width="215" height="30" rx="4" fill="var(--accent)" opacity=".7"/>
+          <text x="180" y="166" text-anchor="end" class="svg-label">4.3 スパム</text>
+          <text x="413" y="166" class="svg-label-sm">既存アプリの焼き直し・重複</text>
+          <text x="196" y="192" class="svg-label-sm">AIチャットボット・AI要約・AIロゴ等は飽和カテゴリ扱い</text>
+
+          <rect x="188" y="206" width="140" height="30" rx="4" fill="var(--accent)" opacity=".5"/>
+          <text x="180" y="226" text-anchor="end" class="svg-label">5.1.1 データ</text>
+          <text x="338" y="226" class="svg-label-sm">取得データの申告と実装の食い違い</text>
+        </svg>
+        <figcaption>図13: バーの長さは頻出度のイメージ。2.1が突出している</figcaption>
+      </figure>
+
+      <p>平均は24時間以内ですが、新規アカウントの初回提出は2〜3日かかることがあります。発売日から逆算するときは初回だけ多めに見ておきます。</p>
+      <p>4.3は「似ている」だけで飛んできます。実務上の対処は、<strong>何が既存と違うのかを審査メモに文章で書いて添えること</strong>です。リジェクトはResolution Centerでやり取りしますが、感情的な反論ではなく指摘番号に1つずつ答えます。</p>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><p>AIを使ったアプリは2026年時点で4.3の警戒対象です。「AIで作った」ではなく<strong>「何が新しいか」</strong>を書いてください。</p></div>
+      </div>
+    </section>
+
+    <section id="s14">
+      <h2>14. Windowsユーザーが実際に詰まる4か所</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="よくある失敗4つとその対策の対比">
+          <text x="16" y="24" class="svg-title" fill="var(--red)">つまずき</text>
+          <text x="404" y="24" class="svg-title" fill="var(--green)">対策</text>
+
+          <rect x="10" y="36" width="330" height="44" rx="6" fill="var(--red-soft)" stroke="var(--red)" stroke-width="1.2"/>
+          <text x="26" y="64" class="svg-label">バージョン番号の不一致</text>
+          <path d="M346 58 H 386" class="svg-arrow" marker-end="url(#ar)"/>
+          <rect x="392" y="36" width="318" height="44" rx="6" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.2"/>
+          <text x="408" y="64" class="svg-label-sm">ビルド側と提出側の番号を完全一致させる</text>
+
+          <rect x="10" y="90" width="330" height="44" rx="6" fill="var(--red-soft)" stroke="var(--red)" stroke-width="1.2"/>
+          <text x="26" y="118" class="svg-label">pod install を忘れる</text>
+          <path d="M346 112 H 386" class="svg-arrow" marker-end="url(#ar)"/>
+          <rect x="392" y="90" width="318" height="44" rx="6" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.2"/>
+          <text x="408" y="118" class="svg-label-sm">謎のビルドエラーの定番。手順書に固定する</text>
+
+          <rect x="10" y="144" width="330" height="44" rx="6" fill="var(--red-soft)" stroke="var(--red)" stroke-width="1.2"/>
+          <text x="26" y="172" class="svg-label">実機ログが取れない</text>
+          <path d="M346 166 H 386" class="svg-arrow" marker-end="url(#ar)"/>
+          <rect x="392" y="144" width="318" height="44" rx="6" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.2"/>
+          <text x="408" y="172" class="svg-label-sm">画面にログを出す／TestFlightのクラッシュログ</text>
+
+          <rect x="10" y="198" width="330" height="44" rx="6" fill="var(--red-soft)" stroke="var(--red)" stroke-width="1.2"/>
+          <text x="26" y="226" class="svg-label">説明文の修正にも新ビルド</text>
+          <path d="M346 220 H 386" class="svg-arrow" marker-end="url(#ar)"/>
+          <rect x="392" y="198" width="318" height="44" rx="6" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.2"/>
+          <text x="408" y="226" class="svg-label-sm">細切れに直さず、溜めて一括で提出する</text>
+        </svg>
+        <figcaption>図14: どれも「Macに繋いでいる時間が課金される」構造と噛み合って効いてくる</figcaption>
+      </figure>
+
+      <p>基本動作は<strong>Windows側で確定できることを全部確定させてからMacに繋ぐ</strong>ことです。先ほどの実例では3回連続でリジェクトを受けており、そのたびにクラウドMacへ接続し直すことになります。</p>
+      <p>加えて、Mac未経験だと <code>Command</code> キーの位置、Finder、キーチェーン、ターミナルといった操作の差そのものにも時間を取られます。ここも接続時間として課金されるという前提で見積もってください。</p>
+    </section>
+
+    <section id="s15">
+      <h2>15. Macに繋ぐ時間を最小化する設計</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Windowsとクラウドマックを行き来する開発サイクルと、課金対象になる区間">
+          <rect x="260" y="10" width="200" height="60" rx="8" class="svg-box"/>
+          <text x="360" y="38" text-anchor="middle" class="svg-title">Windowsで実装</text>
+          <text x="360" y="58" text-anchor="middle" class="svg-label-sm">確認もここで済ませる</text>
+
+          <rect x="500" y="120" width="200" height="60" rx="8" class="svg-box-accent"/>
+          <text x="600" y="148" text-anchor="middle" class="svg-title">Macでアーカイブ</text>
+          <text x="600" y="168" text-anchor="middle" class="svg-label-sm">課金されるのはここだけ</text>
+
+          <rect x="260" y="230" width="200" height="60" rx="8" class="svg-box"/>
+          <text x="360" y="258" text-anchor="middle" class="svg-title">TestFlightで確認</text>
+          <text x="360" y="278" text-anchor="middle" class="svg-label-sm">実機は自分のiPhone</text>
+
+          <rect x="20" y="120" width="200" height="60" rx="8" class="svg-box"/>
+          <text x="120" y="148" text-anchor="middle" class="svg-title">修正点をまとめる</text>
+          <text x="120" y="168" text-anchor="middle" class="svg-label-sm">細切れに戻らない</text>
+
+          <path d="M460 45 C 550 45, 600 70, 600 115" class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M600 185 C 600 230, 550 260, 465 260" class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M260 260 C 170 260, 120 230, 120 185" class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M120 115 C 120 70, 170 45, 255 45" class="svg-arrow" marker-end="url(#ar)"/>
+        </svg>
+        <figcaption>図15: サイクルのうち、色の付いた1箱だけが費用に変わる</figcaption>
+      </figure>
+
+      <p>目標は「Macでやることをアーカイブとアップロードだけにする」ことです。実例ではメタデータの修正を月に1回へまとめる運用にして、接続時間を圧縮しています。</p>
+      <p>次の段階は自動化です。CIサービスや GitHub Actions の macOSランナーにビルドとTestFlight配信を任せれば、<strong>手動でMacに繋ぐ時間をほぼゼロにできます</strong>。署名まわりは、証明書とプロファイルを暗号化してプライベートGitに置く fastlane match が定番です。</p>
+    </section>
+
+    <section id="s16">
+      <h2>16. 特許は取れるのか — 「アイデア」は特許にならない</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 268" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="アプリの何が特許の対象になるかを3段階でふるいにかける判定図">
+          <rect x="40" y="12" width="520" height="60" rx="8" class="svg-box"/>
+          <text x="300" y="40" text-anchor="middle" class="svg-label">「〜できるアプリ」というアイデアそのもの</text>
+          <text x="300" y="60" text-anchor="middle" class="svg-label-sm">例：家計簿を自動で分類するアプリ</text>
+          <text x="580" y="48" class="svg-title" fill="var(--red)">✕ 特許にならない</text>
+          <path d="M300 74 V 92" class="svg-arrow" marker-end="url(#ar)"/>
+
+          <rect x="40" y="96" width="520" height="60" rx="8" class="svg-box"/>
+          <text x="300" y="124" text-anchor="middle" class="svg-label">画面の見た目・アイコンのデザイン</text>
+          <text x="300" y="144" text-anchor="middle" class="svg-label-sm">配色・レイアウト・操作画面</text>
+          <text x="580" y="132" class="svg-title" fill="var(--amber)">△ 意匠の話</text>
+          <path d="M300 158 V 176" class="svg-arrow" marker-end="url(#ar)"/>
+
+          <rect x="40" y="180" width="520" height="72" rx="8" class="svg-box-accent"/>
+          <text x="300" y="208" text-anchor="middle" class="svg-label">CPUやメモリを使って行う、具体的な処理の手順</text>
+          <text x="300" y="230" text-anchor="middle" class="svg-label-sm">どのデータを、どう処理して、何を実現するか</text>
+          <text x="580" y="220" class="svg-title" fill="var(--green)">○ ここだけ</text>
+        </svg>
+        <figcaption>図16: 3段のふるいを通り抜けたものだけが特許の土俵に乗る</figcaption>
+      </figure>
+
+      <p>特許法でいう「発明」は自然法則を利用した技術的思想の創作で、単なる思いつきやビジネスのアイデアは含まれません。特許庁の審査基準では、<strong>ソフトウェアによる情報処理がハードウェア資源（CPU・メモリなど）を用いて具体的に実現されている</strong>場合に限り発明に該当するとされています。</p>
+      <p>ですから「家計簿を自動で分類するアプリ」は特許になりません。どういう手順で、どのデータを、どう処理して分類を実現するのかまで具体化して、はじめて土俵に乗ります。</p>
+
+      <div class="callout tip">
+        <span class="ico">💡</span>
+        <div><p><strong>「アイデアを盗まれる」という不安に、特許はほとんど答えてくれません。</strong>特許が守るのは仕組みであってアイデアではないからです。「特許を取れるか」の前に「そもそも発明があるか」を確認してください。</p></div>
+      </div>
+    </section>
+
+    <section id="s17">
+      <h2>17. 一番大事な落とし穴 — 公開したら原則アウト</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 268" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="出願と公開の順序による結果の違いを2本のタイムラインで比較した図">
+          <text x="6" y="24" class="svg-title" fill="var(--green)">正しい順</text>
+          <line x1="120" y1="60" x2="556" y2="60" stroke="var(--green)" stroke-width="2"/>
+          <circle cx="200" cy="60" r="8" fill="var(--green)"/>
+          <text x="200" y="44" text-anchor="middle" class="svg-label">出願</text>
+          <circle cx="440" cy="60" r="8" fill="var(--green)" opacity=".7"/>
+          <text x="440" y="44" text-anchor="middle" class="svg-label">App Storeで公開</text>
+          <text x="570" y="64" class="svg-label-sm" fill="var(--green)">どの国でも可能性が残る</text>
+
+          <text x="6" y="140" class="svg-title" fill="var(--red)">よくある順</text>
+          <line x1="120" y1="176" x2="556" y2="176" stroke="var(--red)" stroke-width="2"/>
+          <circle cx="200" cy="176" r="8" fill="var(--red)"/>
+          <text x="200" y="160" text-anchor="middle" class="svg-label">App Storeで公開</text>
+          <circle cx="440" cy="176" r="8" fill="var(--red)" opacity=".7"/>
+          <text x="440" y="160" text-anchor="middle" class="svg-label">あとから出願</text>
+          <text x="570" y="180" class="svg-label-sm" fill="var(--red)">選択肢が激減する</text>
+
+          <rect x="120" y="200" width="220" height="52" rx="6" fill="var(--amber-soft)" stroke="var(--amber)" stroke-width="1.2"/>
+          <text x="230" y="222" text-anchor="middle" class="svg-label-sm">日本・米国</text>
+          <text x="230" y="242" text-anchor="middle" class="svg-label-sm">1年以内なら救済の可能性</text>
+          <rect x="356" y="200" width="220" height="52" rx="6" fill="var(--red-soft)" stroke="var(--red)" stroke-width="1.2"/>
+          <text x="466" y="222" text-anchor="middle" class="svg-label-sm">欧州・中国</text>
+          <text x="466" y="242" text-anchor="middle" class="svg-label-sm">原則アウト</text>
+        </svg>
+        <figcaption>図17: App Storeへのリリースは「世界公開」。順番を間違えると取り返せない</figcaption>
+      </figure>
+
+      <p>特許はまだ世に出ていないものにしか与えられません。公開してしまうと、<strong>自分で公開した場合でも</strong>原則として取れなくなります。</p>
+      <p>日本には救済制度（新規性喪失の例外・特許法30条）があります。ただし公開から1年以内の出願に加えて、<strong>出願と同時に申し出て、30日以内に証明書を提出する</strong>手続きが要ります。黙っていても適用されません。</p>
+      <p>そしてApp Storeは世界配信です。日本の例外規定で日本の特許は救えても、欧州は原則グレースピリオドなし、中国も国際展覧会や指定学会など限られた場合のみで、世界で権利化する道は事実上そこで閉じます。</p>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><p><strong>特許を検討するなら、判断は「発売日の前」ではなく「テスト配布の前」です。</strong>TestFlightの外部テスト（最大10,000人）も公開とみなされうるため、内部テスト（100人・関係者のみ）とはリスクが違います。</p></div>
+      </div>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 4</span>
+      <p class="qtext">アプリを App Store で公開したあとに「この仕組みで特許を取りたい」と思いつきました。正しい理解はどれですか。</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>自分で公開したものなので、期限も手続きもなく後から自由に出願できる</span></button>
+        <button class="opt"><span class="mark">B</span><span>公開した時点で世界中どこでも完全に不可能になり、打つ手はない</span></button>
+        <button class="opt" data-correct><span class="mark">C</span><span>日本と米国は1年以内なら救済の可能性があるが、欧州・中国は原則アウト</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>Cが正解です。日本の新規性喪失の例外は1年以内の出願に加えて、出願と同時の申し出と30日以内の証明書提出が必要で、Aのように「自由に」出願できるわけではありません。Bは日本国内などでは救済制度が実際に機能するため言い過ぎです。ただしApp Storeは世界配信なので、Cの状態でも取れる国は大きく減ります。</p>
+      </div>
+    </div>
+
+    <section id="s18">
+      <h2>18. 特許・商標・著作権・意匠 — 個人開発者の現実解</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 258" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="著作権・商標・特許にかかる費用を比較したバーチャート">
+          <line x1="200" y1="20" x2="200" y2="200" stroke="var(--border)"/>
+          <line x1="200" y1="200" x2="710" y2="200" stroke="var(--border-strong)"/>
+
+          <rect x="200" y="30" width="3" height="28" rx="1" fill="var(--green)"/>
+          <text x="192" y="49" text-anchor="end" class="svg-label">著作権</text>
+          <text x="212" y="49" class="svg-label-sm">0円（自動で発生）</text>
+
+          <rect x="200" y="72" width="48" height="28" rx="4" fill="var(--green)" opacity=".8"/>
+          <text x="192" y="91" text-anchor="end" class="svg-label">商標 1区分</text>
+          <text x="258" y="91" class="svg-label-sm">約44,900円（10年）</text>
+
+          <rect x="200" y="114" width="182" height="28" rx="4" fill="var(--amber)" opacity=".85"/>
+          <text x="192" y="133" text-anchor="end" class="svg-label">特許（庁費用）</text>
+          <text x="392" y="133" class="svg-label-sm">約170,000円</text>
+
+          <rect x="200" y="156" width="500" height="28" rx="4" fill="var(--red)" opacity=".7"/>
+          <text x="192" y="175" text-anchor="end" class="svg-label">＋弁理士費用</text>
+          <text x="420" y="175" class="svg-label-sm" fill="#fff">総額 約47〜77万円</text>
+
+          <text x="200" y="228" class="svg-label-sm">出典: INPIT（出願14,000／審査請求142,000／特許料13,800）・日本弁理士会</text>
+          <text x="200" y="248" class="svg-label-sm">中小企業・個人事業主は審査請求料と特許料が1/3に減免される</text>
+        </svg>
+        <figcaption>図18: 桁が1つ違う。商標は特許の10分の1以下で、効き方も分かりやすい</figcaption>
+      </figure>
+
+      <div class="tablewrap">
+      <table>
+        <thead><tr><th>権利</th><th>どう手に入るか</th><th>何を守るか</th></tr></thead>
+        <tbody>
+          <tr><td><strong>著作権</strong></td><td>書いた瞬間に自動で発生。手続き不要</td><td>書いたコードそのもの（アイデアは守らない）</td></tr>
+          <tr><td><strong>商標</strong></td><td>出願して登録。1区分 約44,900円／10年</td><td>アプリ名・アイコン</td></tr>
+          <tr><td><strong>意匠</strong></td><td>出願して登録。2020年4月からGUI単独で可能に</td><td>画面デザイン。存続25年</td></tr>
+          <tr><td><strong>特許</strong></td><td>出願 → 審査請求 → 登録。<strong>出願から3年以内</strong>に審査請求</td><td>具体的な処理の仕組み</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <p>個人開発者にとって実害が出やすいのは特許ではなく<strong>商標</strong>です。アプリ名を他人に先に登録されると改名を迫られます。</p>
+      <p>「とらない」も戦略です。公開してしまえばそれが先行技術になり、同じものを他人が後から特許化することも難しくなります。1本目のアプリで数十万円と数年を特許に使う合理性は、多くの場合ありません。</p>
+
+      <div class="callout key">
+        <span class="ico">🔑</span>
+        <div><p>迷ったときの優先順位は <strong>①商標（名前）→ ②著作権（自動なので何もしない）→ ③意匠 → ④特許</strong> です。</p></div>
+      </div>
+    </section>
+
+    <section id="s19">
+      <h2>19. サンプルスケジュール（3か月）</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 296" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="3か月のリリーススケジュールをガントチャートで示した図">
+          <line x1="212" y1="34" x2="212" y2="250" stroke="var(--border)"/>
+          <line x1="378" y1="34" x2="378" y2="250" stroke="var(--border)"/>
+          <line x1="544" y1="34" x2="544" y2="250" stroke="var(--border)"/>
+          <text x="295" y="26" text-anchor="middle" class="svg-label-sm">1か月目</text>
+          <text x="461" y="26" text-anchor="middle" class="svg-label-sm">2か月目</text>
+          <text x="627" y="26" text-anchor="middle" class="svg-label-sm">3か月目</text>
+
+          <text x="204" y="56" text-anchor="end" class="svg-label-sm">Program登録</text>
+          <rect x="212" y="42" width="70" height="18" rx="4" fill="var(--accent)"/>
+          <text x="204" y="84" text-anchor="end" class="svg-label-sm">15%の申し込み</text>
+          <rect x="240" y="70" width="52" height="18" rx="4" fill="var(--accent)" opacity=".8"/>
+
+          <text x="204" y="112" text-anchor="end" class="svg-label-sm">知財の方針を決める</text>
+          <rect x="212" y="98" width="110" height="18" rx="4" fill="var(--purple)"/>
+
+          <text x="204" y="140" text-anchor="end" class="svg-label-sm">実装・Android確認</text>
+          <rect x="240" y="126" width="290" height="18" rx="4" fill="var(--green)" opacity=".8"/>
+
+          <text x="204" y="168" text-anchor="end" class="svg-label-sm">契約・口座・W-8BEN</text>
+          <rect x="378" y="154" width="110" height="18" rx="4" fill="var(--accent)" opacity=".7"/>
+
+          <text x="204" y="196" text-anchor="end" class="svg-label-sm">クラウドMac・内部テスト</text>
+          <rect x="460" y="182" width="130" height="18" rx="4" fill="var(--amber)"/>
+
+          <text x="204" y="224" text-anchor="end" class="svg-label-sm">外部テスト・提出・審査</text>
+          <rect x="558" y="210" width="148" height="18" rx="4" fill="var(--amber)" opacity=".8"/>
+
+          <line x1="322" y1="34" x2="322" y2="250" stroke="var(--red)" stroke-width="2" stroke-dasharray="5 4"/>
+          <text x="330" y="268" class="svg-label-sm" fill="var(--red)">この線より後に特許を思いついても、原則もう遅い</text>
+        </svg>
+        <figcaption>図19: 登録・税務・知財は開発と並行して走る。知財だけはやり直しが効かない</figcaption>
+      </figure>
+
+      <p>登録・税務・知財は、アプリの実装と並行して進む作業です。ここを後回しにすると、アプリは完成しているのに出せない期間が生まれます。</p>
+      <p>特に知財は<strong>やり直しが効きません</strong>。判断そのものを最初のブロックに置いてください。組織で登録するならD-U-N-S番号の取得が全体のクリティカルパスになります。</p>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 5</span>
+      <p class="qtext">3か月でリリースする計画を立てるとき、最初の1か月に必ず入れるべきものはどれですか。</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>クラウドMacの契約。早く借りるほど操作に慣れられる</span></button>
+        <button class="opt"><span class="mark">B</span><span>銀行口座とW-8BENの登録。入金設定は最優先で片付ける</span></button>
+        <button class="opt" data-correct><span class="mark">C</span><span>Developer Programの登録と、特許を取るかどうかの判断</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>Cが正解です。組織登録はD-U-N-S取得で数週間かかることがあり、特許は<strong>テスト配布より前でないと判断そのものが手遅れ</strong>になります。どちらも後から取り返せません。Aはアーカイブ直前で足り、借りている期間がそのまま費用になります。Bは重要ですが、審査と並行して2か月目に進めても間に合います。</p>
+      </div>
+    </div>
+
+    <section id="summary">
+      <h2>まとめ</h2>
+      <div class="cards">
+        <div class="card"><h4>作れる。出せないだけ</h4><p>Windowsで止まるのは署名・アーカイブ・アップロードなど4工程。登録も審査対応もブラウザで完結します。</p></div>
+        <div class="card"><h4>性能は作るものから逆算</h4><p>Windowsで書いてMacはビルド専用、という形にできるなら、Macの性能を悩む必要そのものがありません。</p></div>
+        <div class="card"><h4>PCにmacOSは入れられない</h4><p>SLAがApple製ハードウェアに限定しています。借りるかCIに投げるかの二択です。</p></div>
+        <div class="card"><h4>手続きは開発と並走</h4><p>D-U-N-S・税務・15%の申請は後回しにすると、完成しているのに出せない期間が生まれます。</p></div>
+        <div class="card"><h4>知財はテスト配布の前に</h4><p>公開すると特許の道は大きく狭まります。個人開発者の現実解は、まず名前を守る商標です。</p></div>
+      </div>
+    </section>
+
+    <section id="sources">
+      <h2>出典</h2>
+
+      <h3>Apple 公式</h3>
+      <ul class="sources">
+        <li><a href="https://developer.apple.com/jp/support/enrollment/">Apple Developer Program 登録</a> — 年会費99米ドル、個人／組織の必要要件、D-U-N-S番号</li>
+        <li><a href="https://developer.apple.com/news/upcoming-requirements/">SDK minimum requirements（Apple Developer News）</a> — 2026年4月28日以降 Xcode 26＋iOS 26 SDK 必須</li>
+        <li><a href="https://developer.apple.com/jp/app-store/small-business-program/">App Store Small Business Program</a> — 15%、100万米ドルのしきい値、適用開始時期</li>
+        <li><a href="https://www.apple.com/legal/sla/docs/macOSTahoe.pdf">macOS Tahoe 26 Software License Agreement（PDF）</a> — Apple-branded computer 限定、仮想環境は追加2インスタンスまで</li>
+      </ul>
+
+      <h3>Macの調達と性能</h3>
+      <ul class="sources">
+        <li><a href="https://www.macincloud.com/pages/payg.html">MacinCloud Pay-as-You-Go</a> — $1/時〜、$4/日〜</li>
+        <li><a href="https://qiita.com/taku999999/items/ba1f6927b4beb6fd8fed">Macを買わずにWindows + クラウドMacだけでiOSパズルゲームを個人リリースした話</a> — 約15時間で完了、詰まりどころの実例</li>
+        <li><a href="https://applech2.com/archives/20260625-apple-increases-prices-mac-and-ipad.html">Apple、MacやiPadなどの価格を値上げ（AAPL Ch., 2026-06-25）</a> — Mac mini 94,800円→134,800円</li>
+        <li><a href="https://everymac.com/mac-answers/macos-26-tahoe-faq/macos-tahoe-macos-26-compatbility-list-system-requirements.html">macOS Tahoe System Requirements（EveryMac）</a> — インストールに35.5GBの空き</li>
+        <li><a href="https://tech.amikelive.com/node-1776/xcode-and-macos-version-compatibility/">Xcode and macOS Version Compatibility</a> — Xcode 26 に必要な macOS バージョン</li>
+        <li><a href="https://xenospectrum.com/apple-admits-that-8gb-of-ram-is-not-enough-for-macs/">Apple、MacのRAMが8GBでは足りないことを認める</a> — 予測コード補完が Apple Silicon＋16GB を要求</li>
+        <li><a href="https://macpull.com/ja/blog/articles/2026-mac-mini-m4-complete-spec-buying-guide.html">2026 Mac mini M4 構成・選び方ガイド</a> — DerivedDataで256GBが枯渇、メモリ／SSDは増設不可</li>
+        <li><a href="https://docs.flutter.dev/platform-integration/ios/setup">Set up iOS development（Flutter 公式）</a> — iOSビルドに macOS と Xcode が必要</li>
+        <li><a href="https://code2native.com/blog/build-ios-app-without-mac-2026">How to Build an iOS App Without a Mac in 2026</a> — クラウドビルドサービスの選択肢</li>
+      </ul>
+
+      <h3>登録・税務・手数料</h3>
+      <ul class="sources">
+        <li><a href="https://note.com/sh0gy0muj0/n/nc428cca42b38">W-8BENの書き方に詰まった日本の個人開発者へ</a> — 契約・銀行口座・税務フォームの順序</li>
+        <li><a href="https://zenn.dev/zawascript/articles/2026-06-apple-w8ben">個人事業主が組織アカウントで登録した場合の納税フォーム対応（2026-06）</a> — W-8BEN と W-8BEN-E の使い分け</li>
+        <li><a href="https://www.businesslawyers.jp/articles/1422">2025年12月施行！スマホソフトウェア競争促進法の概要</a> — 2025年12月18日 全面施行</li>
+        <li><a href="https://business.nikkei.com/atcl/gen/19/00297/041700280/">「スマホ新法」施行から4カ月 外部決済の手数料に開発者の強い不満</a> — 施行後の実態</li>
+      </ul>
+
+      <h3>提出要件・審査</h3>
+      <ul class="sources">
+        <li><a href="https://www.revenuecat.com/blog/growth/the-ultimate-guide-to-app-store-rejections">The ultimate guide to App Store rejections</a> — 2.1が未解決問題の40%超</li>
+        <li><a href="https://pushmyapp.ai/blog/app-store-rejection-reasons">App Store Rejection Reasons Index 2026</a> — 2.1 / 4.3 / 5.1.1 の三大理由</li>
+        <li><a href="https://ptkd.com/journal/rejection-guideline-4-3-ai-spam">Why did Apple reject my AI app under Guideline 4.3?</a> — AI系の飽和カテゴリ</li>
+        <li><a href="https://zenn.dev/hsylife/articles/fd8b59d683812e">TestFlightの外部テスターとBeta App Reviewを整理する</a> — 内部100人／外部10,000人、初回ビルドのみ審査</li>
+        <li><a href="https://dev.classmethod.jp/articles/support-privacy-manifests-for-ios-app/">Privacy Manifests未対応のiOSアプリはリジェクトされる</a> — 2024年からの必須化</li>
+        <li><a href="https://pochanglab.com/blog/personal_ios_app">個人でiOSアプリをApp Storeに公開する完全ガイド（2026）</a> — 年齢レーティング新制度・Xcode 26必須化</li>
+      </ul>
+
+      <h3>知的財産</h3>
+      <ul class="sources">
+        <li><a href="https://www.jpo.go.jp/system/laws/rule/guideline/patent/handbook_shinsa/document/index/app_b1.pdf">附属書B 第1章 コンピュータソフトウエア関連発明（特許庁・PDF）</a> — ハードウェア資源との協働</li>
+        <li><a href="https://www.jpo.go.jp/system/laws/rule/guideline/patent/hatumei_reigai.html">発明の新規性喪失の例外規定の適用を受けるための手続（特許庁）</a> — 特許法30条</li>
+        <li><a href="https://www.jpo.go.jp/system/laws/rule/guideline/patent/document/hatumei_reigai/03_0205.pdf">審査基準 第III部 第2章 第5節 新規性喪失の例外（PDF）</a> — 1年以内、出願と同時の申し出、30日以内の証明書</li>
+        <li><a href="https://faq.inpit.go.jp/FAQ/2024/02/000161.html">出願から登録までに必要な手数料の概要（INPIT）</a> — 出願14,000円／審査請求142,000円／特許料13,800円／商標12,000円・32,900円</li>
+        <li><a href="https://www.jpo.go.jp/system/process/tesuryo/genmen/genmensochi.html">特許料等の減免制度（特許庁）</a> — 中小・個人事業主は1/3に減免</li>
+        <li><a href="https://www.harakenzo.com/service/pss-grace-period/">各国の新規性喪失の例外（グレースピリオド）</a> — 米国1年、欧州は原則なし、中国は限定的</li>
+        <li><a href="https://www.jpo.go.jp/system/process/tesuryo/kaisei/2020_ishoryokinkaisei.html">令和元年特許法等改正に伴う意匠関係料金改正（特許庁）</a> — 2020年4月1日施行、存続期間25年</li>
+        <li><a href="https://www.harakenzo.com/design-gui-icon/">GUI・アイコン意匠登録の重要性</a> — 画像意匠の登録対象</li>
+        <li><a href="https://www.jpaa.or.jp/faq/q6/">出願に必要な費用はどのくらいでしょうか？（日本弁理士会）</a> — 弁理士費用の相場</li>
+      </ul>
+    </section>
+
+  </main>
+</div>
+
+<script>
+// ---- テーマ切替（OS設定を初期値にし、選択はlocalStorageではなくセッション内変数で保持） ----
+(function(){
+  var root=document.documentElement, btn=document.getElementById('themeBtn');
+  if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+    root.setAttribute('data-theme','dark');
+  }
+  var sync=function(){ btn.textContent = root.getAttribute('data-theme')==='dark' ? '☀️' : '🌙'; };
+  sync();
+  btn.addEventListener('click',function(){
+    root.setAttribute('data-theme', root.getAttribute('data-theme')==='dark'?'light':'dark');
+    sync();
+  });
+})();
+
+// ---- 目次スクロール連動 ----
+(function(){
+  var links=[].slice.call(document.querySelectorAll('#toc a'));
+  var map={}; links.forEach(function(a){ var el=document.querySelector(a.getAttribute('href')); if(el) map[el.id]=a; });
+  var targets=Object.keys(map).map(function(id){return document.getElementById(id);});
+  if(!targets.length) return;
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        links.forEach(function(a){a.classList.remove('active');});
+        map[e.target.id].classList.add('active');
+      }
+    });
+  },{rootMargin:'-15% 0px -70% 0px', threshold:0});
+  targets.forEach(function(t){io.observe(t);});
+})();
+
+// ---- クイズ：3択・即時採点・解説表示 ----
+(function(){
+  document.querySelectorAll('[data-quiz]').forEach(function(q){
+    var opts=[].slice.call(q.querySelectorAll('.opt'));
+    var box=q.querySelector('.explain'), verdict=q.querySelector('.verdict');
+    opts.forEach(function(btn){
+      btn.addEventListener('click',function(){
+        if(btn.disabled) return;
+        var ok=btn.hasAttribute('data-correct');
+        opts.forEach(function(o){
+          o.disabled=true;
+          if(o.hasAttribute('data-correct')) o.classList.add('correct');
+        });
+        if(!ok) btn.classList.add('wrong');
+        verdict.textContent = ok ? '正解！' : '惜しい — 正解は上の緑の選択肢です';
+        verdict.className = 'verdict ' + (ok?'ok':'ng');
+        box.classList.add('show');
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
