@@ -261,6 +261,32 @@ input[type=text],input[type=date],select{
 .levelbtn[data-lv="5"] .lvbadge{background:var(--fg); color:var(--bg)}
 .lvstat{margin-left:auto; text-align:right; font-size:11px; color:var(--fg-faint); flex:none; line-height:1.5}
 
+/* 解きかけの盤面の1行。「消す」は画面の外に置き、左へスワイプすると出てくる。
+   ブラウザ標準の横スクロールに任せているので、指のジェスチャを自前で拾う処理は要らない。
+   scroll-snap のおかげで、中途半端な位置で止まらない */
+.res-row{
+  display:flex; gap:8px;
+  overflow-x:auto; overscroll-behavior-x:contain;
+  scroll-snap-type:x mandatory;
+  scrollbar-width:none; -ms-overflow-style:none;
+}
+.res-row::-webkit-scrollbar{display:none}
+.res-row > .levelbtn{flex:0 0 100%; scroll-snap-align:start}
+.res-del{
+  flex:0 0 88px; scroll-snap-align:end;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  border:1px solid var(--ng); border-radius:11px;
+  background:var(--ng-soft); color:var(--ng);
+  font-size:12.5px; font-weight:700; line-height:1.2;
+}
+.res-del .di{font-size:16px; line-height:1}
+/* マウスの環境では横スワイプができないので、最初から並べて見せる */
+@media (hover:hover) and (pointer:fine){
+  .res-row{overflow:visible}
+  .res-row > .levelbtn{flex:1 1 auto; min-width:0}
+  .touch-only{display:none}
+}
+
 /* ============================================================
    プレイ画面
    盤面と数字パッドが必ず同時に画面内へ収まることを最優先にする（→ issue-0013）
@@ -287,6 +313,9 @@ input[type=text],input[type=date],select{
 }
 .board{
   display:grid; gap:0;
+  /* 行の高さは中身ではなく等分で決める。指定しないと、数字が1つも入っていない行だけ
+     背が低くなる（自動サイズの行は中身の高さから始まり、余りを等分でもらうため） */
+  grid-auto-rows:1fr;
   width:var(--bsize); height:var(--bsize);
   background:var(--line-strong);
   border:2px solid var(--line-strong);
@@ -483,7 +512,7 @@ input[type=text],input[type=date],select{
     </div>
   </div>
   <div class="sec" id="resumeBox" hidden>
-    <h2>解きかけの盤面<span class="sub">続きから解けます</span></h2>
+    <h2>解きかけの盤面<span class="sub">続きから解けます<span class="touch-only">・左へスワイプすると消せます</span></span></h2>
     <div class="levels" id="resumeList"></div>
   </div>
   <div class="sec">
@@ -3139,6 +3168,13 @@ async function goHome() {
     statTile('合計時間', sums.length ? fmtDur(sum(sums.map(s => s.elapsedMs))) : '—') +
     statTile('いちばん難しいクリア', hardestOf(p), '');
 
+  await renderResumeList();
+}
+
+/** 解きかけの盤面の一覧。難しさ（コース）ごとに1件で、いちばん新しいものが上に来る */
+async function renderResumeList() {
+  const p = App.player;
+  if (!p) return;
   const list = (await Store.byPlayer('inprogress', p.id)).sort((a, b) => a.at < b.at ? 1 : -1);
   $('#resumeBox').hidden = !list.length;
   $('#goResume').disabled = !list.length;
@@ -3150,16 +3186,35 @@ async function goHome() {
     const c = courseByKey(r.courseKey);
     const filled = strToArr(r.grid).filter(v => v).length;
     const total = r.size * r.size;
-    return `<button class="levelbtn" type="button" data-res="${esc(r.id)}">
+    const name = `${r.size}×${r.size} ${c ? c.label : ''}`;
+    return `<div class="res-row">
+      <button class="levelbtn" type="button" data-res="${esc(r.id)}">
       <span class="lvbadge">${esc(String(r.size))}</span>
-      <span><span class="lvname">${esc(r.size)}×${esc(r.size)} ${esc(c ? c.label : '')}</span><br>
+      <span><span class="lvname">${esc(name)}</span><br>
       <span class="lvdesc">${filled}/${total}マス ・ ${fmtClock(r.elapsedMs)} ・ ${esc(fmtDateTime(r.at))}</span></span>
-      <span class="lvstat">${Math.round(filled / total * 100)}%</span></button>`;
+      <span class="lvstat">${Math.round(filled / total * 100)}%</span></button>
+      <button class="res-del" type="button" data-del="${esc(r.id)}"
+        aria-label="${esc(name)} の解きかけを消す"><span class="di" aria-hidden="true">🗑</span>消す</button>
+    </div>`;
   }).join('');
 
   $$('#resumeList [data-res]').forEach(b => b.addEventListener('click', async () => {
     const rec = await Store.one('inprogress', b.dataset.res);
     if (rec) restoreGame(rec);
+  }));
+
+  $$('#resumeList [data-del]').forEach(b => b.addEventListener('click', async () => {
+    const rec = await Store.one('inprogress', b.dataset.del);
+    if (!rec) { await renderResumeList(); return; }
+    const c = courseByKey(rec.courseKey);
+    const ok = await confirmDialog('この解きかけを消しますか',
+      `${rec.size}×${rec.size} ${c ? c.label : ''} の解きかけを消します。元には戻せません。` +
+      `クリアした記録は消えません。`,
+      '消す', '', null, 'やめる');
+    if (!ok) return;
+    await Store.del('inprogress', rec.id);
+    toast('解きかけの盤面を消しました');
+    await renderResumeList();
   }));
 }
 
