@@ -1,0 +1,3417 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="auto">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ナンプレ">
+<meta name="theme-color" content="#fbfbfa">
+<meta name="description" content="ナンプレを解いて、解き方を分析する。記録は端末内にのみ保存され、外部には一切送信されません。">
+<title>ナンプレｘ解き方分析</title>
+<style>
+/* ============================================================
+   トークン
+   ============================================================ */
+:root{
+  --bg:#fbfbfa;
+  --bg-elev:#ffffff;
+  --bg-sunk:#f2f1ee;
+  --fg:#37352f;
+  --fg-muted:#7c7469;
+  --fg-faint:#a8a29a;
+  --border:#e4e2dd;
+  --border-strong:#cfccc5;
+  --accent:#2f6fb3;
+  --accent-soft:#e8f0f8;
+  --accent-fg:#ffffff;
+  --ok:#2f7a52;
+  --ok-soft:#e7f3ec;
+  --ng:#b93b34;
+  --ng-soft:#fbeceb;
+  --warn:#a9760f;
+  --warn-soft:#fdf3e2;
+  --gold:#c99700;
+  --shadow:0 1px 2px rgba(15,15,15,.06), 0 4px 12px rgba(15,15,15,.05);
+  --shadow-lg:0 2px 6px rgba(15,15,15,.08), 0 12px 32px rgba(15,15,15,.09);
+  --radius:12px;
+  --radius-sm:8px;
+  --maxw:920px;
+  /* --- 盤面 --- */
+  --cell:#ffffff;
+  --cell-given:#f4f2ef;      /* 最初から入っている数字のマス */
+  --cell-peer:#f0efec;       /* 選択マスと同じ行・列・ブロック */
+  --cell-sel:#d8e6f5;        /* 選択中のマス */
+  --cell-same:#e6eefa;       /* 同じ数字が入っているマス */
+  --line:#cfccc5;
+  --line-strong:#8d8880;
+  /* --- データ可視化（001 と同じ並び。順番そのものが色覚多様性への安全装置なので入れ替えない） --- */
+  --c1:#2a78d6; --c2:#eb6834; --c3:#1baf7a; --c4:#eda100;
+  --c5:#e87ba4; --c6:#008300; --c7:#4a3aa7; --c8:#e34948;
+  --q1:#cde2fb; --q2:#9ec5f4; --q3:#5598e7; --q4:#256abf; --q5:#0d366b;
+  --qt1:#12304f; --qt2:#12304f; --qt3:#ffffff; --qt4:#ffffff; --qt5:#ffffff;
+  --grid:#e7e5e0;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#191919; --bg-elev:#232323; --bg-sunk:#141414;
+    --fg:#e9e7e3; --fg-muted:#9d978d; --fg-faint:#6f6a63;
+    --border:#333230; --border-strong:#474540;
+    --accent:#77aede; --accent-soft:#1e2c38; --accent-fg:#10161c;
+    --ok:#74c898; --ok-soft:#17271e;
+    --ng:#e58b84; --ng-soft:#2a1a19;
+    --warn:#d9a64a; --warn-soft:#2a2115;
+    --gold:#e0bb45;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 4px 12px rgba(0,0,0,.24);
+    --shadow-lg:0 2px 6px rgba(0,0,0,.36), 0 12px 32px rgba(0,0,0,.36);
+    --cell:#212121; --cell-given:#2b2b2a; --cell-peer:#2a2c2f;
+    --cell-sel:#2f4761; --cell-same:#26374a;
+    --line:#3d3b38; --line-strong:#7d7871;
+    --c1:#3987e5; --c2:#d95926; --c3:#199e70; --c4:#c98500;
+    --c5:#d55181; --c6:#008300; --c7:#9085e9; --c8:#e66767;
+    --q1:#184f95; --q2:#256abf; --q3:#3987e5; --q4:#6da7ec; --q5:#b7d3f6;
+    --qt1:#ffffff; --qt2:#ffffff; --qt3:#ffffff; --qt4:#10233a; --qt5:#10233a;
+    --grid:#2f2e2c;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#191919; --bg-elev:#232323; --bg-sunk:#141414;
+  --fg:#e9e7e3; --fg-muted:#9d978d; --fg-faint:#6f6a63;
+  --border:#333230; --border-strong:#474540;
+  --accent:#77aede; --accent-soft:#1e2c38; --accent-fg:#10161c;
+  --ok:#74c898; --ok-soft:#17271e;
+  --ng:#e58b84; --ng-soft:#2a1a19;
+  --warn:#d9a64a; --warn-soft:#2a2115;
+  --gold:#e0bb45;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 4px 12px rgba(0,0,0,.24);
+  --shadow-lg:0 2px 6px rgba(0,0,0,.36), 0 12px 32px rgba(0,0,0,.36);
+  --cell:#212121; --cell-given:#2b2b2a; --cell-peer:#2a2c2f;
+  --cell-sel:#2f4761; --cell-same:#26374a;
+  --line:#3d3b38; --line-strong:#7d7871;
+  --c1:#3987e5; --c2:#d95926; --c3:#199e70; --c4:#c98500;
+  --c5:#d55181; --c6:#008300; --c7:#9085e9; --c8:#e66767;
+  --q1:#184f95; --q2:#256abf; --q3:#3987e5; --q4:#6da7ec; --q5:#b7d3f6;
+  --qt1:#ffffff; --qt2:#ffffff; --qt3:#ffffff; --qt4:#10233a; --qt5:#10233a;
+  --grid:#2f2e2c;
+}
+
+/* ============================================================
+   基本
+   ============================================================ */
+*,*::before,*::after{box-sizing:border-box}
+/* display を持つ要素にも hidden 属性を効かせる（→ issue-0011） */
+[hidden]{display:none !important}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,"Segoe UI",sans-serif;
+  font-size:15px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior-y:none;
+}
+body[data-scale="sm"]{font-size:14px}
+body[data-scale="lg"]{font-size:17px}
+h1,h2,h3{line-height:1.4; margin:0}
+p{margin:0 0 .9em}
+p:last-child{margin-bottom:0}
+button{font:inherit; color:inherit; cursor:pointer}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.num,.tnum{font-variant-numeric:tabular-nums}
+
+/* ============================================================
+   共通の枠
+   ============================================================ */
+header.top{
+  position:sticky; top:0; z-index:40;
+  display:flex; align-items:center; gap:10px;
+  padding:10px max(14px, env(safe-area-inset-left)) 10px max(14px, env(safe-area-inset-right));
+  background:color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter:saturate(180%) blur(12px);
+  border-bottom:1px solid var(--border);
+}
+header.top .brand{font-weight:700; font-size:15px; letter-spacing:-.01em; white-space:nowrap; flex:none}
+header.top .brand-sub{color:var(--fg-faint); font-weight:400}
+header.top .sp{flex:1; min-width:0}
+.iconbtn{
+  width:34px; height:34px; flex:none;
+  display:flex; align-items:center; justify-content:center;
+  border:1px solid var(--border-strong); border-radius:9px;
+  background:var(--bg-elev); font-size:15px; line-height:1;
+}
+.iconbtn:hover{background:var(--bg-sunk)}
+.iconbtn.on{display:flex}
+.chip-btn{
+  padding:5px 11px; border:1px solid var(--border-strong); border-radius:99px;
+  background:var(--bg-elev); font-size:12.5px; white-space:nowrap;
+}
+.chip-btn:hover{background:var(--bg-sunk)}
+#who{display:none; align-items:center; gap:6px; font-size:12.5px; color:var(--fg-muted); min-width:0}
+#who.on{display:flex}
+/* 名前が長くても折り返させない。折り返すとヘッダーが3行になって盤面の高さを食う */
+#whoName{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:7em}
+#btnQuit{display:none}
+#btnQuit.on{display:flex}
+
+main{
+  max-width:var(--maxw);
+  margin:0 auto;
+  padding:22px max(16px, env(safe-area-inset-left)) 80px max(16px, env(safe-area-inset-right));
+}
+body.playing main{padding:0; max-width:none}
+.screen{display:none}
+.screen.on{display:block}
+
+.card{
+  background:var(--bg-elev); border:1px solid var(--border);
+  border-radius:var(--radius); padding:16px 18px; box-shadow:var(--shadow);
+}
+.card + .card{margin-top:14px}
+.sec{margin:26px 0 0}
+.sec:first-child{margin-top:0}
+.sec > h2{font-size:17px; margin-bottom:10px; display:flex; align-items:baseline; gap:9px; flex-wrap:wrap}
+.sec > h2 .sub{font-size:12px; color:var(--fg-faint); font-weight:400}
+.lead{color:var(--fg-muted); font-size:13.5px}
+.note{font-size:12.5px; color:var(--fg-muted); background:var(--bg-sunk);
+      border-left:3px solid var(--border-strong); border-radius:0 8px 8px 0; padding:9px 12px}
+.note.warn{border-left-color:var(--warn); background:var(--warn-soft); color:var(--fg)}
+.note.ok{border-left-color:var(--ok); background:var(--ok-soft); color:var(--fg)}
+
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:7px;
+  padding:10px 18px; border-radius:10px; border:1px solid var(--border-strong);
+  background:var(--bg-elev); font-size:14px; font-weight:600;
+}
+.btn:hover{background:var(--bg-sunk)}
+.btn.pri{background:var(--accent); border-color:transparent; color:var(--accent-fg)}
+.btn.pri:hover{filter:brightness(1.06)}
+.btn.wide{width:100%}
+.btn.sm{padding:7px 13px; font-size:13px; font-weight:500}
+.btn:disabled{opacity:.45; cursor:not-allowed}
+.row{display:flex; gap:9px; flex-wrap:wrap}
+.row.end{justify-content:flex-end}
+
+.tbl{border-collapse:collapse; width:100%; font-size:13px}
+.tbl th,.tbl td{border-bottom:1px solid var(--border); padding:6px 9px; text-align:left}
+.tbl th{color:var(--fg-muted); font-weight:600; font-size:12px; white-space:nowrap}
+.tbl td.num{text-align:right; font-variant-numeric:tabular-nums}
+
+.foldout{border:1px solid var(--border); border-radius:10px; background:var(--bg-elev); overflow:hidden}
+.foldout > summary{padding:10px 14px; cursor:pointer; font-size:13.5px; font-weight:600; list-style:none}
+.foldout > summary::-webkit-details-marker{display:none}
+.foldout > summary::before{content:"▸ "; color:var(--fg-faint)}
+.foldout[open] > summary::before{content:"▾ "}
+.foldbody{padding:0 14px 14px; font-size:13.5px; color:var(--fg-muted)}
+.foldbody .tbl{color:var(--fg)}
+
+/* ============================================================
+   プレイヤー
+   ============================================================ */
+.players{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px}
+.pcard{
+  position:relative; text-align:left; padding:13px 14px;
+  border:1px solid var(--border-strong); border-radius:var(--radius);
+  background:var(--bg-elev);
+}
+.pcard:hover{border-color:var(--accent)}
+.pcard .pname{font-weight:700; font-size:15.5px; margin-bottom:2px; word-break:break-all}
+.pcard .pmeta{font-size:11.5px; color:var(--fg-faint)}
+.pcard .pdel{
+  position:absolute; top:6px; right:6px; width:26px; height:26px;
+  border:none; background:transparent; color:var(--fg-faint); font-size:14px; border-radius:7px;
+}
+.pcard .pdel:hover{background:var(--ng-soft); color:var(--ng)}
+.pcard.add{border-style:dashed; color:var(--fg-muted); display:flex; align-items:center; justify-content:center; min-height:74px}
+input[type=text],input[type=date],select{
+  width:100%; padding:9px 11px; font:inherit; font-size:15px;
+  border:1px solid var(--border-strong); border-radius:9px;
+  background:var(--bg); color:var(--fg);
+}
+
+/* ============================================================
+   コース選択
+   ============================================================ */
+.sizes{display:grid; grid-template-columns:repeat(3,1fr); gap:9px}
+.sizebtn{
+  padding:12px 8px; border:1px solid var(--border-strong); border-radius:11px;
+  background:var(--bg-elev); text-align:center; line-height:1.35;
+}
+.sizebtn .big{display:block; font-size:17px; font-weight:700}
+.sizebtn .sml{display:block; font-size:11px; color:var(--fg-faint)}
+.sizebtn[aria-pressed="true"]{border-color:var(--accent); background:var(--accent-soft)}
+.levels{display:grid; gap:9px}
+.levelbtn{
+  display:flex; align-items:center; gap:12px; text-align:left;
+  padding:12px 14px; border:1px solid var(--border-strong); border-radius:11px; background:var(--bg-elev);
+}
+.levelbtn:hover{border-color:var(--accent)}
+.levelbtn .lvname{font-weight:700; font-size:15px}
+.levelbtn .lvdesc{font-size:12px; color:var(--fg-muted); line-height:1.55}
+.levelbtn .lvbadge{
+  flex:none; width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:14px; background:var(--bg-sunk); color:var(--fg-muted);
+}
+.levelbtn[data-lv="1"] .lvbadge{background:var(--ok-soft); color:var(--ok)}
+.levelbtn[data-lv="2"] .lvbadge{background:var(--accent-soft); color:var(--accent)}
+.levelbtn[data-lv="3"] .lvbadge{background:var(--warn-soft); color:var(--warn)}
+.levelbtn[data-lv="4"] .lvbadge{background:var(--ng-soft); color:var(--ng)}
+.levelbtn[data-lv="5"] .lvbadge{background:var(--fg); color:var(--bg)}
+.lvstat{margin-left:auto; text-align:right; font-size:11px; color:var(--fg-faint); flex:none; line-height:1.5}
+
+/* ============================================================
+   プレイ画面
+   盤面と数字パッドが必ず同時に画面内へ収まることを最優先にする（→ issue-0013）
+   ============================================================ */
+/* ヘッダーの高さを引かないと、そのぶん数字パッドが画面の下に押し出される。
+   --headh は実測して入れる（文字サイズを変えるとヘッダーの高さも変わるため） */
+.play{
+  display:flex; flex-direction:column;
+  height:calc(100vh - var(--headh, 54px));
+  padding:0 max(8px, env(safe-area-inset-left)) max(6px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-right));
+  gap:6px;
+}
+@supports (height:100dvh){ .play{height:calc(100dvh - var(--headh, 54px))} }
+.play-bar{
+  display:flex; align-items:center; gap:8px; flex:none;
+  padding:6px 2px; font-size:12.5px; color:var(--fg-muted);
+}
+.play-bar .t{font-variant-numeric:tabular-nums; font-weight:700; font-size:15px; color:var(--fg)}
+.play-bar .sp{flex:1}
+.play-bar .meta{font-size:11.5px}
+.board-area{
+  flex:1 1 auto; min-height:0;
+  display:flex; align-items:center; justify-content:center;
+}
+.board{
+  display:grid; gap:0;
+  width:var(--bsize); height:var(--bsize);
+  background:var(--line-strong);
+  border:2px solid var(--line-strong);
+  border-radius:6px; overflow:hidden;
+  touch-action:manipulation;
+}
+.cell{
+  position:relative;
+  background:var(--cell);
+  border-right:1px solid var(--line); border-bottom:1px solid var(--line);
+  display:flex; align-items:center; justify-content:center;
+  font-variant-numeric:tabular-nums;
+  font-size:calc(var(--bsize) / var(--n) * .58);
+  font-weight:600; line-height:1;
+  color:var(--accent);
+  user-select:none; -webkit-user-select:none;
+  padding:0; border-radius:0;
+  cursor:pointer;
+}
+.cell.bR{border-right:2px solid var(--line-strong)}
+.cell.bB{border-bottom:2px solid var(--line-strong)}
+.cell.edgeR{border-right:none}
+.cell.edgeB{border-bottom:none}
+.cell.given{background:var(--cell-given); color:var(--fg); font-weight:700}
+.cell.peer{background:var(--cell-peer)}
+.cell.given.peer{background:color-mix(in srgb, var(--cell-given) 70%, var(--cell-peer))}
+.cell.same{background:var(--cell-same)}
+.cell.sel{background:var(--cell-sel)}
+.cell.bad{color:var(--ng)}
+/* 色だけに頼らない: 誤りのマスは左上に印を出す */
+.cell.bad::before{
+  content:""; position:absolute; top:2px; left:2px;
+  width:0; height:0; border-top:6px solid var(--ng); border-right:6px solid transparent;
+}
+.cell.hintCell{box-shadow:inset 0 0 0 3px var(--warn)}
+.cell.flash{animation:cellFlash .5s ease-out}
+@keyframes cellFlash{from{background:var(--accent-soft)} to{}}
+.cell .notes{
+  position:absolute; inset:0; display:grid; padding:1px;
+  font-size:calc(var(--bsize) / var(--n) * .235);
+  font-weight:500; color:var(--fg-muted); line-height:1;
+}
+.cell .notes span{display:flex; align-items:center; justify-content:center}
+.cell .notes span.hi{color:var(--accent); font-weight:800}
+.board.done .cell{transition:background .3s}
+.cell.won{background:var(--ok-soft)}
+
+.pad-area{flex:none; display:flex; flex-direction:column; gap:6px; width:100%; max-width:520px; margin:0 auto}
+.tools{display:grid; grid-template-columns:repeat(5,1fr); gap:6px}
+.tool{
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+  padding:7px 2px 6px; border:1px solid var(--border-strong); border-radius:10px;
+  background:var(--bg-elev); font-size:10.5px; color:var(--fg-muted); line-height:1.2;
+}
+.tool .ti{font-size:16px; line-height:1}
+.tool:disabled{opacity:.35}
+.tool[aria-pressed="true"]{background:var(--accent); border-color:transparent; color:var(--accent-fg)}
+.tool[aria-pressed="true"] .ti{color:var(--accent-fg)}
+/* キーの高さ。指で押せる大きさを保ちつつ、画面が低いときは縮める */
+.pad{display:grid; gap:6px; --keyh:clamp(38px, 7.2dvh, 56px)}
+@supports not (height:1dvh){ .pad{--keyh:clamp(38px, 7.2vh, 56px)} }
+.key{
+  position:relative;
+  padding:0; height:var(--keyh); border:1px solid var(--border-strong); border-radius:10px;
+  background:var(--bg-elev); font-size:calc(var(--keyh) * .48); font-weight:700; line-height:1;
+  font-variant-numeric:tabular-nums;
+  display:flex; align-items:center; justify-content:center;
+}
+.key:hover{background:var(--bg-sunk)}
+.key .left{
+  position:absolute; right:4px; bottom:2px;
+  font-size:9.5px; font-weight:600; color:var(--fg-faint);
+}
+.key.used{opacity:.34}
+.key.used .left{color:var(--fg-faint)}
+
+/* ============================================================
+   結果・分析
+   ============================================================ */
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(108px,1fr)); gap:9px}
+.stat{background:var(--bg-sunk); border-radius:10px; padding:10px 12px}
+.stat .sk{font-size:11px; color:var(--fg-muted)}
+.stat .sv{font-size:23px; font-weight:800; letter-spacing:-.02em; font-variant-numeric:tabular-nums; line-height:1.25}
+.stat .sv small{font-size:11.5px; font-weight:600; margin-left:2px; color:var(--fg-muted)}
+.stat .sd{font-size:11px; margin-top:1px}
+.stat .sd.up{color:var(--ok)} .stat .sd.down{color:var(--ng)} .stat .sd.flat{color:var(--fg-faint)}
+.chart-wrap{width:100%; overflow-x:auto; margin:4px 0 2px}
+.legend{display:flex; flex-wrap:wrap; gap:6px 14px; font-size:12px; color:var(--fg-muted); margin-top:6px}
+.legend-item{display:inline-flex; align-items:center; gap:5px}
+.legend-item i{width:10px; height:10px; border-radius:3px; flex:none}
+.report{font-size:14px; line-height:1.85}
+.report b{color:var(--fg)}
+.filters{display:flex; gap:8px; flex-wrap:wrap; align-items:center; font-size:12.5px}
+.filters select{width:auto; padding:6px 9px; font-size:13px}
+.empty{text-align:center; color:var(--fg-faint); font-size:13px; padding:22px 10px}
+
+/* 盤面の形をしたヒートマップ（分析A） */
+.mini-board{display:grid; gap:1px; background:var(--line); border:1px solid var(--line-strong);
+            border-radius:5px; overflow:hidden; width:100%; max-width:330px; aspect-ratio:1; margin:0 auto}
+.mini-cell{background:var(--cell); display:flex; align-items:center; justify-content:center;
+           font-size:11px; font-variant-numeric:tabular-nums; line-height:1.1; position:relative}
+
+/* ============================================================
+   モーダル・トースト
+   ============================================================ */
+#modal{
+  position:fixed; inset:0; z-index:90; display:none;
+  align-items:center; justify-content:center; padding:20px;
+  background:rgba(15,15,15,.42);
+}
+#modal.on{display:flex}
+.modal-box{
+  width:100%; max-width:400px; background:var(--bg-elev);
+  border-radius:14px; padding:20px; box-shadow:var(--shadow-lg);
+  max-height:86dvh; overflow-y:auto;
+}
+.modal-box h3{font-size:16px; margin-bottom:8px}
+.modal-box p{font-size:13.5px; color:var(--fg-muted)}
+#toast{
+  position:fixed; left:50%; bottom:26px; transform:translate(-50%,14px); z-index:95;
+  background:var(--fg); color:var(--bg); padding:9px 17px; border-radius:99px;
+  font-size:13px; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s;
+  max-width:calc(100vw - 40px); text-align:center;
+}
+#toast.on{opacity:1; transform:translate(-50%,0)}
+
+#iosBanner{
+  position:fixed; left:10px; right:10px; bottom:calc(10px + env(safe-area-inset-bottom)); z-index:60;
+  background:var(--bg-elev); border:1px solid var(--border-strong); border-radius:12px;
+  padding:12px 14px; box-shadow:var(--shadow-lg); font-size:12.5px; display:none;
+}
+#iosBanner.on{display:block}
+
+@media (max-width:520px){
+  main{padding-left:14px; padding-right:14px}
+  .sizes{grid-template-columns:repeat(3,1fr)}
+  .card{padding:14px}
+  header.top{gap:7px; padding-left:12px; padding-right:12px}
+  header.top .brand-sub{display:none}
+  #whoName{max-width:4.5em}
+  .iconbtn{width:31px; height:31px}
+  .chip-btn{padding:4px 9px; font-size:12px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important; transition:none !important}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <span class="brand">ナンプレ<span class="brand-sub">ｘ解き方分析</span></span>
+  <span class="sp"></span>
+  <span id="who"><span id="whoName"></span><button class="chip-btn" id="btnSwitch" type="button">かえる</button></span>
+  <button class="chip-btn" id="btnQuit" type="button">やめる</button>
+  <button class="iconbtn" id="btnScale" type="button" title="文字の大きさ" aria-label="文字の大きさを変える">Ａ</button>
+  <button class="iconbtn" id="btnTheme" type="button" title="配色" aria-label="配色を切り替える">◐</button>
+</header>
+
+<main>
+
+<!-- ============ プレイヤー選択 ============ -->
+<section class="screen on" id="scPlayer">
+  <div class="sec">
+    <h2>だれが解きますか？</h2>
+    <p class="lead">4人まで登録できます。記録は人ごとに分かれて残ります。</p>
+    <div class="players" id="playerList"></div>
+    <div class="note" style="margin-top:14px">
+      名前と記録は<b>この端末のブラウザの中だけ</b>に保存されます。どこにも送信されず、ほかの端末とも共有されません。
+    </div>
+  </div>
+</section>
+
+<!-- ============ ホーム ============ -->
+<section class="screen" id="scHome">
+  <div class="sec">
+    <h2>なにをしますか？</h2>
+    <div class="levels">
+      <button class="levelbtn" id="goNew" type="button">
+        <span class="lvbadge">＋</span>
+        <span><span class="lvname">あたらしく解く</span><br><span class="lvdesc">サイズと難しさを選ぶと、その場で問題をつくります</span></span>
+      </button>
+      <button class="levelbtn" id="goResume" type="button">
+        <span class="lvbadge">▶</span>
+        <span><span class="lvname">つづきから</span><br><span class="lvdesc" id="resumeDesc">解きかけの盤面はありません</span></span>
+      </button>
+      <button class="levelbtn" id="goAnalysis" type="button">
+        <span class="lvbadge">📊</span>
+        <span><span class="lvname">解き方分析</span><br><span class="lvdesc">どこで手が止まったか、どう解いたかを記録から見ます</span></span>
+      </button>
+      <button class="levelbtn" id="goBackup" type="button">
+        <span class="lvbadge">💾</span>
+        <span><span class="lvname">記録とバックアップ</span><br><span class="lvdesc">記録の書き出し・読み込みと、記録が消える条件</span></span>
+      </button>
+    </div>
+  </div>
+  <div class="sec" id="resumeBox" hidden>
+    <h2>解きかけの盤面<span class="sub">続きから解けます</span></h2>
+    <div class="levels" id="resumeList"></div>
+  </div>
+  <div class="sec">
+    <h2>これまでの記録<span class="sub">この人の通算</span></h2>
+    <div class="stats" id="homeStats"></div>
+  </div>
+</section>
+
+<!-- ============ あたらしく解く ============ -->
+<section class="screen" id="scNew">
+  <div class="sec">
+    <h2>盤面のサイズ</h2>
+    <div class="sizes" id="sizeBtns">
+      <button class="sizebtn" type="button" data-size="4" aria-pressed="false">
+        <span class="big">4×4</span><span class="sml">いりぐち</span></button>
+      <button class="sizebtn" type="button" data-size="6" aria-pressed="false">
+        <span class="big">6×6</span><span class="sml">ならし</span></button>
+      <button class="sizebtn" type="button" data-size="9" aria-pressed="true">
+        <span class="big">9×9</span><span class="sml">ふつう</span></button>
+    </div>
+    <p class="lead" id="sizeNote" style="margin-top:10px"></p>
+  </div>
+  <div class="sec">
+    <h2 id="lvHead">難しさ</h2>
+    <div class="levels" id="levelBtns"></div>
+  </div>
+  <div class="sec">
+    <details class="foldout">
+      <summary>問題番号を指定して解く</summary>
+      <div class="foldbody">
+        <p>同じ問題番号を入れると、まったく同じ盤面が出ます。家族で同じ問題を解いてタイムを比べられます。</p>
+        <div class="row" style="align-items:center">
+          <input type="text" id="puzzleIdInput" placeholder="例: 9C-4F2A1B" style="max-width:220px" autocapitalize="characters">
+          <button class="btn sm" id="btnById" type="button">この番号で解く</button>
+        </div>
+      </div>
+    </details>
+  </div>
+  <div class="row end" style="margin-top:18px">
+    <button class="btn" id="newBack" type="button">もどる</button>
+  </div>
+</section>
+
+<!-- ============ プレイ ============ -->
+<section class="screen" id="scPlay">
+  <div class="play">
+    <div class="play-bar">
+      <span class="t" id="clock">0:00</span>
+      <span class="meta" id="playMeta"></span>
+      <span class="sp"></span>
+      <span class="meta" id="playCount"></span>
+    </div>
+    <div class="board-area">
+      <div class="board" id="board" role="grid" aria-label="ナンプレの盤面"></div>
+    </div>
+    <div class="pad-area">
+      <div class="tools">
+        <button class="tool" id="tMemo" type="button" aria-pressed="false"><span class="ti">✎</span>メモ</button>
+        <button class="tool" id="tUndo" type="button"><span class="ti">↩</span>取り消し</button>
+        <button class="tool" id="tRedo" type="button"><span class="ti">↪</span>やり直し</button>
+        <button class="tool" id="tErase" type="button"><span class="ti">⌫</span>消す</button>
+        <button class="tool" id="tHint" type="button"><span class="ti">💡</span>ヒント</button>
+      </div>
+      <div class="pad" id="pad"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 結果 ============ -->
+<section class="screen" id="scResult">
+  <div id="resultBody"></div>
+</section>
+
+<!-- ============ 解き方分析 ============ -->
+<section class="screen" id="scAnalysis">
+  <div class="sec">
+    <h2>解き方分析</h2>
+    <div class="filters card" style="padding:12px 14px">
+      <label>期間
+        <select id="fPeriod">
+          <option value="7">直近7日</option>
+          <option value="30">直近30日</option>
+          <option value="90">直近90日</option>
+          <option value="365">直近1年</option>
+          <option value="0" selected>全期間</option>
+        </select>
+      </label>
+      <label>サイズ
+        <select id="fSize">
+          <option value="0" selected>すべて</option>
+          <option value="9">9×9</option>
+          <option value="6">6×6</option>
+          <option value="4">4×4</option>
+        </select>
+      </label>
+      <label>難しさ
+        <select id="fLevel">
+          <option value="0" selected>すべて</option>
+        </select>
+      </label>
+    </div>
+  </div>
+  <div id="analysisBody"></div>
+  <div class="row end" style="margin-top:20px">
+    <button class="btn" id="anaBack" type="button">もどる</button>
+  </div>
+</section>
+
+<!-- ============ 記録とバックアップ ============ -->
+<section class="screen" id="scBackup">
+  <div class="sec">
+    <h2>記録の書き出しと読み込み</h2>
+    <div class="card">
+      <p class="lead">記録はこの端末のブラウザの中だけにあります。<b>消えることがある</b>ので、ときどき書き出して保存しておくと安心です。</p>
+      <div class="row" style="margin-top:12px">
+        <button class="btn pri" id="btnExport" type="button">記録を書き出す</button>
+        <button class="btn" id="btnImport" type="button">記録を読み込む</button>
+        <input type="file" id="fileImport" accept="application/json,.json" hidden>
+      </div>
+      <p class="lead" id="exportInfo" style="margin-top:10px"></p>
+    </div>
+  </div>
+  <div class="sec">
+    <h2>記録が消える条件</h2>
+    <div class="card">
+      <p class="lead">端末やブラウザを再起動しても<b>消えません</b>。消えるのは次の場合です。</p>
+      <table class="tbl" style="margin-top:8px">
+        <thead><tr><th>条件</th><th>結果</th></tr></thead>
+        <tbody>
+          <tr><td>端末・ブラウザの再起動</td><td>消えない</td></tr>
+          <tr><td>ブラウザの「閲覧データの削除」</td><td>消える</td></tr>
+          <tr><td>プライベート／シークレットモード</td><td>閉じると消える</td></tr>
+          <tr><td><b>iPhone / iPad の Safari で7日間開かない</b></td><td><b>消える</b></td></tr>
+          <tr><td>保存領域が足りなくなったとき</td><td>消えることがある</td></tr>
+          <tr><td>別の端末・別のブラウザ</td><td>そもそも共有されない</td></tr>
+        </tbody>
+      </table>
+      <p class="lead" style="margin-top:10px">
+        iPhone / iPad の Safari は、7日間そのサイトを開かないと保存した記録を消します。
+        ただし<b>ホーム画面に追加したものは対象外</b>です。解きかけの盤面も消えるので、続けて遊ぶならホーム画面に追加してください。
+      </p>
+      <p class="lead" id="usageInfo" style="margin-top:8px"></p>
+    </div>
+  </div>
+  <div class="sec">
+    <h2>この人の記録を消す</h2>
+    <div class="card">
+      <p class="lead">選んでいる人の記録だけを消します。取り消せません。</p>
+      <div class="row" style="margin-top:10px"><button class="btn" id="btnWipe" type="button">記録を消す</button></div>
+    </div>
+  </div>
+  <div class="row end" style="margin-top:20px">
+    <button class="btn" id="bkBack" type="button">もどる</button>
+  </div>
+</section>
+
+</main>
+
+<div id="modal" role="dialog" aria-modal="true">
+  <div class="modal-box">
+    <h3 id="modalTitle"></h3>
+    <p id="modalText"></p>
+    <div id="modalExtra"></div>
+    <div class="row end" style="margin-top:16px">
+      <button class="btn" id="modalNo" type="button">キャンセル</button>
+      <button class="btn pri" id="modalYes" type="button">はい</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<div id="iosBanner">
+  <b>ホーム画面に追加すると記録が消えません</b><br>
+  Safari では7日間開かないと、記録と解きかけの盤面が消えることがあります。
+  下の <b>共有ボタン</b> →「ホーム画面に追加」で防げます。
+  <div class="row end" style="margin-top:8px"><button class="btn sm" id="iosClose" type="button">閉じる</button></div>
+</div>
+
+<script>
+/* ===========================================================================
+   0. 生成エンジンと人間的解法ソルバー
+   このかたまりは Worker にも文字列として渡すため、外の変数を一切参照しない。
+   Node 上で 900 盤面の検証を通したコードと同一（一意解・難易度・生成時間）
+   =========================================================================== */
+function EngineFactory(){
+'use strict';
+/* ナンプレ 生成エンジン ＋ 人間的解法ソルバー
+   ブロック幅 bw ・高さ bh で一般化する（4x4=2x2 / 6x6=3x2 / 9x9=3x3）
+   候補はビットマスク（bit0 = 数字1）で持つ */
+
+// ---- 乱数（シード付き。同じシードなら同じ盤面を再現できる） ----
+function rng(seed){
+  var s = seed >>> 0;
+  if(s === 0) s = 0x9e3779b9;
+  return function(){
+    s ^= s << 13; s >>>= 0;
+    s ^= s >>> 17;
+    s ^= s << 5;  s >>>= 0;
+    return s / 4294967296;
+  };
+}
+function shuffle(arr, rnd){
+  for(var i = arr.length - 1; i > 0; i--){
+    var j = Math.floor(rnd() * (i + 1));
+    var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+  }
+  return arr;
+}
+
+// ---- ビット操作 ----
+function bitCount(x){
+  var c = 0;
+  while(x){ x &= x - 1; c++; }
+  return c;
+}
+function lowBit(x){ return 31 - Math.clz32(x & -x); }   // 最下位ビットの位置
+function bitsOf(x){
+  var a = [];
+  while(x){ var b = x & -x; a.push(31 - Math.clz32(b)); x ^= b; }
+  return a;
+}
+
+// ---- 盤面の幾何（行・列・ブロックと、各セルの仲間） ----
+var geoCache = {};
+function makeGeo(bw, bh){
+  var key = bw + 'x' + bh;
+  if(geoCache[key]) return geoCache[key];
+  var n = bw * bh, N = n * n;
+  var rows = [], cols = [], boxes = [];
+  for(var r = 0; r < n; r++){
+    var a = [];
+    for(var c = 0; c < n; c++) a.push(r * n + c);
+    rows.push(a);
+  }
+  for(var c2 = 0; c2 < n; c2++){
+    var b = [];
+    for(var r2 = 0; r2 < n; r2++) b.push(r2 * n + c2);
+    cols.push(b);
+  }
+  // ブロックは横 bw ・縦 bh。横に bh 個、縦に bw 個ならぶ
+  for(var br = 0; br < bw; br++){
+    for(var bc = 0; bc < bh; bc++){
+      var e = [];
+      for(var dr = 0; dr < bh; dr++){
+        for(var dc = 0; dc < bw; dc++){
+          e.push((br * bh + dr) * n + (bc * bw + dc));
+        }
+      }
+      boxes.push(e);
+    }
+  }
+  var units = rows.concat(cols, boxes);
+  var unitsOf = [], peers = [], boxOf = [];
+  for(var i = 0; i < N; i++){ unitsOf.push([]); peers.push([]); }
+  units.forEach(function(u, ui){
+    u.forEach(function(i){ unitsOf[i].push(ui); });
+  });
+  boxes.forEach(function(u, bi){ u.forEach(function(i){ boxOf[i] = bi; }); });
+  for(var i2 = 0; i2 < N; i2++){
+    var set = {};
+    unitsOf[i2].forEach(function(ui){
+      units[ui].forEach(function(j){ if(j !== i2) set[j] = 1; });
+    });
+    peers[i2] = Object.keys(set).map(Number);
+  }
+  var geo = {
+    bw: bw, bh: bh, n: n, N: N,
+    rows: rows, cols: cols, boxes: boxes,
+    units: units, unitsOf: unitsOf, peers: peers, boxOf: boxOf,
+    all: (1 << n) - 1,
+    rowOf: function(i){ return (i / n) | 0; },
+    colOf: function(i){ return i % n; }
+  };
+  geoCache[key] = geo;
+  return geo;
+}
+
+// ---- 候補の算出 ----
+function computeCands(grid, geo){
+  var cand = new Int32Array(geo.N);
+  for(var i = 0; i < geo.N; i++){
+    if(grid[i]) continue;
+    var m = geo.all;
+    var ps = geo.peers[i];
+    for(var k = 0; k < ps.length; k++){
+      var v = grid[ps[k]];
+      if(v) m &= ~(1 << (v - 1));
+    }
+    cand[i] = m;
+  }
+  return cand;
+}
+
+// ---- 総当たりソルバー（解の個数を数える。limit に達したら打ち切る） ----
+function countSolutions(grid, geo, limit, rnd){
+  limit = limit || 2;
+  var g = Int8Array.from(grid);
+  var cand = computeCands(g, geo);
+  var found = 0;
+
+  function place(i, v, undo){
+    g[i] = v;
+    var old = cand[i]; cand[i] = 0;
+    undo.push([i, old]);
+    var bit = 1 << (v - 1), ps = geo.peers[i];
+    for(var k = 0; k < ps.length; k++){
+      var j = ps[k];
+      if(!g[j] && (cand[j] & bit)){
+        undo.push([j, cand[j]]);
+        cand[j] &= ~bit;
+      }
+    }
+    return true;
+  }
+  function rollback(undo){
+    for(var k = undo.length - 1; k >= 0; k--) cand[undo[k][0]] = undo[k][1];
+  }
+
+  function rec(){
+    // 最小候補セル（MRV）を選ぶ
+    var best = -1, bestC = 99;
+    for(var i = 0; i < geo.N; i++){
+      if(g[i]) continue;
+      var c = bitCount(cand[i]);
+      if(c === 0) return false;
+      if(c < bestC){ bestC = c; best = i; if(c === 1) break; }
+    }
+    if(best === -1){ found++; return found >= limit; }
+    var vals = bitsOf(cand[best]);
+    if(rnd) shuffle(vals, rnd);
+    for(var k = 0; k < vals.length; k++){
+      var undo = [];
+      place(best, vals[k] + 1, undo);
+      var stop = rec();
+      g[best] = 0;
+      rollback(undo);
+      if(stop) return true;
+    }
+    return false;
+  }
+  rec();
+  return { count: found, grid: g };
+}
+
+// 完成盤を1つ作る
+function generateFull(geo, rnd){
+  var empty = new Int8Array(geo.N);
+  var g = Int8Array.from(empty);
+  var cand = computeCands(g, geo);
+  function rec(){
+    var best = -1, bestC = 99;
+    for(var i = 0; i < geo.N; i++){
+      if(g[i]) continue;
+      var c = bitCount(cand[i]);
+      if(c === 0) return false;
+      if(c < bestC){ bestC = c; best = i; if(c === 1) break; }
+    }
+    if(best === -1) return true;
+    var vals = shuffle(bitsOf(cand[best]), rnd);
+    for(var k = 0; k < vals.length; k++){
+      var v = vals[k] + 1, bit = 1 << vals[k], undo = [[best, cand[best]]];
+      g[best] = v; cand[best] = 0;
+      var ps = geo.peers[best];
+      for(var m = 0; m < ps.length; m++){
+        var j = ps[m];
+        if(!g[j] && (cand[j] & bit)){ undo.push([j, cand[j]]); cand[j] &= ~bit; }
+      }
+      if(rec()) return true;
+      g[best] = 0;
+      for(var u = undo.length - 1; u >= 0; u--) cand[undo[u][0]] = undo[u][1];
+    }
+    return false;
+  }
+  rec();
+  return g;
+}
+
+/* =========================================================
+   人間的解法ソルバー
+   難易度判定・ヒント・つまずき分析のすべてがここに乗る
+   ========================================================= */
+
+var TECHS = [
+  { id: 'nakedSingle',   level: 1, name: '単独候補' },
+  { id: 'hiddenSingle',  level: 2, name: '唯一の置き場所' },
+  { id: 'pointing',      level: 3, name: 'ブロックからの絞り込み' },
+  { id: 'claiming',      level: 3, name: '行・列からの絞り込み' },
+  { id: 'nakedPair',     level: 4, name: '裸のペア' },
+  { id: 'hiddenPair',    level: 4, name: '隠れたペア' },
+  { id: 'nakedTriple',   level: 4, name: '裸のトリプル' },
+  { id: 'hiddenTriple',  level: 4, name: '隠れたトリプル' },
+  { id: 'xWing',         level: 5, name: 'X-Wing' },
+  { id: 'xyWing',        level: 5, name: 'XY-Wing' }
+];
+
+/**
+ * 人間が使うテクニックだけで解く。
+ * opts.maxSteps    … 指定手数で打ち切る（ヒントは 1 手だけ求める）
+ * opts.stopAtCell  … そのマスが埋まった時点で止め、埋めた手を stopStep に入れる
+ *                    （分析A「このマスはどう決まったか」に使う）
+ */
+function humanSolve(grid, geo, maxLevel, wantSteps, opts){
+  opts = opts || {};
+  maxLevel = maxLevel == null ? 5 : maxLevel;
+  var g = Int8Array.from(grid);
+  var cand = computeCands(g, geo);
+  var steps = [];
+  var top = 0;
+  var filled = 0;
+  for(var i = 0; i < geo.N; i++) if(g[i]) filled++;
+
+  function place(i, v){
+    g[i] = v; cand[i] = 0; filled++;
+    var bit = 1 << (v - 1), ps = geo.peers[i];
+    for(var k = 0; k < ps.length; k++) cand[ps[k]] &= ~bit;
+  }
+
+  // --- Lv1 単独候補 ---
+  function nakedSingle(){
+    for(var i = 0; i < geo.N; i++){
+      if(g[i] || cand[i] === 0) continue;
+      if(bitCount(cand[i]) === 1){
+        var v = lowBit(cand[i]) + 1;
+        place(i, v);
+        return { tech: 'nakedSingle', cell: i, value: v };
+      }
+    }
+    return null;
+  }
+
+  // --- Lv2 唯一の置き場所 ---
+  function hiddenSingle(){
+    for(var ui = 0; ui < geo.units.length; ui++){
+      var u = geo.units[ui];
+      for(var d = 0; d < geo.n; d++){
+        var bit = 1 << d, spot = -1, cnt = 0, done = false;
+        for(var k = 0; k < u.length; k++){
+          var i = u[k];
+          if(g[i] === d + 1){ done = true; break; }
+          if(!g[i] && (cand[i] & bit)){ cnt++; spot = i; }
+        }
+        if(done || cnt !== 1) continue;
+        place(spot, d + 1);
+        return { tech: 'hiddenSingle', cell: spot, value: d + 1, unit: ui };
+      }
+    }
+    return null;
+  }
+
+  // --- Lv3 ブロックからの絞り込み（Pointing） ---
+  function pointing(){
+    for(var bi = 0; bi < geo.boxes.length; bi++){
+      var box = geo.boxes[bi];
+      for(var d = 0; d < geo.n; d++){
+        var bit = 1 << d, cells = [], used = false;
+        for(var k = 0; k < box.length; k++){
+          var i = box[k];
+          if(g[i] === d + 1){ used = true; break; }
+          if(!g[i] && (cand[i] & bit)) cells.push(i);
+        }
+        if(used || cells.length < 2) continue;
+        var sameRow = cells.every(function(i){ return geo.rowOf(i) === geo.rowOf(cells[0]); });
+        var sameCol = cells.every(function(i){ return geo.colOf(i) === geo.colOf(cells[0]); });
+        if(!sameRow && !sameCol) continue;
+        var line = sameRow ? geo.rows[geo.rowOf(cells[0])] : geo.cols[geo.colOf(cells[0])];
+        var removed = [];
+        for(var m = 0; m < line.length; m++){
+          var j = line[m];
+          if(geo.boxOf[j] === bi) continue;
+          if(!g[j] && (cand[j] & bit)){ cand[j] &= ~bit; removed.push(j); }
+        }
+        if(removed.length) return { tech: 'pointing', value: d + 1, box: bi, cells: cells, removed: removed };
+      }
+    }
+    return null;
+  }
+
+  // --- Lv3 行・列からの絞り込み（Claiming） ---
+  function claiming(){
+    var lines = geo.rows.concat(geo.cols);
+    for(var li = 0; li < lines.length; li++){
+      var line = lines[li];
+      for(var d = 0; d < geo.n; d++){
+        var bit = 1 << d, cells = [], used = false;
+        for(var k = 0; k < line.length; k++){
+          var i = line[k];
+          if(g[i] === d + 1){ used = true; break; }
+          if(!g[i] && (cand[i] & bit)) cells.push(i);
+        }
+        if(used || cells.length < 2) continue;
+        var bi = geo.boxOf[cells[0]];
+        if(!cells.every(function(i){ return geo.boxOf[i] === bi; })) continue;
+        var box = geo.boxes[bi], removed = [];
+        for(var m = 0; m < box.length; m++){
+          var j = box[m];
+          if(cells.indexOf(j) >= 0) continue;
+          if(!g[j] && (cand[j] & bit)){ cand[j] &= ~bit; removed.push(j); }
+        }
+        if(removed.length) return { tech: 'claiming', value: d + 1, line: li, cells: cells, removed: removed };
+      }
+    }
+    return null;
+  }
+
+  // --- Lv4 裸のペア／トリプル ---
+  function nakedSubset(size){
+    var id = size === 2 ? 'nakedPair' : 'nakedTriple';
+    for(var ui = 0; ui < geo.units.length; ui++){
+      var u = geo.units[ui];
+      var open = u.filter(function(i){ return !g[i] && bitCount(cand[i]) >= 2 && bitCount(cand[i]) <= size; });
+      if(open.length <= size) continue;
+      var combos = combinations(open, size);
+      for(var ci = 0; ci < combos.length; ci++){
+        var set = combos[ci], mask = 0;
+        for(var k = 0; k < size; k++) mask |= cand[set[k]];
+        if(bitCount(mask) !== size) continue;
+        var removed = [];
+        for(var m = 0; m < u.length; m++){
+          var j = u[m];
+          if(g[j] || set.indexOf(j) >= 0) continue;
+          if(cand[j] & mask){ removed.push([j, cand[j] & mask]); cand[j] &= ~mask; }
+        }
+        if(removed.length) return { tech: id, unit: ui, cells: set, mask: mask, removed: removed };
+      }
+    }
+    return null;
+  }
+
+  // --- Lv4 隠れたペア／トリプル ---
+  function hiddenSubset(size){
+    var id = size === 2 ? 'hiddenPair' : 'hiddenTriple';
+    for(var ui = 0; ui < geo.units.length; ui++){
+      var u = geo.units[ui];
+      var spots = [];       // 数字 d が置けるセル一覧
+      for(var d = 0; d < geo.n; d++){
+        var bit = 1 << d, list = [], used = false;
+        for(var k = 0; k < u.length; k++){
+          var i = u[k];
+          if(g[i] === d + 1){ used = true; break; }
+          if(!g[i] && (cand[i] & bit)) list.push(i);
+        }
+        spots.push(used ? null : list);
+      }
+      var digits = [];
+      for(var d2 = 0; d2 < geo.n; d2++){
+        if(spots[d2] && spots[d2].length >= 2 && spots[d2].length <= size) digits.push(d2);
+      }
+      if(digits.length < size) continue;
+      var combos = combinations(digits, size);
+      for(var ci = 0; ci < combos.length; ci++){
+        var ds = combos[ci], cellSet = {}, mask = 0;
+        for(var k2 = 0; k2 < size; k2++){
+          mask |= 1 << ds[k2];
+          spots[ds[k2]].forEach(function(i){ cellSet[i] = 1; });
+        }
+        var cells = Object.keys(cellSet).map(Number);
+        if(cells.length !== size) continue;
+        var removed = [];
+        for(var m = 0; m < cells.length; m++){
+          var j = cells[m], extra = cand[j] & ~mask;
+          if(extra){ removed.push([j, extra]); cand[j] &= mask; }
+        }
+        if(removed.length) return { tech: id, unit: ui, cells: cells, mask: mask, removed: removed };
+      }
+    }
+    return null;
+  }
+
+  // --- Lv5 X-Wing ---
+  function xWing(){
+    var groups = [{ lines: geo.rows, other: geo.cols, idx: geo.colOf },
+                  { lines: geo.cols, other: geo.rows, idx: geo.rowOf }];
+    for(var gi = 0; gi < groups.length; gi++){
+      var G = groups[gi];
+      for(var d = 0; d < geo.n; d++){
+        var bit = 1 << d, pos = [];
+        for(var li = 0; li < G.lines.length; li++){
+          var line = G.lines[li], cells = [], used = false;
+          for(var k = 0; k < line.length; k++){
+            var i = line[k];
+            if(g[i] === d + 1){ used = true; break; }
+            if(!g[i] && (cand[i] & bit)) cells.push(i);
+          }
+          pos.push(used || cells.length !== 2 ? null : cells);
+        }
+        for(var a = 0; a < pos.length; a++){
+          if(!pos[a]) continue;
+          for(var b = a + 1; b < pos.length; b++){
+            if(!pos[b]) continue;
+            var ka = pos[a].map(G.idx), kb = pos[b].map(G.idx);
+            if(ka[0] !== kb[0] || ka[1] !== kb[1]) continue;
+            var removed = [];
+            for(var t = 0; t < 2; t++){
+              var oth = G.other[ka[t]];
+              for(var m = 0; m < oth.length; m++){
+                var j = oth[m];
+                if(pos[a].indexOf(j) >= 0 || pos[b].indexOf(j) >= 0) continue;
+                if(!g[j] && (cand[j] & bit)){ cand[j] &= ~bit; removed.push(j); }
+              }
+            }
+            if(removed.length) return { tech: 'xWing', value: d + 1, cells: pos[a].concat(pos[b]), removed: removed };
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  // --- Lv5 XY-Wing ---
+  function xyWing(){
+    var two = [];
+    for(var i = 0; i < geo.N; i++) if(!g[i] && bitCount(cand[i]) === 2) two.push(i);
+    for(var p = 0; p < two.length; p++){
+      var pivot = two[p], pm = cand[pivot], pb = bitsOf(pm);
+      var linked = two.filter(function(j){ return j !== pivot && geo.peers[pivot].indexOf(j) >= 0; });
+      for(var a = 0; a < linked.length; a++){
+        for(var b = a + 1; b < linked.length; b++){
+          var A = linked[a], B = linked[b];
+          var ma = cand[A], mb = cand[B];
+          if((ma & pm) === 0 || (mb & pm) === 0) continue;
+          // A は pivot と1つ、B は pivot と1つ共有し、その共有ビットは異なる
+          var sa = ma & pm, sb = mb & pm;
+          if(bitCount(sa) !== 1 || bitCount(sb) !== 1 || sa === sb) continue;
+          var z = ma & mb & ~pm;
+          if(bitCount(z) !== 1) continue;
+          var removed = [];
+          var ps = geo.peers[A];
+          for(var m = 0; m < ps.length; m++){
+            var j = ps[m];
+            if(j === pivot || j === B) continue;
+            if(geo.peers[B].indexOf(j) < 0) continue;
+            if(!g[j] && (cand[j] & z)){ cand[j] &= ~z; removed.push(j); }
+          }
+          if(removed.length) return { tech: 'xyWing', pivot: pivot, cells: [pivot, A, B], value: lowBit(z) + 1, removed: removed };
+        }
+      }
+    }
+    return null;
+  }
+
+  var ladder = [
+    { fn: nakedSingle,                     level: 1 },
+    { fn: hiddenSingle,                    level: 2 },
+    { fn: pointing,                        level: 3 },
+    { fn: claiming,                        level: 3 },
+    { fn: function(){ return nakedSubset(2); },  level: 4 },
+    { fn: function(){ return hiddenSubset(2); }, level: 4 },
+    { fn: function(){ return nakedSubset(3); },  level: 4 },
+    { fn: function(){ return hiddenSubset(3); }, level: 4 },
+    { fn: xWing,                           level: 5 },
+    { fn: xyWing,                          level: 5 }
+  ];
+
+  var guard = 0, count = 0, stopStep = null;
+  while(filled < geo.N){
+    if(++guard > geo.N * 40) break;
+    var step = null, stepLevel = 0;
+    for(var t = 0; t < ladder.length; t++){
+      if(ladder[t].level > maxLevel) break;
+      step = ladder[t].fn();
+      if(step){
+        stepLevel = ladder[t].level;
+        if(stepLevel > top) top = stepLevel;
+        break;
+      }
+    }
+    if(!step) break;
+    step.level = stepLevel;
+    count++;
+    if(wantSteps) steps.push(step);
+    if(opts.maxSteps && count >= opts.maxSteps){ stopStep = step; break; }
+    if(opts.stopAtCell != null && step.cell === opts.stopAtCell){ stopStep = step; break; }
+  }
+  return { solved: filled === geo.N, level: top, steps: steps, grid: g,
+           stopStep: stopStep, cands: cand };
+}
+
+function combinations(arr, k){
+  var out = [];
+  (function rec(start, cur){
+    if(cur.length === k){ out.push(cur.slice()); return; }
+    for(var i = start; i < arr.length; i++){
+      cur.push(arr[i]);
+      rec(i + 1, cur);
+      cur.pop();
+    }
+  })(0, []);
+  return out;
+}
+
+/* =========================================================
+   問題の生成
+   ========================================================= */
+
+// 完成盤から穴をあける。「maxLevel 以内の人間的解法で解ける」ことを保ちながら削る
+// minGivens を指定すると、そこまで削ったら止める（4x4 の「かんたん／ふつう」に使う）
+function dig(full, geo, maxLevel, rnd, symmetric, minGivens){
+  var puzzle = Int8Array.from(full);
+  var N = geo.N;
+  var left = N;
+  var order = [];
+  for(var i = 0; i < N; i++) order.push(i);
+  shuffle(order, rnd);
+  for(var k = 0; k < order.length; k++){
+    var i = order[k];
+    if(!puzzle[i]) continue;
+    var pair = symmetric ? (N - 1 - i) : i;
+    var drop = (pair === i) ? 1 : 2;
+    if(minGivens != null && left - drop < minGivens) continue;
+    var vi = puzzle[i], vp = puzzle[pair];
+    puzzle[i] = 0; puzzle[pair] = 0;
+    var res = humanSolve(puzzle, geo, maxLevel, false);
+    if(!res.solved){ puzzle[i] = vi; puzzle[pair] = vp; }
+    else left -= drop;
+  }
+  return puzzle;
+}
+
+function countGivens(p){
+  var c = 0;
+  for(var i = 0; i < p.length; i++) if(p[i]) c++;
+  return c;
+}
+
+// 目標難易度の盤面を作る
+function generate(bw, bh, level, seed, opts){
+  opts = opts || {};
+  var geo = makeGeo(bw, bh);
+  var rnd = rng(seed);
+  var budget = opts.budgetMs || 8000;
+  var t0 = Date.now();
+  var attempts = 0;
+  var best = null;
+  var symmetric = opts.symmetric !== false;
+  while(Date.now() - t0 < budget){
+    attempts++;
+    // 規定回数を過ぎたら対称性をあきらめる（§4.2）
+    // 生成が速いので試行を厚めに取れる。ここを削ると見た目の整った盤面が出にくくなる
+    var sym = symmetric && attempts <= (opts.symTries || 60);
+    var full = generateFull(geo, rnd);
+    var puzzle = dig(full, geo, level, rnd, sym, opts.minGivens);
+    var rated = humanSolve(puzzle, geo, 5, false);
+    // minGivens を効かせた盤面は「削り切っていない」ので難易度の一致を求めない
+    // （4x4 はどう削っても Lv1 にしかならない。→ 難易度ではなくヒント数で軽重を付ける）
+    if(opts.minGivens != null){
+      if(rated.solved && rated.level <= level){
+        return { puzzle: puzzle, solution: full, level: rated.level, givens: countGivens(puzzle),
+                 attempts: attempts, ms: Date.now() - t0, symmetric: sym };
+      }
+      continue;
+    }
+    if(rated.level === level && rated.solved){
+      return { puzzle: puzzle, solution: full, level: rated.level, givens: countGivens(puzzle),
+               attempts: attempts, ms: Date.now() - t0, symmetric: sym };
+    }
+    if(!best || Math.abs(rated.level - level) < Math.abs(best.level - level)){
+      best = { puzzle: puzzle, solution: full, level: rated.level, givens: countGivens(puzzle),
+               attempts: attempts, ms: Date.now() - t0, symmetric: sym };
+    }
+  }
+  if(best) best.timedOut = true;
+  return best;
+}
+
+function toStr(g){
+  var s = '';
+  for(var i = 0; i < g.length; i++) s += g[i];
+  return s;
+}
+return { rng: rng, makeGeo: makeGeo, countSolutions: countSolutions, generateFull: generateFull, humanSolve: humanSolve, dig: dig, generate: generate, toStr: toStr, TECHS: TECHS, bitCount: bitCount, bitsOf: bitsOf, computeCands: computeCands };
+}
+
+/* ===========================================================================
+   1. ちいさな道具
+   =========================================================================== */
+const $  = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => [].slice.call((r || document).querySelectorAll(s));
+const sum = a => a.reduce((x, y) => x + y, 0);
+const clamp = (v, lo, hi) => v < lo ? lo : v > hi ? hi : v;
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const nowISO = () => new Date().toISOString();
+const fmtInt = n => Math.round(n).toLocaleString('ja-JP');
+const avg = a => a.length ? sum(a) / a.length : 0;
+function median(a){
+  if (!a.length) return 0;
+  const s = a.slice().sort((x, y) => x - y);
+  const m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+/** 秒に丸めて 0:00 形式。1時間を超えたら h:mm:ss */
+function fmtClock(ms) {
+  const t = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = t % 60;
+  return h ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+           : `${m}:${String(s).padStart(2, '0')}`;
+}
+/** 「14分22秒」のように読める形。分析の文章で使う */
+function fmtDur(ms) {
+  const t = Math.max(0, Math.round(ms / 1000));
+  if (t < 60) return `${t}秒`;
+  const m = Math.floor(t / 60), s = t % 60;
+  if (m < 60) return s ? `${m}分${s}秒` : `${m}分`;
+  return `${Math.floor(m / 60)}時間${m % 60}分`;
+}
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+function fmtDateTime(iso) {
+  const d = new Date(iso);
+  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+const daysAgoISO = d => new Date(Date.now() - d * 86400000).toISOString();
+
+/* ===========================================================================
+   2. コース定義
+   サイズごとに、実際に生成できる難易度だけを並べる。
+   4×4 は Lv2 以上が原理的に作れないため、難易度ではなくヒントの数で軽重を付ける。
+   =========================================================================== */
+const SIZE_GEO = { 4: [2, 2], 6: [3, 2], 9: [3, 3] };
+
+const SIZE_NOTE = {
+  4: '2×2のブロックが4つ。1〜4の数字を使います。ルールを覚えるための盤面です。',
+  6: '横3・縦2のブロックが6つ。1〜6の数字を使います。9×9はまだ重い、というときに。',
+  9: '3×3のブロックが9つ。1〜9の数字を使う、いちばん標準的なサイズです。'
+};
+
+/* base   … スコアの基礎点（難易度係数 × 盤面係数）
+   baseMs … 基準時間。レシオ＝自分の時間÷基準時間。難易度をまたいで比べるための正規化に使う
+   lv     … 生成に使う難易度（人間的解法で必要になる最上位テクニック）  */
+const COURSES = {
+  4: [
+    { key: '4a', label: 'かんたん', lv: 1, minGivens: 10, base: 30, baseMs: 60000,
+      badge: '易', desc: 'ヒントが10マス。数字を入れる練習から始めます' },
+    { key: '4b', label: 'ふつう', lv: 1, minGivens: 6, base: 45, baseMs: 90000,
+      badge: '並', desc: 'ヒントが6マス。4×4で歯ごたえを出せる下限に近い数です' }
+  ],
+  6: [
+    { key: '6a', label: 'やさしい', lv: 1, base: 60, baseMs: 120000,
+      badge: '1', desc: 'そのマスに入る数字が1つしかないマスを探していけば解けます' },
+    { key: '6b', label: 'ふつう', lv: 2, base: 108, baseMs: 180000,
+      badge: '2', desc: '＋ 行・列・ブロックを見渡して、その数字が入れる場所が1か所しかないマスを探します' }
+  ],
+  9: [
+    { key: '9a', label: 'やさしい', lv: 1, base: 100, baseMs: 300000,
+      badge: '1', desc: 'そのマスに入る数字が1つしかないマスを探していけば解けます' },
+    { key: '9b', label: 'ふつう', lv: 2, base: 180, baseMs: 480000,
+      badge: '2', desc: '＋ 行・列・ブロックを見渡して、その数字が入れる場所が1か所しかないマスを探します' },
+    { key: '9c', label: 'むずかしい', lv: 3, base: 300, baseMs: 720000,
+      badge: '3', desc: '＋ ブロックの中でその数字が1行（1列）にしか入らないことを使って、他のマスの候補を消します' },
+    { key: '9d', label: 'とてもむずかしい', lv: 4, base: 500, baseMs: 1200000,
+      badge: '4', desc: '＋ 2〜3マスに同じ候補が閉じこもっている形を見つけて、他のマスの候補を消します' },
+    { key: '9e', label: 'おに', lv: 5, base: 800, baseMs: 2100000,
+      badge: '5', desc: '＋ 離れたマスをつないで候補を消す形（X-Wing・XY-Wing）が要ります' }
+  ]
+};
+const ALL_COURSES = [].concat(COURSES[4], COURSES[6], COURSES[9]);
+const courseByKey = k => ALL_COURSES.find(c => c.key === k) || null;
+const sizeOfCourse = k => (k[0] === '4' ? 4 : k[0] === '6' ? 6 : 9);
+
+/* テクニックの表示名。ヒントと分析の両方で使う。
+   グラフの軸ラベルに収まるよう全角8文字までにし、意味は techHelp() の説明文で補う。
+   X-Wing と XY-Wing だけは、うまい訳が無いので通り名のまま出す */
+const TECH_NAME = {
+  nakedSingle:  '入る数字が1つ',
+  hiddenSingle: '置ける場所が1つ',
+  pointing:     'ブロックで絞る',
+  claiming:     '行・列で絞る',
+  nakedPair:    '2マスの候補ペア',
+  nakedTriple:  '3マスの候補組',
+  hiddenPair:   '2数字が2マスに',
+  hiddenTriple: '3数字が3マスに',
+  xWing:        'X-Wing',
+  xyWing:       'XY-Wing'
+};
+const TECH_ORDER = Object.keys(TECH_NAME);
+/* グラフの色は難易度で決める。テクニックは10種類あって色は8色しかなく、
+   順番に割り当てると9個目と10個目が既出の色と重なる。同じ難しさのものが同じ色になる方が読める */
+const TECH_LV = {
+  nakedSingle: 1, hiddenSingle: 2, pointing: 3, claiming: 3,
+  nakedPair: 4, nakedTriple: 4, hiddenPair: 4, hiddenTriple: 4,
+  xWing: 5, xyWing: 5
+};
+
+const LIMITS = { gamesPerPlayer: 500, gamesFallback: 60, undo: 50, players: 4 };
+const ANALYSIS_VERSION = 1;
+const LONG_THINK_MS = 20000;   // これを超えたら「手が止まった」とみなす
+
+/* ===========================================================================
+   3. データ層
+   IndexedDB を正とする。使えない環境では localStorage に落とし、そのときだけ件数を絞る。
+   file:// では IndexedDB が開けたまま返事をしないことがあるので、短く見切る（→ know-0016）
+   =========================================================================== */
+const DB_NAME = 'nanpure';
+const DB_VER = 1;
+const LS_KEY = 'nanpure.fallback.v1';
+const STORES = ['players', 'games', 'summaries', 'inprogress'];
+const KEYOF = { players: 'id', games: 'id', summaries: 'gameId', inprogress: 'id' };
+
+const Store = (() => {
+  let db = null, useLS = false, lsCache = null;
+
+  function lsLoad() {
+    if (lsCache) return lsCache;
+    try { lsCache = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch { lsCache = null; }
+    if (!lsCache) { lsCache = {}; STORES.forEach(s => lsCache[s] = []); }
+    STORES.forEach(s => { if (!lsCache[s]) lsCache[s] = []; });
+    return lsCache;
+  }
+  function lsSave() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(lsCache)); }
+    catch { toast('保存領域がいっぱいです。古い記録を減らしてください'); }
+  }
+
+  function open() {
+    return new Promise(resolve => {
+      if (!('indexedDB' in window)) { useLS = true; return resolve(false); }
+      const waitMs = location.protocol === 'file:' ? 700 : 2500;
+      let req;
+      try { req = indexedDB.open(DB_NAME, DB_VER); }
+      catch { useLS = true; return resolve(false); }
+
+      req.onupgradeneeded = ev => {
+        const d = ev.target.result;
+        if (!d.objectStoreNames.contains('players')) d.createObjectStore('players', { keyPath: 'id' });
+        if (!d.objectStoreNames.contains('games')) {
+          const s = d.createObjectStore('games', { keyPath: 'id' });
+          s.createIndex('byPlayerAt', ['playerId', 'at']);
+          s.createIndex('byPlayer', 'playerId');
+        }
+        if (!d.objectStoreNames.contains('summaries')) {
+          const s = d.createObjectStore('summaries', { keyPath: 'gameId' });
+          s.createIndex('byPlayerAt', ['playerId', 'at']);
+          s.createIndex('byPlayer', 'playerId');
+        }
+        if (!d.objectStoreNames.contains('inprogress')) {
+          const s = d.createObjectStore('inprogress', { keyPath: 'id' });
+          s.createIndex('byPlayer', 'playerId');
+        }
+      };
+      req.onsuccess = () => { db = req.result; resolve(true); };
+      req.onerror = () => { useLS = true; resolve(false); };
+      req.onblocked = () => { useLS = true; resolve(false); };
+      setTimeout(() => { if (!db) { useLS = true; resolve(false); } }, waitMs);
+    });
+  }
+
+  const ls = () => useLS || !db;
+  const tx = (n, m) => db.transaction(n, m);
+  const wrap = req => new Promise((res, rej) => {
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  });
+
+  return {
+    get isFallback() { return ls(); },
+    get limit() { return ls() ? LIMITS.gamesFallback : LIMITS.gamesPerPlayer; },
+
+    async init() { const ok = await open(); if (!ok) lsLoad(); return ok; },
+
+    async put(store, obj) {
+      if (ls()) {
+        const d = lsLoad(), k = KEYOF[store];
+        const i = d[store].findIndex(x => x[k] === obj[k]);
+        if (i >= 0) d[store][i] = obj; else d[store].push(obj);
+        lsSave();
+        return obj;
+      }
+      const t = tx([store], 'readwrite');
+      await wrap(t.objectStore(store).put(obj));
+      return obj;
+    },
+
+    async del(store, key) {
+      if (ls()) {
+        const d = lsLoad(), k = KEYOF[store];
+        d[store] = d[store].filter(x => x[k] !== key);
+        lsSave();
+        return;
+      }
+      const t = tx([store], 'readwrite');
+      await wrap(t.objectStore(store).delete(key));
+    },
+
+    async all(store) {
+      if (ls()) return lsLoad()[store].slice();
+      const t = tx([store], 'readonly');
+      return wrap(t.objectStore(store).getAll());
+    },
+
+    async one(store, key) {
+      if (ls()) return lsLoad()[store].find(x => x[KEYOF[store]] === key) || null;
+      const t = tx([store], 'readonly');
+      return (await wrap(t.objectStore(store).get(key))) || null;
+    },
+
+    async byPlayer(store, playerId) {
+      if (ls()) return lsLoad()[store].filter(x => x.playerId === playerId);
+      const t = tx([store], 'readonly');
+      return wrap(t.objectStore(store).index('byPlayer').getAll(playerId));
+    },
+
+    /** 期間で絞って古い順に返す。全件走査はしない */
+    async range(store, playerId, fromISO, toISO) {
+      const lo = fromISO || '0000', hi = toISO || '9999';
+      if (ls()) {
+        return lsLoad()[store]
+          .filter(x => x.playerId === playerId && x.at >= lo && x.at <= hi)
+          .sort((a, b) => a.at < b.at ? -1 : 1);
+      }
+      const t = tx([store], 'readonly');
+      const idx = t.objectStore(store).index('byPlayerAt');
+      return wrap(idx.getAll(IDBKeyRange.bound([playerId, lo], [playerId, hi])));
+    },
+
+    async usage() {
+      if (navigator.storage && navigator.storage.estimate) {
+        try {
+          const e = await navigator.storage.estimate();
+          return { used: e.usage || 0, quota: e.quota || 0 };
+        } catch {}
+      }
+      return { used: 0, quota: 0 };
+    }
+  };
+})();
+
+/* --- この端末の好み（プレイヤーとは別） --- */
+const Prefs = {
+  key: 'nanpure.prefs.v1',
+  data: {
+    theme: 'auto', lastPlayerId: null, fontScale: 'md',
+    iosBannerClosed: false, autoNotes: true, markDup: true, markWrong: false,
+    lastSize: 9
+  },
+  load() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(this.key) || 'null');
+      if (raw) Object.assign(this.data, raw);
+    } catch {}
+    return this.data;
+  },
+  save() { try { localStorage.setItem(this.key, JSON.stringify(this.data)); } catch {} },
+  set(k, v) { this.data[k] = v; this.save(); }
+};
+
+/* ===========================================================================
+   4. アプリの状態
+   =========================================================================== */
+const App = {
+  player: null,
+  screen: 'player',
+  size: 9,
+  game: null,        // 解いている最中の盤面
+  touch: matchMedia('(pointer: coarse)').matches
+};
+
+const SCREENS = {
+  player: 'scPlayer', home: 'scHome', new: 'scNew',
+  play: 'scPlay', result: 'scResult', analysis: 'scAnalysis', backup: 'scBackup'
+};
+
+function show(name) {
+  if (App.screen === 'play' && name !== 'play') pauseTimer();
+  Object.entries(SCREENS).forEach(([k, id]) => $('#' + id).classList.toggle('on', k === name));
+  App.screen = name;
+  document.body.classList.toggle('playing', name === 'play');
+  $('#btnQuit').classList.toggle('on', name === 'play');
+  // プレイ中は「やめる」だけ出す。狭い画面で「かえる」と並ぶと重なるため
+  $('#who').classList.toggle('on', !!App.player && name !== 'player' && name !== 'play');
+  window.scrollTo({ top: 0, behavior: 'auto' });
+  if (name === 'play') requestAnimationFrame(fitBoard);
+}
+
+function toast(msg, ms) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => el.classList.remove('on'), ms || 2600);
+}
+
+function confirmDialog(title, text, yesLabel, extraHTML, onMount, noLabel) {
+  return new Promise(resolve => {
+    const m = $('#modal');
+    $('#modalTitle').textContent = title;
+    $('#modalText').textContent = text;
+    $('#modalExtra').innerHTML = extraHTML || '';
+    $('#modalYes').textContent = yesLabel === false ? '' : (yesLabel || 'はい');
+    $('#modalNo').textContent = noLabel === false ? '' : (noLabel || 'キャンセル');
+    // false を渡した側のボタンだけ消す（生成中は「やめる」しか出さない、など）
+    $('#modalYes').hidden = yesLabel === false;
+    $('#modalNo').hidden = noLabel === false;
+    m.classList.add('on');
+
+    const done = v => {
+      m.classList.remove('on');
+      $('#modalYes').removeEventListener('click', onYes);
+      $('#modalNo').removeEventListener('click', onNo);
+      m.removeEventListener('click', onBack);
+      document.removeEventListener('keydown', onEsc);
+      $('#modalExtra').innerHTML = '';
+      $('#modalYes').hidden = false;
+      $('#modalNo').hidden = false;
+      resolve(v);
+    };
+    const onYes = () => done(true);
+    const onNo = () => done(false);
+    const onBack = e => { if (e.target === m) done(false); };
+    const onEsc = e => { if (e.key === 'Escape') { e.stopPropagation(); done(false); } };
+
+    $('#modalYes').addEventListener('click', onYes);
+    $('#modalNo').addEventListener('click', onNo);
+    m.addEventListener('click', onBack);
+    document.addEventListener('keydown', onEsc);
+    if (onMount) onMount(done, $('#modalExtra'));
+    setTimeout(() => $('#modalYes').focus(), 30);
+  });
+}
+
+/* ===========================================================================
+   5. テーマと文字サイズ
+   =========================================================================== */
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  const dark = t === 'dark' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+  const meta = document.querySelector('meta[name=theme-color]');
+  if (meta) meta.setAttribute('content', dark ? '#191919' : '#fbfbfa');
+}
+function cycleTheme() {
+  const order = ['auto', 'light', 'dark'];
+  const next = order[(order.indexOf(Prefs.data.theme) + 1) % 3];
+  Prefs.set('theme', next);
+  applyTheme(next);
+  toast({ auto: '配色: 端末の設定に合わせる', light: '配色: ライト', dark: '配色: ダーク' }[next], 1700);
+}
+function applyScale(s) { document.body.dataset.scale = s; }
+function cycleScale() {
+  const order = ['md', 'lg', 'sm'];
+  const next = order[(order.indexOf(Prefs.data.fontScale) + 1) % 3];
+  Prefs.set('fontScale', next);
+  applyScale(next);
+  toast({ md: '文字の大きさ: ふつう', lg: '文字の大きさ: 大きい', sm: '文字の大きさ: 小さい' }[next], 1700);
+  if (App.screen === 'play') requestAnimationFrame(fitBoard);
+}
+
+/* ===========================================================================
+   6. プレイヤー
+   =========================================================================== */
+function newPlayerRecord(name) {
+  return {
+    schemaVersion: 1,
+    id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    name: name,
+    createdAt: nowISO(),
+    best: {},            // コースキー → 最短ミリ秒
+    bestScore: {},       // コースキー → 最高スコア
+    cleared: {},         // コースキー → クリア回数
+    perfect: 0,          // ノーミス・ノーヒントのクリア数
+    lastExportAt: null
+  };
+}
+
+async function renderPlayers() {
+  const list = await Store.all('players');
+  list.sort((a, b) => a.createdAt < b.createdAt ? -1 : 1);
+  const box = $('#playerList');
+  const games = await Store.all('summaries');
+
+  box.innerHTML = list.map(p => {
+    const n = games.filter(g => g.playerId === p.id).length;
+    return `<button class="pcard" type="button" data-id="${esc(p.id)}">
+      <div class="pname">${esc(p.name)}</div>
+      <div class="pmeta">${n ? `${n}問クリア` : 'まだ記録はありません'}</div>
+      <button class="pdel" type="button" data-del="${esc(p.id)}" aria-label="${esc(p.name)}を消す">✕</button>
+    </button>`;
+  }).join('') +
+  (list.length < LIMITS.players
+    ? `<button class="pcard add" type="button" id="pAdd">＋ 人をふやす</button>` : '');
+
+  $$('.pcard[data-id]', box).forEach(b => b.addEventListener('click', e => {
+    if (e.target.closest('[data-del]')) return;
+    selectPlayer(b.dataset.id);
+  }));
+  $$('[data-del]', box).forEach(b => b.addEventListener('click', async e => {
+    e.stopPropagation();
+    const p = list.find(x => x.id === b.dataset.del);
+    const ok = await confirmDialog('この人の記録を消しますか？',
+      `${p.name} さんの記録と解きかけの盤面がすべて消えます。取り消せません。`, '消す');
+    if (!ok) return;
+    await wipePlayer(p.id);
+    await Store.del('players', p.id);
+    if (App.player && App.player.id === p.id) App.player = null;
+    renderPlayers();
+    toast('消しました');
+  }));
+  const add = $('#pAdd');
+  if (add) add.addEventListener('click', askNewPlayer);
+}
+
+async function askNewPlayer() {
+  let value = '';
+  const ok = await confirmDialog('名前を入れてください',
+    '名前はこの端末の中だけに保存されます。どこにも送信されません。', '決定',
+    `<input type="text" id="pName" maxlength="10" placeholder="なまえ" style="margin-top:10px">`,
+    (done, root) => {
+      const inp = $('#pName', root);
+      setTimeout(() => inp.focus(), 60);
+      inp.addEventListener('input', () => value = inp.value);
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') { value = inp.value; done(true); } });
+    });
+  if (!ok) return;
+  const name = (value || '').trim();
+  if (!name) { toast('名前を入れてください'); return; }
+  const p = newPlayerRecord(name);
+  await Store.put('players', p);
+  await renderPlayers();
+  selectPlayer(p.id);
+}
+
+async function selectPlayer(id) {
+  App.player = await Store.one('players', id);
+  if (!App.player) return;
+  Prefs.set('lastPlayerId', id);
+  $('#whoName').textContent = App.player.name;
+  await goHome();
+}
+
+async function wipePlayer(id) {
+  for (const s of ['games', 'summaries', 'inprogress']) {
+    const list = await Store.byPlayer(s, id);
+    for (const r of list) await Store.del(s, r[KEYOF[s]]);
+  }
+}
+
+/* ===========================================================================
+   7. 盤面の生成
+   生成は Worker に投げる。Blob URL で起こすので外部ファイルは要らない。
+   file:// など Worker を作れない環境ではその場で生成する（最大でも 0.5 秒程度）
+   =========================================================================== */
+const Engine = EngineFactory();
+
+let genWorker = null, workerBroken = false, workerReady = null;
+
+/**
+ * Worker を起こして「生きている」ことを確かめる。
+ * file:// で開いた場合、Worker は作れても起動せず、成功も失敗も返ってこないことがある。
+ * 黙って待ち続けると操作不能になるので、起動の挨拶を 1.5 秒待って来なければ捨てる（→ know-0016 と同じ形）
+ */
+function ensureWorker() {
+  if (workerReady) return workerReady;
+  workerReady = new Promise(resolve => {
+    let w;
+    try {
+      const src =
+        'var E=(' + EngineFactory.toString() + ')();\n' +
+        'self.postMessage({hello:true});\n' +
+        'self.onmessage=function(ev){var d=ev.data;try{' +
+        'var r=E.generate(d.bw,d.bh,d.level,d.seed,d.opts);' +
+        'if(!r){self.postMessage({ok:false});return;}' +
+        'self.postMessage({ok:true,puzzle:Array.from(r.puzzle),solution:Array.from(r.solution),' +
+        'level:r.level,givens:r.givens,ms:r.ms,attempts:r.attempts,timedOut:!!r.timedOut});' +
+        '}catch(e){self.postMessage({ok:false,error:String(e)});}};';
+      const url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+      w = new Worker(url);
+    } catch {
+      workerBroken = true;
+      return resolve(false);
+    }
+    const giveUp = () => {
+      clearTimeout(to);
+      try { w.terminate(); } catch {}
+      workerBroken = true; genWorker = null;
+      resolve(false);
+    };
+    const to = setTimeout(giveUp, 1500);
+    w.addEventListener('message', function hello(ev) {
+      if (!ev.data || !ev.data.hello) return;
+      w.removeEventListener('message', hello);
+      clearTimeout(to);
+      genWorker = w;
+      resolve(true);
+    });
+    w.addEventListener('error', giveUp);
+  });
+  return workerReady;
+}
+
+function makeSeed() { return (Math.random() * 0xffffffff) >>> 0; }
+
+function puzzleIdOf(courseKey, seed) {
+  return courseKey.toUpperCase() + '-' + seed.toString(16).toUpperCase().padStart(6, '0');
+}
+function parsePuzzleId(s) {
+  const m = String(s || '').trim().toUpperCase().match(/^([469][A-E])-([0-9A-F]{1,8})$/);
+  if (!m) return null;
+  const course = courseByKey(m[1].toLowerCase());
+  if (!course) return null;
+  return { course: course, seed: parseInt(m[2], 16) >>> 0 };
+}
+
+/** 生成。進捗つきのモーダルを出し、途中でやめられるようにする */
+async function generatePuzzle(course, seed) {
+  const size = sizeOfCourse(course.key);
+  const [bw, bh] = SIZE_GEO[size];
+  const opts = { budgetMs: 10000, minGivens: course.minGivens };
+  const alive = await ensureWorker();
+
+  return new Promise(resolve => {
+    let settled = false, hardTo = null;
+    const finish = v => { if (!settled) { settled = true; resolve(v); } };
+    const dropWorker = () => {
+      if (genWorker) { try { genWorker.terminate(); } catch {} }
+      genWorker = null; workerReady = null;
+    };
+
+    const t0 = Date.now();
+    const timer = setInterval(() => {
+      const el = $('#genElapsed');
+      if (el) el.textContent = `${((Date.now() - t0) / 1000).toFixed(1)} 秒`;
+    }, 100);
+
+    confirmDialog('盤面をつくっています', 'この難しさで解ける盤面をさがしています。',
+      false, `<p class="lead" style="margin-top:8px">経過 <b id="genElapsed">0.0 秒</b></p>`,
+      done => {
+        const cleanup = () => { clearInterval(timer); clearTimeout(hardTo); done(true); };
+
+        if (alive && genWorker) {
+          const w = genWorker;
+          const off = () => { w.removeEventListener('message', onMsg); w.removeEventListener('error', onErr); };
+          const onMsg = ev => {
+            if (!ev.data || ev.data.hello) return;
+            off(); cleanup();
+            const d = ev.data;
+            if (!d.ok || d.timedOut) return finish(null);
+            finish({ puzzle: Int8Array.from(d.puzzle), solution: Int8Array.from(d.solution),
+                     level: d.level, givens: d.givens });
+          };
+          const onErr = () => {
+            off(); workerBroken = true; dropWorker(); cleanup();
+            finish(generateHere(bw, bh, course.lv, seed, opts));
+          };
+          // 沈黙したままにさせない。予算を超えたら Worker を捨てて自分で作る
+          hardTo = setTimeout(() => {
+            off(); workerBroken = true; dropWorker();
+            clearInterval(timer); done(true);
+            finish(generateHere(bw, bh, course.lv, seed, opts));
+          }, opts.budgetMs + 3000);
+          w.addEventListener('message', onMsg);
+          w.addEventListener('error', onErr);
+          w.postMessage({ bw, bh, level: course.lv, seed, opts });
+        } else {
+          // 同期生成。モーダルを1フレーム描いてから走らせる
+          setTimeout(() => { cleanup(); finish(generateHere(bw, bh, course.lv, seed, opts)); }, 30);
+        }
+      }, 'やめる')
+      .then(v => {
+        if (v === false) { clearInterval(timer); clearTimeout(hardTo); dropWorker(); finish(null); }
+      });
+  });
+}
+
+function generateHere(bw, bh, level, seed, opts) {
+  const r = Engine.generate(bw, bh, level, seed, opts);
+  if (!r || r.timedOut) return null;
+  return { puzzle: r.puzzle, solution: r.solution, level: r.level, givens: r.givens };
+}
+
+/* ===========================================================================
+   8. 対局の状態
+   =========================================================================== */
+function blankGame(course, seed, gen) {
+  const size = sizeOfCourse(course.key);
+  const [bw, bh] = SIZE_GEO[size];
+  const geo = Engine.makeGeo(bw, bh);
+  return {
+    courseKey: course.key, size, bw, bh, geo,
+    seed, puzzleId: puzzleIdOf(course.key, seed),
+    givens: Array.from(gen.puzzle),
+    solution: Array.from(gen.solution),
+    grid: Array.from(gen.puzzle),
+    notes: new Array(geo.N).fill(0),
+    sel: -1, noteMode: false,
+    moves: [], hints: { explain: 0, reveal: 0 },
+    undos: 0, autoNotesUsed: 0,
+    elapsedMs: 0, startedAt: nowISO(),
+    undoStack: [], redoStack: [],
+    hintState: null, done: false
+  };
+}
+
+/* --- 時計 --- */
+let tickTimer = null, tickFrom = 0;
+function startTimer() {
+  if (tickTimer) return;
+  tickFrom = Date.now();
+  tickTimer = setInterval(() => {
+    const g = App.game;
+    if (!g) return;
+    $('#clock').textContent = fmtClock(g.elapsedMs + (Date.now() - tickFrom));
+  }, 250);
+}
+function pauseTimer() {
+  if (!tickTimer) return;
+  clearInterval(tickTimer); tickTimer = null;
+  if (App.game) App.game.elapsedMs += Date.now() - tickFrom;
+}
+function elapsedNow() {
+  const g = App.game;
+  if (!g) return 0;
+  return g.elapsedMs + (tickTimer ? Date.now() - tickFrom : 0);
+}
+
+/* ===========================================================================
+   9. 盤面の描画
+   =========================================================================== */
+function buildBoard() {
+  const g = App.game, geo = g.geo;
+  const b = $('#board');
+  b.style.setProperty('--n', geo.n);
+  b.style.gridTemplateColumns = `repeat(${geo.n}, 1fr)`;
+  let html = '';
+  for (let i = 0; i < geo.N; i++) {
+    const r = (i / geo.n) | 0, c = i % geo.n;
+    const cls = ['cell'];
+    if ((c + 1) % g.bw === 0) cls.push('bR');
+    if ((r + 1) % g.bh === 0) cls.push('bB');
+    if (c === geo.n - 1) cls.push('edgeR');
+    if (r === geo.n - 1) cls.push('edgeB');
+    html += `<div class="${cls.join(' ')}" data-i="${i}" role="gridcell" tabindex="-1"></div>`;
+  }
+  b.innerHTML = html;
+  b.onclick = e => {
+    const cell = e.target.closest('.cell');
+    if (cell) selectCell(+cell.dataset.i);
+  };
+  buildPad();
+  fitBoard();
+}
+
+function fitBoard() {
+  const head = $('header.top');
+  if (head) document.documentElement.style.setProperty('--headh', head.offsetHeight + 'px');
+  const area = $('.board-area'), b = $('#board');
+  if (!area || !b || !App.game) return;
+  const w = area.clientWidth, h = area.clientHeight;
+  if (!w || !h) return;
+  // 盤面より数字パッドの方が大事。残った高さに収まるところまで盤面を縮める
+  const s = Math.max(140, Math.floor(Math.min(w, h)) - 2);
+  b.style.setProperty('--bsize', s + 'px');
+}
+
+function buildPad() {
+  const g = App.game, n = g.geo.n;
+  const cols = n <= 6 ? n : 5;
+  const pad = $('#pad');
+  pad.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  let html = '';
+  for (let v = 1; v <= n; v++) {
+    html += `<button class="key" type="button" data-v="${v}">${v}<span class="left" data-left="${v}"></span></button>`;
+  }
+  pad.innerHTML = html;
+  pad.onclick = e => {
+    const k = e.target.closest('.key');
+    if (k) inputNumber(+k.dataset.v);
+  };
+}
+
+/** 重複しているマス（ルール違反）を集める。正解とは照合しない */
+function duplicateCells(g) {
+  const bad = new Set();
+  g.geo.units.forEach(u => {
+    const seen = {};
+    u.forEach(i => {
+      const v = g.grid[i];
+      if (!v) return;
+      if (seen[v] !== undefined) { bad.add(i); bad.add(seen[v]); }
+      else seen[v] = i;
+    });
+  });
+  return bad;
+}
+
+function paintBoard() {
+  const g = App.game, geo = g.geo, n = geo.n;
+  const cells = $('#board').children;
+  const sel = g.sel;
+  const selVal = sel >= 0 ? g.grid[sel] : 0;
+  const peers = sel >= 0 ? new Set(geo.peers[sel]) : null;
+  const dup = Prefs.data.markDup ? duplicateCells(g) : new Set();
+  const hintCell = g.hintState ? g.hintState.cell : -1;
+
+  for (let i = 0; i < geo.N; i++) {
+    const el = cells[i];
+    const v = g.grid[i];
+    const isGiven = !!g.givens[i];
+    const wrong = Prefs.data.markWrong && v && !isGiven && v !== g.solution[i];
+    el.classList.toggle('given', isGiven);
+    el.classList.toggle('sel', i === sel);
+    el.classList.toggle('peer', !!peers && peers.has(i));
+    el.classList.toggle('same', !!selVal && v === selVal && i !== sel);
+    el.classList.toggle('bad', dup.has(i) || wrong);
+    el.classList.toggle('hintCell', i === hintCell);
+
+    if (v) {
+      if (el.dataset.v !== String(v)) { el.textContent = v; el.dataset.v = String(v); }
+    } else if (g.notes[i]) {
+      const bits = g.notes[i];
+      let s = `<div class="notes" style="grid-template-columns:repeat(${g.bw},1fr)">`;
+      for (let d = 0; d < n; d++) {
+        const on = bits & (1 << d);
+        const hi = on && selVal && (d + 1) === selVal;
+        s += `<span class="${hi ? 'hi' : ''}">${on ? d + 1 : ''}</span>`;
+      }
+      s += '</div>';
+      if (el.dataset.v !== 'n' + bits + '|' + selVal) {
+        el.innerHTML = s; el.dataset.v = 'n' + bits + '|' + selVal;
+      }
+    } else if (el.dataset.v !== '') {
+      el.textContent = ''; el.dataset.v = '';
+    }
+  }
+  paintPad();
+  const left = geo.N - g.grid.filter(x => x).length;
+  $('#playCount').textContent = left ? `のこり ${left}マス` : 'すべて埋まりました';
+  $('#tUndo').disabled = !g.undoStack.length;
+  $('#tRedo').disabled = !g.redoStack.length;
+}
+
+/** 数字パッドに残り個数を出す。置き終えた数字は薄くする */
+function paintPad() {
+  const g = App.game, n = g.geo.n;
+  const used = new Array(n + 1).fill(0);
+  g.grid.forEach(v => { if (v) used[v]++; });
+  $$('#pad .key').forEach(k => {
+    const v = +k.dataset.v;
+    const left = n - used[v];
+    $('[data-left]', k).textContent = left > 0 ? left : '';
+    k.classList.toggle('used', left <= 0);
+  });
+}
+
+/* ===========================================================================
+   10. 入力
+   =========================================================================== */
+function snapshot() {
+  const g = App.game;
+  g.undoStack.push({ grid: g.grid.slice(), notes: g.notes.slice() });
+  if (g.undoStack.length > LIMITS.undo) g.undoStack.shift();
+  g.redoStack.length = 0;
+}
+function logMove(c, v, k, w) {
+  App.game.moves.push({ c, v, k, t: Math.round(elapsedNow()), w: w ? 1 : 0 });
+}
+
+function selectCell(i) {
+  const g = App.game;
+  if (!g || g.done) return;
+  g.sel = i;
+  g.hintState = null;
+  paintBoard();
+}
+
+function moveSel(dr, dc) {
+  const g = App.game, n = g.geo.n;
+  if (g.sel < 0) { selectCell(0); return; }
+  let r = (g.sel / n) | 0, c = g.sel % n;
+  r = clamp(r + dr, 0, n - 1); c = clamp(c + dc, 0, n - 1);
+  selectCell(r * n + c);
+}
+
+function inputNumber(v) {
+  const g = App.game;
+  if (!g || g.done) return;
+  if (g.sel < 0) { toast('先にマスを選んでください'); return; }
+  const i = g.sel;
+  if (g.givens[i]) { toast('最初から入っている数字は変えられません'); return; }
+
+  if (g.noteMode) {
+    snapshot();
+    const bit = 1 << (v - 1);
+    const had = g.notes[i] & bit;
+    g.notes[i] ^= bit;
+    if (g.grid[i]) g.grid[i] = 0;
+    logMove(i, v, had ? 'M' : 'm', 0);
+  } else {
+    if (g.grid[i] === v) { eraseCell(); return; }
+    snapshot();
+    g.grid[i] = v;
+    g.notes[i] = 0;
+    const wrong = v !== g.solution[i];
+    logMove(i, v, 's', wrong);
+    if (Prefs.data.autoNotes) clearPeerNotes(i, v);
+  }
+  g.hintState = null;
+  paintBoard();
+  saveProgressSoon();
+  if (!g.noteMode) checkDone();
+}
+
+function clearPeerNotes(i, v) {
+  const g = App.game, bit = 1 << (v - 1);
+  let n = 0;
+  g.geo.peers[i].forEach(j => { if (g.notes[j] & bit) { g.notes[j] &= ~bit; n++; } });
+  return n;
+}
+
+function eraseCell() {
+  const g = App.game;
+  if (!g || g.done || g.sel < 0) return;
+  const i = g.sel;
+  if (g.givens[i]) return;
+  if (!g.grid[i] && !g.notes[i]) return;
+  snapshot();
+  g.grid[i] = 0; g.notes[i] = 0;
+  logMove(i, 0, 'd', 0);
+  g.hintState = null;
+  paintBoard();
+  saveProgressSoon();
+}
+
+function undo() {
+  const g = App.game;
+  if (!g || !g.undoStack.length) return;
+  g.redoStack.push({ grid: g.grid.slice(), notes: g.notes.slice() });
+  const s = g.undoStack.pop();
+  g.grid = s.grid; g.notes = s.notes;
+  g.undos++;
+  logMove(g.sel, 0, 'u', 0);
+  g.hintState = null;
+  paintBoard();
+  saveProgressSoon();
+}
+function redo() {
+  const g = App.game;
+  if (!g || !g.redoStack.length) return;
+  g.undoStack.push({ grid: g.grid.slice(), notes: g.notes.slice() });
+  const s = g.redoStack.pop();
+  g.grid = s.grid; g.notes = s.notes;
+  logMove(g.sel, 0, 'r', 0);
+  paintBoard();
+  saveProgressSoon();
+}
+
+/* ===========================================================================
+   11. ヒント（2段階）
+   1回目は「なぜそのマスが決まるか」だけを見せる。2回目で数字を開示する
+   =========================================================================== */
+function askHint() {
+  const g = App.game;
+  if (!g || g.done) return;
+
+  if (g.hintState) {                       // 2回目 → 数字を開示して置く
+    const h = g.hintState;
+    snapshot();
+    g.grid[h.cell] = h.value;
+    g.notes[h.cell] = 0;
+    g.hints.reveal++;
+    logMove(h.cell, h.value, 'h', 0);
+    if (Prefs.data.autoNotes) clearPeerNotes(h.cell, h.value);
+    g.sel = h.cell;
+    g.hintState = null;
+    paintBoard();
+    $('#board').children[h.cell].classList.add('flash');
+    saveProgressSoon();
+    checkDone();
+    return;
+  }
+
+  // 自分が入れた誤りが残っていると、その先を論理で進められない
+  const dup = duplicateCells(g);
+  const wrongs = [];
+  for (let i = 0; i < g.geo.N; i++) {
+    if (g.grid[i] && !g.givens[i] && g.grid[i] !== g.solution[i]) wrongs.push(i);
+  }
+  if (wrongs.length) {
+    g.hints.explain++;
+    const c = wrongs[0], r = ((c / g.geo.n) | 0) + 1, cc = (c % g.geo.n) + 1;
+    g.sel = c;
+    g.hintState = null;
+    paintBoard();
+    confirmDialog('先に直すところがあります',
+      `${r}行${cc}列 の数字が正解と違います。ここを直さないと、この先は論理では進めません。`,
+      'わかった', '', null, false);
+    return;
+  }
+
+  const res = Engine.humanSolve(g.grid, g.geo, 5, false, { maxSteps: 1 });
+  const step = res.stopStep;
+  if (!step) {
+    g.hints.explain++;
+    confirmDialog('ここから先は総当たりが必要です',
+      '用意しているテクニックでは次の1手を決められませんでした。', 'とじる', '', null, false);
+    return;
+  }
+
+  g.hints.explain++;
+  const name = TECH_NAME[step.tech] || step.tech;
+
+  if (step.cell !== undefined) {
+    const r = ((step.cell / g.geo.n) | 0) + 1, c = (step.cell % g.geo.n) + 1;
+    g.hintState = { cell: step.cell, value: step.value, tech: step.tech };
+    g.sel = step.cell;
+    paintBoard();
+    confirmDialog('つぎの1マス',
+      `${r}行${c}列 が決まります。理由は「${name}」です。`,
+      '数字を見る', `<p class="lead" style="margin-top:8px">${esc(techHelp(step.tech))}</p>`,
+      null, '自分で考える');
+    return;
+  }
+
+  // 候補を消すテクニック（マスは決まらない）。場所だけ示す
+  const cells = (step.cells || []).map(i => `${((i / g.geo.n) | 0) + 1}行${(i % g.geo.n) + 1}列`).join('、');
+  g.hintState = null;
+  highlightCells(step.cells || []);
+  confirmDialog('候補をけずれます',
+    `${cells} に注目してください。「${name}」の形になっています。`,
+    'わかった', `<p class="lead" style="margin-top:8px">${esc(techHelp(step.tech))}</p>`, null, false);
+}
+
+function highlightCells(list) {
+  const b = $('#board');
+  list.forEach(i => {
+    const el = b.children[i];
+    el.classList.add('flash');
+    setTimeout(() => el.classList.remove('flash'), 600);
+  });
+}
+
+function techHelp(tech) {
+  return {
+    nakedSingle:  'そのマスに入れられる数字が1つしか残っていません。',
+    hiddenSingle: 'その行（列・ブロック）を見渡すと、その数字を置けるマスがそこしかありません。',
+    pointing:     'ブロックの中で、その数字が1つの行（列）にしか入りません。だから同じ行（列）の他のブロックからは、その数字を消せます。',
+    claiming:     'その行（列）で、その数字が1つのブロックにしか入りません。だからそのブロックの他のマスからは、その数字を消せます。',
+    nakedPair:    '2つのマスが同じ2つの候補だけを持っています。その2つの数字は必ずこの2マスに入るので、同じ行・列・ブロックの他のマスからは消せます。',
+    nakedTriple:  '3つのマスが同じ3つの候補に閉じこもっています。その3つの数字は必ずこの3マスに入ります。',
+    hiddenPair:   '2つの数字が、その行（列・ブロック）で同じ2マスにしか入りません。だからその2マスの他の候補は消せます。',
+    hiddenTriple: '3つの数字が、同じ3マスにしか入りません。だからその3マスの他の候補は消せます。',
+    xWing:        '2つの行で、その数字が同じ2つの列にしか入りません。すると、その2列の他の行からは、その数字を消せます。',
+    xyWing:       '候補が2つずつの3マスが鎖のようにつながっています。どちらに転んでも同じ数字が確定するので、共通のマスからその数字を消せます。'
+  }[tech] || '';
+}
+
+/* ===========================================================================
+   12. 完成の判定
+   =========================================================================== */
+function checkDone() {
+  const g = App.game;
+  for (let i = 0; i < g.geo.N; i++) if (g.grid[i] !== g.solution[i]) return false;
+  g.done = true;
+  pauseTimer();
+  paintBoard();
+
+  // マスが順に色づく（点滅は使わない）
+  const cells = $('#board').children;
+  for (let i = 0; i < g.geo.N; i++) {
+    setTimeout(() => cells[i].classList.add('won'), i * 12);
+  }
+  setTimeout(() => finishGame(), Math.min(900, g.geo.N * 12 + 260));
+  return true;
+}
+
+/* ===========================================================================
+   13. 中断と再開
+   入力のたびに保存する。ブラウザを閉じても電池が切れても続きから解ける
+   =========================================================================== */
+let saveTimer = null;
+function saveProgressSoon() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveProgress, 900);
+}
+async function saveProgress() {
+  const g = App.game;
+  if (!g || g.done || !App.player) return;
+  await Store.put('inprogress', {
+    id: App.player.id + '|' + g.courseKey,
+    playerId: App.player.id,
+    at: nowISO(),
+    courseKey: g.courseKey, size: g.size,
+    seed: g.seed, puzzleId: g.puzzleId,
+    givens: g.givens.join(''), solution: g.solution.join(''),
+    grid: g.grid.join(''), notes: g.notes.slice(),
+    moves: g.moves, hints: g.hints, undos: g.undos,
+    autoNotesUsed: g.autoNotesUsed,
+    elapsedMs: Math.round(elapsedNow()), startedAt: g.startedAt
+  });
+}
+
+function restoreGame(rec) {
+  const course = courseByKey(rec.courseKey);
+  const size = rec.size, [bw, bh] = SIZE_GEO[size];
+  const geo = Engine.makeGeo(bw, bh);
+  const toArr = s => String(s).split('').map(Number);
+  App.game = {
+    courseKey: rec.courseKey, size, bw, bh, geo,
+    seed: rec.seed, puzzleId: rec.puzzleId,
+    givens: toArr(rec.givens), solution: toArr(rec.solution), grid: toArr(rec.grid),
+    notes: rec.notes.slice(), sel: -1, noteMode: false,
+    moves: rec.moves || [], hints: rec.hints || { explain: 0, reveal: 0 },
+    undos: rec.undos || 0, autoNotesUsed: rec.autoNotesUsed || 0,
+    elapsedMs: rec.elapsedMs || 0, startedAt: rec.startedAt || rec.at,
+    undoStack: [], redoStack: [], hintState: null, done: false
+  };
+  enterPlay(course);
+}
+
+/* ===========================================================================
+   14. 対局の開始・終了
+   =========================================================================== */
+async function startCourse(course, seedOpt) {
+  const id = App.player.id + '|' + course.key;
+  const existing = await Store.one('inprogress', id);
+  if (existing && seedOpt === undefined) {
+    const ok = await confirmDialog('解きかけの盤面があります',
+      `この難しさには解きかけの盤面があります。新しく作ると、そちらは消えます。`,
+      '新しく作る', '', null, '続きを解く');
+    if (!ok) { restoreGame(existing); return; }
+    await Store.del('inprogress', id);
+  }
+  const seed = seedOpt === undefined ? makeSeed() : seedOpt;
+  const gen = await generatePuzzle(course, seed);
+  if (!gen) { toast('盤面をつくれませんでした。もう一度お試しください'); return; }
+  App.game = blankGame(course, seed, gen);
+  enterPlay(course);
+  saveProgress();
+}
+
+function enterPlay(course) {
+  const g = App.game;
+  $('#playMeta').textContent = `${g.size}×${g.size} ${course.label}`;
+  $('#tMemo').setAttribute('aria-pressed', 'false');
+  g.noteMode = false;
+  show('play');
+  buildBoard();
+  paintBoard();
+  $('#clock').textContent = fmtClock(g.elapsedMs);
+  startTimer();
+}
+
+async function finishGame() {
+  const g = App.game;
+  const course = courseByKey(g.courseKey);
+  const elapsed = Math.round(elapsedNow());
+  const mistakes = g.moves.filter(m => m.k === 's' && m.w).length;
+
+  const game = {
+    schemaVersion: 1,
+    id: 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+    playerId: App.player.id,
+    at: nowISO(),
+    size: g.size, level: course.lv, courseKey: g.courseKey,
+    puzzleId: g.puzzleId,
+    givens: g.givens.join(''), solution: g.solution.join(''),
+    elapsedMs: elapsed, completed: true,
+    moves: g.moves, hints: g.hints, undos: g.undos,
+    autoNotesUsed: g.autoNotesUsed
+  };
+
+  await Store.put('games', game);
+  const sm = summarize(game);
+  await Store.put('summaries', sm);
+  await Store.del('inprogress', App.player.id + '|' + g.courseKey);
+  await trimGames();
+
+  // 自己ベストの更新
+  const p = App.player;
+  p.cleared[g.courseKey] = (p.cleared[g.courseKey] || 0) + 1;
+  const isPerfect = mistakes === 0 && g.hints.explain === 0 && g.hints.reveal === 0;
+  if (isPerfect) p.perfect = (p.perfect || 0) + 1;
+  const bestT = p.best[g.courseKey];
+  const newBestTime = bestT === undefined || elapsed < bestT;
+  if (newBestTime) p.best[g.courseKey] = elapsed;
+  const bestS = p.bestScore[g.courseKey];
+  const newBestScore = bestS === undefined || sm.score > bestS;
+  if (newBestScore) p.bestScore[g.courseKey] = sm.score;
+  await Store.put('players', p);
+
+  App.game = null;
+  showResult(game, sm, { newBestTime, newBestScore, isPerfect });
+}
+
+/** 上限を超えた古い記録から消す。自己ベストはプレイヤー側にあるので残る */
+async function trimGames() {
+  const list = await Store.byPlayer('summaries', App.player.id);
+  const over = list.length - Store.limit;
+  if (over <= 0) return;
+  list.sort((a, b) => a.at < b.at ? -1 : 1);
+  for (let i = 0; i < over; i++) {
+    await Store.del('games', list[i].gameId);
+    await Store.del('summaries', list[i].gameId);
+  }
+}
+
+/* ===========================================================================
+   15. 分析エンジン
+   すべて「生ログ（moves）を入力にとる純粋関数」として書く。
+   ここに関数を1つ足せば、過去の全記録に自動的に新しい観点が適用される。
+   分析結果は正データとして保存しない（summaries はキャッシュ。版が上がれば作り直す）
+   =========================================================================== */
+
+const geoOf = size => Engine.makeGeo(...SIZE_GEO[size]);
+const strToArr = s => String(s).split('').map(Number);
+const cellName = (i, n) => `${((i / n) | 0) + 1}行${(i % n) + 1}列`;
+
+/**
+ * 盤面のどのマスが、どのテクニックで決まるか。ソルバーの解き筋から1回で全部求める。
+ *
+ * 「ブロックからの絞り込み」や X-Wing はマスを確定させず候補を消すだけなので、
+ * その手だけを見ていると一生どのマスにも結び付かない。
+ * 候補を消す手はいったん保留し、そのあと最初に確定したマスへ引き継ぐ。
+ * そのマスは「その絞り込みをして初めて決まったマス」なので、こちらが実態に合う。
+ */
+function techMap(givens, size) {
+  const geo = geoOf(size);
+  const res = Engine.humanSolve(strToArr(givens), geo, 5, true);
+  const map = new Array(geo.N).fill(null);
+  let pend = null, pendLv = 0;
+  res.steps.forEach(s => {
+    if (s.cell === undefined) {
+      if ((s.level || 0) > pendLv) { pend = s.tech; pendLv = s.level || 0; }
+      return;
+    }
+    if (map[s.cell] === null) map[s.cell] = (pendLv > (s.level || 0)) ? pend : s.tech;
+    pend = null; pendLv = 0;
+  });
+  return map;
+}
+
+/** moves を先頭から適用して、各手の時点の盤面を再現する（取り消し・やり直しも含む） */
+function replay(game) {
+  const geo = geoOf(game.size);
+  let grid = strToArr(game.givens), notes = new Array(geo.N).fill(0);
+  const undoStack = [], redoStack = [];
+  const filled = () => grid.reduce((a, v) => a + (v ? 1 : 0), 0);
+  const out = [];
+  const push = () => {
+    undoStack.push({ g: grid.slice(), n: notes.slice() });
+    if (undoStack.length > LIMITS.undo) undoStack.shift();
+    redoStack.length = 0;
+  };
+  (game.moves || []).forEach((m, idx) => {
+    if (m.k === 'u') {
+      if (undoStack.length) {
+        redoStack.push({ g: grid.slice(), n: notes.slice() });
+        const s = undoStack.pop(); grid = s.g; notes = s.n;
+      }
+    } else if (m.k === 'r') {
+      if (redoStack.length) {
+        undoStack.push({ g: grid.slice(), n: notes.slice() });
+        const s = redoStack.pop(); grid = s.g; notes = s.n;
+      }
+    } else {
+      push();
+      if (m.k === 's' || m.k === 'h') { grid[m.c] = m.v; notes[m.c] = 0; }
+      else if (m.k === 'd') { grid[m.c] = 0; notes[m.c] = 0; }
+      else if (m.k === 'm') { notes[m.c] |= 1 << (m.v - 1); grid[m.c] = 0; }
+      else if (m.k === 'M') { notes[m.c] &= ~(1 << (m.v - 1)); }
+    }
+    out.push({ i: idx, t: m.t, filled: filled(), grid: grid, k: m.k, c: m.c, v: m.v, w: m.w });
+  });
+  return { states: out, geo };
+}
+
+/** 1手あたりの所要時間。直前の手からの差分をその手のマスに割り当てる */
+function thinkTimes(game) {
+  const per = {};                 // セル → 合計ms
+  let prev = 0;
+  (game.moves || []).forEach(m => {
+    const dt = Math.max(0, m.t - prev);
+    prev = m.t;
+    if (m.c === undefined || m.c < 0) return;
+    per[m.c] = (per[m.c] || 0) + dt;
+  });
+  return per;
+}
+
+/* --- スコア（§8.2） --- */
+function scoreOf(game) {
+  const c = courseByKey(game.courseKey);
+  if (!c) return 0;
+  const base = c.base;
+  const ratio = game.elapsedMs / c.baseMs;
+  const timeCoef = clamp(2.0 - ratio, 0.3, 1.5);
+  const mistakes = (game.moves || []).filter(m => m.k === 's' && m.w).length;
+  const pen = base * 0.03 * Math.min(mistakes, 10)
+            + base * 0.05 * (game.hints ? game.hints.explain : 0)
+            + base * 0.12 * (game.hints ? game.hints.reveal : 0)
+            + base * 0.08 * (game.autoNotesUsed ? 1 : 0);
+  return Math.max(0, Math.round(base * timeCoef - pen));
+}
+
+/** 1局のサマリ。グラフはこれだけを読むので、生ログは開かない（§10） */
+function summarize(game) {
+  const geo = geoOf(game.size);
+  const tm = techMap(game.givens, game.size);
+  const per = thinkTimes(game);
+  const moves = game.moves || [];
+  const course = courseByKey(game.courseKey);
+
+  const techTime = {}, techCount = {};
+  Object.keys(per).forEach(k => {
+    const t = tm[+k];
+    if (!t) return;
+    techTime[t] = (techTime[t] || 0) + per[k];
+    techCount[t] = (techCount[t] || 0) + 1;
+  });
+
+  const longCells = Object.keys(per)
+    .map(k => ({ c: +k, ms: per[k], tech: tm[+k] }))
+    .filter(x => x.ms >= 3000)
+    .sort((a, b) => b.ms - a.ms).slice(0, 5);
+
+  // 序盤・中盤・終盤の1マスあたり平均（充填率で3分割）
+  const rp = replay(game);
+  const N = geo.N, g0 = strToArr(game.givens).filter(v => v).length;
+  const need = N - g0;
+  const thirds = [[], [], []];
+  let prevT = 0, prevFilled = g0;
+  rp.states.forEach(s => {
+    const dt = Math.max(0, s.t - prevT); prevT = s.t;
+    const gained = s.filled - prevFilled; prevFilled = s.filled;
+    if (gained <= 0) return;
+    const prog = need ? (s.filled - g0) / need : 0;
+    thirds[clamp(Math.floor(prog * 3), 0, 2)].push(dt / gained);
+  });
+
+  // 誤入力の傾向
+  const wrongs = moves.filter(m => m.k === 's' && m.w);
+  const mistakeByDigit = {};
+  wrongs.forEach(m => mistakeByDigit[m.v] = (mistakeByDigit[m.v] || 0) + 1);
+  const mistakeByCands = {};
+  const lags = [];
+  wrongs.forEach(m => {
+    const st = rp.states[moves.indexOf(m)];
+    if (st) {
+      const cands = Engine.computeCands(st.grid.map((v, i) => i === m.c ? 0 : v), geo)[m.c];
+      const nc = Engine.bitCount(cands);
+      mistakeByCands[nc] = (mistakeByCands[nc] || 0) + 1;
+    }
+    // 気づくまでの手数（そのマスを直すまでに何手進んだか）
+    const from = moves.indexOf(m);
+    let lag = 0;
+    for (let i = from + 1; i < moves.length; i++) {
+      if (moves[i].c === m.c && (moves[i].k === 'd' || moves[i].k === 's' || moves[i].k === 'h' || moves[i].k === 'u')) { lag = i - from; break; }
+      lag = i - from;
+    }
+    lags.push(lag);
+  });
+
+  // 走査のまとまり（連続して埋めたマスが同じブロックにある割合）
+  const placed = moves.filter(m => m.k === 's' || m.k === 'h');
+  let runs = 0;
+  for (let i = 1; i < placed.length; i++) {
+    if (geo.boxOf[placed[i].c] === geo.boxOf[placed[i - 1].c]) runs++;
+  }
+
+  const noteMoves = moves.filter(m => m.k === 'm' || m.k === 'M').length;
+
+  return {
+    gameId: game.id, playerId: game.playerId, at: game.at,
+    analysisVersion: ANALYSIS_VERSION,
+    size: game.size, level: game.level, courseKey: game.courseKey, puzzleId: game.puzzleId,
+    elapsedMs: game.elapsedMs,
+    score: scoreOf(game),
+    ratio: course ? game.elapsedMs / course.baseMs : 1,
+    mistakes: wrongs.length,
+    hintsE: game.hints ? game.hints.explain : 0,
+    hintsR: game.hints ? game.hints.reveal : 0,
+    undos: game.undos || 0,
+    noteMoves, moveCount: moves.length,
+    perfect: wrongs.length === 0 && !(game.hints && (game.hints.explain || game.hints.reveal)),
+    techTime, techCount, longCells,
+    thirds: thirds.map(a => Math.round(avg(a))),
+    mistakeByDigit, mistakeByCands,
+    noticeLag: lags.length ? Math.round(avg(lags)) : 0,
+    boxRun: placed.length > 1 ? runs / (placed.length - 1) : 0
+  };
+}
+
+/** 分析ロジックを更新したら、生ログから作り直す */
+async function rebuildSummaries(playerId) {
+  const games = await Store.byPlayer('games', playerId);
+  const sums = await Store.byPlayer('summaries', playerId);
+  const stale = sums.filter(s => s.analysisVersion !== ANALYSIS_VERSION).map(s => s.gameId);
+  const missing = games.filter(g => !sums.some(s => s.gameId === g.id)).map(g => g.id);
+  const todo = [...new Set([...stale, ...missing])];
+  if (!todo.length) return 0;
+  for (const id of todo) {
+    const g = games.find(x => x.id === id);
+    if (g) await Store.put('summaries', summarize(g));
+  }
+  return todo.length;
+}
+
+/* ===========================================================================
+   16. グラフ（すべてインラインSVG。色は必ずCSS変数を通す）
+   001「フラッシュ暗算ｘ履歴分析」から移植し、盤面ヒートマップだけ足した
+   =========================================================================== */
+const VIZ = {
+  // viewBox の幅。SVG は width:100% で伸縮するので、ここを小さくするほど
+  // 狭い画面での文字が大きくなり、広い画面では maxW まで拡大される。
+  // 640 のままだと 375px 幅で軸ラベルが 6px まで潰れて読めなかった
+  w: 340,
+  ink: 'var(--fg)',
+  muted: 'var(--fg-muted)',
+  faint: 'var(--fg-faint)',
+  grid: 'var(--grid)',
+  surface: 'var(--bg-elev)',
+  cat: i => `var(--c${(i % 8) + 1})`,
+  seq: i => `var(--q${clamp(i, 1, 5)})`
+};
+
+const svgWrap = (inner, w, h, minW, maxW) =>
+  `<div class="chart-wrap"${maxW ? ` style="display:flex;justify-content:center"` : ''}>` +
+  `<svg viewBox="0 0 ${w} ${h}" role="img" ` +
+  `style="${minW ? `min-width:${minW}px;` : ''}max-width:${maxW ? maxW + 'px' : '100%'};` +
+  `width:100%;height:auto" preserveAspectRatio="xMidYMid meet">${inner}</svg></div>`;
+
+const svgText = (x, y, s, opt) => {
+  const o = opt || {};
+  return `<text x="${x}" y="${y}" fill="${o.fill || VIZ.muted}" font-size="${o.size || 11}" ` +
+    `text-anchor="${o.anchor || 'start'}" ${o.weight ? `font-weight="${o.weight}" ` : ''}` +
+    `style="font-variant-numeric:tabular-nums" dominant-baseline="${o.base || 'auto'}">${esc(s)}</text>`;
+};
+
+function barPathH(x0, y, len, h, r) {
+  if (len <= 0.6) return '';
+  const rr = Math.min(r ?? 4, len, h / 2), x1 = x0 + len;
+  return `M${x0},${y} H${x1 - rr} A${rr},${rr} 0 0 1 ${x1},${y + rr} V${y + h - rr} ` +
+         `A${rr},${rr} 0 0 1 ${x1 - rr},${y + h} H${x0} Z`;
+}
+function barPathV(x, yBase, len, w, r) {
+  if (len <= 0.6) return '';
+  const rr = Math.min(r ?? 4, len, w / 2), yTop = yBase - len;
+  return `M${x},${yBase} V${yTop + rr} A${rr},${rr} 0 0 1 ${x + rr},${yTop} H${x + w - rr} ` +
+         `A${rr},${rr} 0 0 1 ${x + w},${yTop + rr} V${yBase} Z`;
+}
+
+function barsH(rows, opts) {
+  const o = opts || {};
+  if (!rows.length) return '';
+  const labelW = o.labelW || 124, valW = 50, rowH = 30, pad = 8;
+  const W = o.w || 310, H = pad * 2 + rows.length * rowH;
+  const x0 = labelW, x1 = W - valW, span = x1 - x0;
+  const max = o.max || Math.max(...rows.map(r => r.value), 1);
+
+  let g = '';
+  (o.ticks || [0, 0.5, 1]).forEach(t => {
+    const x = x0 + span * t;
+    g += `<line x1="${x}" y1="${pad - 2}" x2="${x}" y2="${H - pad + 2}" stroke="${VIZ.grid}" stroke-width="1"/>`;
+  });
+  rows.forEach((r, i) => {
+    const y = pad + i * rowH, bh = 14, by = y + (rowH - bh) / 2;
+    const len = Math.max(0, r.value / max) * span;
+    const dim = r.enough === false;
+    g += svgText(labelW - 7, by + bh / 2, r.label, { anchor: 'end', base: 'central', size: 12, fill: VIZ.muted });
+    g += `<rect x="${x0}" y="${by}" width="${span}" height="${bh}" rx="4" fill="${VIZ.grid}" opacity=".45"/>`;
+    const d = barPathH(x0, by, len, bh, 4);
+    if (d) g += `<path d="${d}" fill="${r.color || o.color || VIZ.cat(0)}" opacity="${dim ? .35 : 1}">` +
+                `<title>${esc(r.label)}：${esc(r.valueText || '')}</title></path>`;
+    g += svgText(W - 4, by + bh / 2, r.valueText || '', {
+      anchor: 'end', base: 'central', size: 12, weight: 600, fill: dim ? VIZ.faint : VIZ.ink });
+  });
+  return svgWrap(g, W, H, 0, o.maxW || 460);
+}
+
+function lineChart(points, opts) {
+  const o = opts || {};
+  if (!points.length) return '';
+  const padL = 44, padR = 16, padT = 16, padB = 26;
+  const innerW = Math.max(VIZ.w - padL - padR, (points.length - 1) * 26);
+  const W = innerW + padL + padR, H = o.height || 180;
+  const y0 = padT, y1 = H - padB;
+
+  const vals = points.map(p => p.y);
+  let lo = o.min !== undefined ? o.min : Math.min(...vals);
+  let hi = o.max !== undefined ? o.max : Math.max(...vals);
+  if (hi === lo) hi = lo + Math.max(1, Math.abs(lo) * 0.1);
+  const room = (hi - lo) * 0.12;
+  if (o.min === undefined) lo = Math.max(0, lo - room);
+  if (o.max === undefined) hi = hi + room;
+
+  const X = i => padL + (points.length === 1 ? innerW / 2 : innerW * i / (points.length - 1));
+  const Y = v => y1 - (v - lo) / (hi - lo) * (y1 - y0);
+
+  let g = '';
+  for (let i = 0; i <= 3; i++) {
+    const v = lo + (hi - lo) * i / 3, y = Y(v);
+    g += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}" stroke="${VIZ.grid}" stroke-width="1"/>`;
+    g += svgText(padL - 6, y, o.fmtY ? o.fmtY(v) : String(Math.round(v)), { anchor: 'end', base: 'central', size: 10, fill: VIZ.faint });
+  }
+  if (o.guide !== undefined) {
+    const y = Y(o.guide);
+    g += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}" stroke="${VIZ.muted}" stroke-width="1" stroke-dasharray="4 3"/>`;
+    g += svgText(W - padR, y - 4, o.guideLabel || '', { anchor: 'end', size: 9.5, fill: VIZ.muted });
+  }
+
+  const d = points.map((p, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)},${Y(p.y).toFixed(1)}`).join(' ');
+  if (o.area) g += `<path d="${d} L${X(points.length - 1).toFixed(1)},${y1} L${X(0).toFixed(1)},${y1} Z" fill="${o.color || VIZ.cat(0)}" opacity=".10"/>`;
+  g += `<path d="${d}" fill="none" stroke="${o.color || VIZ.cat(0)}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+  const every = Math.max(1, Math.ceil(points.length / (innerW / 46)));
+  points.forEach((p, i) => {
+    const cx = X(i), cy = Y(p.y);
+    g += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="4" fill="${o.color || VIZ.cat(0)}" stroke="${VIZ.surface}" stroke-width="2">` +
+         `<title>${esc(p.title || '')}</title></circle>`;
+    if (i % every === 0 || i === points.length - 1) g += svgText(cx, H - 8, p.label, { anchor: 'middle', size: 10, fill: VIZ.faint });
+  });
+  return svgWrap(g, W, H, W > VIZ.w ? W : 0, W > VIZ.w ? 0 : 560);
+}
+
+/** 充填曲線。横軸は経過時間、縦軸は埋まったマス数（分析B） */
+function paceChart(states, total, given) {
+  if (!states.length) return '';
+  const padL = 40, padR = 14, padT = 14, padB = 26;
+  const W = VIZ.w, H = 190, y0 = padT, y1 = H - padB;
+  const maxT = Math.max(states[states.length - 1].t, 1000);
+  const X = t => padL + (W - padL - padR) * t / maxT;
+  const Y = f => y1 - (f - given) / Math.max(1, total - given) * (y1 - y0);
+
+  let g = '';
+  for (let i = 0; i <= 3; i++) {
+    const f = given + (total - given) * i / 3, y = Y(f);
+    g += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}" stroke="${VIZ.grid}" stroke-width="1"/>`;
+    g += svgText(padL - 6, y, String(Math.round(f)), { anchor: 'end', base: 'central', size: 10, fill: VIZ.faint });
+  }
+  const pts = [{ t: 0, filled: given }].concat(states.map(s => ({ t: s.t, filled: s.filled })));
+  const d = pts.map((p, i) => `${i ? 'L' : 'M'}${X(p.t).toFixed(1)},${Y(p.filled).toFixed(1)}`).join(' ');
+  g += `<path d="${d}" fill="none" stroke="${VIZ.cat(0)}" stroke-width="2" stroke-linejoin="round"/>`;
+
+  // 手が止まった区間を帯で示す
+  for (let i = 1; i < pts.length; i++) {
+    const dt = pts[i].t - pts[i - 1].t;
+    if (dt < LONG_THINK_MS) continue;
+    g += `<rect x="${X(pts[i - 1].t).toFixed(1)}" y="${padT}" width="${(X(pts[i].t) - X(pts[i - 1].t)).toFixed(1)}" ` +
+         `height="${y1 - padT}" fill="var(--warn)" opacity=".13"><title>${fmtDur(dt)} 手が止まりました</title></rect>`;
+  }
+  for (let i = 0; i <= 4; i++) {
+    const t = maxT * i / 4;
+    g += svgText(X(t), H - 8, fmtClock(t), { anchor: 'middle', size: 9.5, fill: VIZ.faint });
+  }
+  g += svgText(padL - 6, padT - 5, 'マス', { anchor: 'end', size: 9.5, fill: VIZ.faint });
+  return svgWrap(g, W, H, 0, 560);
+}
+
+/** 盤面の形をしたヒートマップ。色の濃さ＝そのマスにかけた時間（分析A） */
+function boardHeat(size, values, opts) {
+  const o = opts || {};
+  const geo = geoOf(size), n = geo.n;
+  const cw = n <= 4 ? 56 : n <= 6 ? 44 : 36;
+  const W = n * cw + 2, H = n * cw + 2;
+  const max = Math.max(...values.filter(v => v != null), 1);
+
+  let g = `<rect x="0" y="0" width="${W}" height="${H}" rx="5" fill="var(--line-strong)"/>`;
+  for (let i = 0; i < geo.N; i++) {
+    const r = (i / n) | 0, c = i % n;
+    const x = 1 + c * cw, y = 1 + r * cw;
+    const v = values[i];
+    // 1秒に満たないマスは塗らない。全面が塗られると「どこで止まったか」が読めなくなる
+    const step = (v == null || v < 1000) ? 0 : clamp(Math.ceil(v / max * 5), 1, 5);
+    const fill = v == null ? 'var(--cell-given)' : step ? VIZ.seq(step) : 'var(--cell)';
+    g += `<rect x="${x + 0.5}" y="${y + 0.5}" width="${cw - 1}" height="${cw - 1}" fill="${fill}">` +
+         `<title>${cellName(i, n)}${v == null ? '：最初から入っている数字' : '：' + fmtDur(v)}</title></rect>`;
+    // 1秒に満たないマスに「0」と書いても意味がないので出さない
+    if (v != null && v >= 1000 && v >= max * 0.18) {
+      g += `<text x="${x + cw / 2}" y="${y + cw / 2}" text-anchor="middle" dominant-baseline="central" ` +
+           `font-size="${cw * 0.27}" font-weight="700" style="font-variant-numeric:tabular-nums" ` +
+           `fill="var(--qt${step})">${Math.round(v / 1000)}</text>`;
+    }
+  }
+  // ブロックの区切り
+  for (let k = 1; k < n; k++) {
+    const strong = k % geo.bw === 0;
+    g += `<line x1="${1 + k * cw}" y1="1" x2="${1 + k * cw}" y2="${H - 1}" stroke="var(--line${strong ? '-strong' : ''})" stroke-width="${strong ? 1.6 : .6}"/>`;
+    const strongR = k % geo.bh === 0;
+    g += `<line x1="1" y1="${1 + k * cw}" x2="${W - 1}" y2="${1 + k * cw}" stroke="var(--line${strongR ? '-strong' : ''})" stroke-width="${strongR ? 1.6 : .6}"/>`;
+  }
+  return svgWrap(g, W, H, 0, o.maxW || 340);
+}
+
+function histogram(values, fmt) {
+  if (values.length < 12) return '';
+  const hi = Math.max(...values) * 1.02 || 1;
+  const binN = clamp(Math.round(Math.sqrt(values.length)) + 1, 4, 10);
+  const bins = new Array(binN).fill(0);
+  values.forEach(v => bins[clamp(Math.floor(v / hi * binN), 0, binN - 1)]++);
+  const maxC = Math.max(...bins);
+  const padL = 10, padR = 10, padT = 12, padB = 24;
+  const W = VIZ.w, H = 150, innerW = W - padL - padR, yBase = H - padB, bw = innerW / binN;
+
+  let g = `<line x1="${padL}" y1="${yBase}" x2="${W - padR}" y2="${yBase}" stroke="${VIZ.grid}" stroke-width="1"/>`;
+  bins.forEach((c, i) => {
+    const h = maxC ? c / maxC * (yBase - padT) : 0;
+    const x = padL + bw * i + 1.5;
+    const d = barPathV(x, yBase, h, bw - 3, 3);
+    const b0 = hi * i / binN, b1 = hi * (i + 1) / binN;
+    if (d) g += `<path d="${d}" fill="${VIZ.cat(0)}"><title>${fmt(b0)}〜${fmt(b1)}：${c}件</title></path>`;
+    if (i % 2 === 0) g += svgText(x + (bw - 3) / 2, H - 8, fmt(b0), { anchor: 'middle', size: 9.5, fill: VIZ.faint });
+  });
+  return svgWrap(g, W, H, 0, 560);
+}
+
+function tableView(head, rows, caption) {
+  return `<details class="foldout" style="margin-top:12px"><summary>数字で見る${caption ? '（' + esc(caption) + '）' : ''}</summary>` +
+    `<div class="foldbody" style="padding-top:0"><div style="overflow-x:auto"><table class="tbl">` +
+    `<thead><tr>${head.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>` +
+    rows.map(r => `<tr>${r.map((c, i) => `<td${i ? ' class="num"' : ''}>${esc(c)}</td>`).join('')}</tr>`).join('') +
+    `</tbody></table></div></div></details>`;
+}
+
+function statTile(k, v, unit, delta) {
+  const d = delta ? `<div class="sd ${delta.dir}">${esc(delta.text)}</div>` : '';
+  return `<div class="stat"><div class="sk">${esc(k)}</div>` +
+    `<div class="sv">${esc(String(v))}${unit ? `<small>${esc(unit)}</small>` : ''}</div>${d}</div>`;
+}
+
+function deltaOf(now, before, unit, higherIsBetter, eps, dec, label) {
+  if (before === null || before === undefined || !isFinite(before) || !isFinite(now)) return null;
+  const what = label || '前回';
+  const d = now - before, e = eps ?? 0.5;
+  if (Math.abs(d) < e) return { dir: 'flat', text: `${what}とほぼ同じ` };
+  const good = higherIsBetter === false ? d < 0 : d > 0;
+  const val = dec ? Math.abs(d).toFixed(dec) : fmtInt(Math.abs(d));
+  return { dir: good ? 'up' : 'down', text: `${what}より ${d > 0 ? '+' : '−'}${val}${unit || ''}` };
+}
+
+/* ===========================================================================
+   17. 結果画面
+   =========================================================================== */
+async function showResult(game, sm, extra) {
+  const course = courseByKey(game.courseKey);
+  const past = (await Store.byPlayer('summaries', App.player.id))
+    .filter(s => s.gameId !== sm.gameId && s.courseKey === sm.courseKey)
+    .sort((a, b) => a.at < b.at ? -1 : 1);
+
+  const prev = past.length ? past[past.length - 1] : null;
+  const medT = past.length >= 3 ? median(past.map(p => p.elapsedMs)) : null;
+
+  const marks = [];
+  if (extra.isPerfect) marks.push('<span style="color:var(--gold)">★ ノーミス・ノーヒント</span>');
+  if (extra.newBestTime && past.length) marks.push('<span style="color:var(--ok)">自己ベスト更新</span>');
+
+  let h = `<div class="sec">
+    <h2>クリア<span class="sub">${esc(game.size)}×${esc(game.size)} ${esc(course.label)} ・ 問題番号 ${esc(game.puzzleId)}</span></h2>
+    ${marks.length ? `<p class="lead" style="font-weight:700">${marks.join(' ／ ')}</p>` : ''}
+    <div class="stats">
+      ${statTile('かかった時間', fmtClock(game.elapsedMs), '', prev ? deltaOf(game.elapsedMs / 1000, prev.elapsedMs / 1000, '秒', false, 2, 0) : null)}
+      ${statTile('スコア', fmtInt(sm.score), '点', prev ? deltaOf(sm.score, prev.score, '点', true, 1, 0) : null)}
+      ${statTile('基準との比', sm.ratio.toFixed(2), '倍')}
+      ${statTile('ミス', sm.mistakes, '回')}
+      ${statTile('ヒント', sm.hintsE + sm.hintsR, '回')}
+      ${statTile('取り消し', sm.undos, '回')}
+    </div>
+    <p class="lead" style="margin-top:8px">基準との比は「かかった時間 ÷ このコースの基準時間（${fmtDur(course.baseMs)}）」です。1.00 より小さいほど速く解けています。</p>
+  </div>`;
+
+  h += analysisOfGame(game, sm);
+  h += `<div class="sec"><h2>まとめ</h2><div class="card report">${reportHTML(sm, past, course)}</div></div>`;
+  h += `<div class="row" style="margin-top:20px">
+      <button class="btn pri" id="rsAgain" type="button">同じ難しさでもう1問</button>
+      <button class="btn" id="rsHome" type="button">ホームへ</button>
+      <button class="btn" id="rsAna" type="button">これまでの記録を見る</button>
+    </div>`;
+
+  $('#resultBody').innerHTML = h;
+  show('result');
+  $('#rsAgain').onclick = () => startCourse(course);
+  $('#rsHome').onclick = () => goHome();
+  $('#rsAna').onclick = () => openAnalysis();
+}
+
+/** 1局ぶんの分析（A〜D）。結果画面から呼ぶ */
+function analysisOfGame(game, sm) {
+  const geo = geoOf(game.size), n = geo.n;
+  const per = thinkTimes(game);
+  const tm = techMap(game.givens, game.size);
+  const givens = strToArr(game.givens);
+  const rp = replay(game);
+
+  // --- A. どこで手が止まったか ---
+  const heatVals = [];
+  for (let i = 0; i < geo.N; i++) heatVals.push(givens[i] ? null : (per[i] || 0));
+
+  const techRows = TECH_ORDER
+    .filter(t => sm.techCount[t])
+    .map(t => ({
+      label: TECH_NAME[t],
+      value: sm.techTime[t] / sm.techCount[t] / 1000,
+      valueText: fmtDur(sm.techTime[t] / sm.techCount[t]),
+      color: VIZ.cat(TECH_LV[t] - 1)
+    }))
+    .sort((a, b) => b.value - a.value);
+
+  let h = `<div class="sec"><h2>A. どこで手が止まったか<span class="sub">色がついたマスほど長く考えたところ</span></h2>
+    <div class="card">
+      ${boardHeat(game.size, heatVals)}
+      <p class="lead" style="margin-top:8px">灰色のマスは最初から数字が入っていたところ、白いマスは1秒かからずに埋めたところです。数字は、そのマスに使った秒数です。</p>`;
+
+  if (sm.longCells.length) {
+    h += `<table class="tbl" style="margin-top:10px">
+      <thead><tr><th>マス</th><th>かけた時間</th><th>そのマスを決める考え方</th></tr></thead><tbody>` +
+      sm.longCells.map(c =>
+        `<tr><td>${esc(cellName(c.c, n))}</td><td class="num">${esc(fmtDur(c.ms))}</td>` +
+        `<td>${esc(c.tech ? TECH_NAME[c.tech] : '—')}</td></tr>`).join('') +
+      `</tbody></table>`;
+  } else {
+    h += `<p class="lead" style="margin-top:10px">3秒以上かかったマスはありませんでした。</p>`;
+  }
+  h += `</div></div>`;
+
+  if (techRows.length > 1) {
+    h += `<div class="sec"><h2>考え方ごとの平均時間<span class="sub">1マスあたり</span></h2><div class="card">
+      ${barsH(techRows)}
+      <p class="lead">この盤面で、それぞれの考え方が必要だったマスに、平均でどれだけ時間をかけたかです。
+      とびぬけて長いものが、いま伸ばせるところです。</p></div></div>`;
+  }
+
+  // --- B. 解き進みのペース ---
+  const g0 = givens.filter(v => v).length;
+  const stops = [];
+  let pt = 0;
+  rp.states.forEach(s => { const dt = s.t - pt; if (dt >= LONG_THINK_MS) stops.push(dt); pt = s.t; });
+
+  h += `<div class="sec"><h2>B. 解き進みのペース</h2><div class="card">
+    ${paceChart(rp.states, geo.N, g0)}
+    <p class="lead">線が平らな区間は、手が止まっていた時間です（帯で示しています）。
+    ${stops.length ? `${stops.length}回、合わせて ${fmtDur(sum(stops))} 止まりました。` : '20秒以上止まった場面はありませんでした。'}</p>
+    <div class="stats" style="margin-top:10px">
+      ${statTile('序盤', sm.thirds[0] ? fmtDur(sm.thirds[0]) : '—', '/マス')}
+      ${statTile('中盤', sm.thirds[1] ? fmtDur(sm.thirds[1]) : '—', '/マス')}
+      ${statTile('終盤', sm.thirds[2] ? fmtDur(sm.thirds[2]) : '—', '/マス')}
+    </div>
+    <p class="lead" style="margin-top:8px">ふつうは終盤ほど速くなります（候補が絞れるため）。終盤で遅くなるなら、見落としを探し直している合図です。</p>
+  </div></div>`;
+
+  // --- C. 誤入力の傾向 ---
+  if (sm.mistakes) {
+    const digits = Object.keys(sm.mistakeByDigit).map(Number).sort((a, b) => a - b);
+    const candRows = Object.keys(sm.mistakeByCands).map(Number).sort((a, b) => a - b)
+      .map(k => ({ label: `候補が${k}個のとき`, value: sm.mistakeByCands[k], valueText: `${sm.mistakeByCands[k]}回` }));
+    h += `<div class="sec"><h2>C. まちがえた場面</h2><div class="card">
+      <p class="lead">まちがえた数字：${digits.map(d => `<b>${d}</b>（${sm.mistakeByDigit[d]}回）`).join('、')}</p>
+      ${candRows.length ? barsH(candRows) : ''}
+      <p class="lead">候補が2個の場面でのまちがいは「当てずっぽう」、
+      候補が多い場面でのまちがいは「絞り込み不足」のことが多いです。
+      まちがいに気づくまで平均 <b>${sm.noticeLag}手</b>進んでいました。</p>
+    </div></div>`;
+  }
+
+  // --- D. 解き方の癖 ---
+  const noteRate = sm.moveCount ? sm.noteMoves / sm.moveCount : 0;
+  h += `<div class="sec"><h2>D. 解き方の癖<span class="sub">よい・わるいではなく、傾向として</span></h2><div class="card">
+    <div class="stats">
+      ${statTile('メモを使った割合', Math.round(noteRate * 100), '%')}
+      ${statTile('取り消し', sm.undos, '回')}
+      ${statTile('同じブロックを続けて埋めた割合', Math.round(sm.boxRun * 100), '%')}
+      ${statTile('ヒント（説明のみ）', sm.hintsE, '回')}
+      ${statTile('ヒント（数字を見た）', sm.hintsR, '回')}
+    </div>
+    <p class="lead" style="margin-top:10px">
+      メモを多く使うのは「書いて考える」型、少ないのは「頭で考える」型です。どちらが優れているということはありません。
+      同じブロックを続けて埋めた割合が高いほど、1か所を集中して片づけていく解き方です。</p>
+  </div></div>`;
+
+  return h;
+}
+
+/** 分析F。数値をつなげて文章にする。断定できるだけの記録が無いときは比較を書かない */
+function reportHTML(sm, past, course) {
+  const L = [];
+  L.push(`今回 <b>${sm.size}×${sm.size} ${esc(course.label)}</b> を <b>${fmtClock(sm.elapsedMs)}</b>` +
+         `（基準の ${sm.ratio.toFixed(2)} 倍）、ミス ${sm.mistakes}回、ヒント ${sm.hintsE + sm.hintsR}回。`);
+
+  if (past.length >= 3) {
+    const med = median(past.map(p => p.elapsedMs));
+    const d = med - sm.elapsedMs;
+    if (Math.abs(d) < 5000) {
+      L.push(`同じ難しさの過去${past.length}局の中央値（${fmtClock(med)}）と<b>ほぼ同じ</b>です。`);
+    } else {
+      L.push(`同じ難しさの過去${past.length}局の中央値 ${fmtClock(med)} より ` +
+             `<b>${fmtDur(Math.abs(d))} ${d > 0 ? '速く' : '遅く'}</b>なっています。`);
+    }
+  } else {
+    L.push(`同じ難しさの記録が ${past.length}局しかないため、比較はまだ出しません（3局から出ます）。`);
+  }
+
+  if (sm.longCells.length) {
+    const top = sm.longCells.slice(0, 2);
+    const n = geoOf(sm.size).n;
+    L.push(`最も手が止まったのは ${top.map(c => `<b>${cellName(c.c, n)}</b>（${fmtDur(c.ms)}）`).join(' と ')}。`);
+    const techs = [...new Set(top.map(c => c.tech).filter(Boolean))];
+    if (techs.length === 1) {
+      L.push(`どちらも<b>「${TECH_NAME[techs[0]]}」</b>が必要な場面でした。`);
+    } else if (techs.length) {
+      L.push(`必要だった考え方は ${techs.map(t => `「${TECH_NAME[t]}」`).join('と')} です。`);
+    }
+  }
+
+  // いちばん時間を食っている考え方を名指しする
+  const avgs = TECH_ORDER.filter(t => sm.techCount[t]).map(t => ({
+    t, v: sm.techTime[t] / sm.techCount[t]
+  })).sort((a, b) => b.v - a.v);
+  if (avgs.length >= 2 && avgs[0].v > avgs[1].v * 1.6 && avgs[0].v > 8000) {
+    L.push(`<b>「${TECH_NAME[avgs[0].t]}」</b>だけ 1マスあたり ${fmtDur(avgs[0].v)} かかっており、` +
+           `ほかの考え方（${fmtDur(avgs[1].v)}前後）より目立って長くなっています。ここが今いちばん伸ばせるところです。`);
+  }
+
+  // 次にやることの提案
+  const list = COURSES[sm.size];
+  const idx = list.findIndex(c => c.key === sm.courseKey);
+  let advice;
+  if (sm.hintsR > 0) {
+    advice = `まずは<b>同じ難しさ</b>を、ヒントで数字を見ずに解けるまで繰り返すことを勧めます。`;
+  } else if (sm.mistakes >= 3) {
+    advice = `ミスが ${sm.mistakes}回ありました。<b>同じ難しさ</b>で、置く前にもう一度確かめる練習を勧めます。`;
+  } else if (sm.ratio <= 0.75 && idx >= 0 && idx < list.length - 1) {
+    advice = `基準よりかなり速く解けています。<b>${list[idx + 1].label}</b>に上げてみてください。`;
+  } else if (idx >= 0 && idx < list.length - 1 && past.length >= 3) {
+    advice = `この難しさに慣れてきたら、<b>${list[idx + 1].label}</b>に進んでみてください。`;
+  } else {
+    advice = `この調子で<b>同じ難しさ</b>を重ねると、時間が縮まっていくのが記録で見えます。`;
+  }
+  L.push(advice);
+  return L.map(s => `<p>${s}</p>`).join('');
+}
+
+/* ===========================================================================
+   18. 解き方分析（履歴全体）
+   =========================================================================== */
+async function openAnalysis() {
+  const sel = $('#fLevel');
+  if (sel.options.length <= 1) {
+    ALL_COURSES.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.key;
+      o.textContent = `${sizeOfCourse(c.key)}×${sizeOfCourse(c.key)} ${c.label}`;
+      sel.appendChild(o);
+    });
+  }
+  show('analysis');
+  const n = await rebuildSummaries(App.player.id);
+  if (n) toast(`記録を再集計しました（${n}件）`);
+  renderAnalysis();
+}
+
+async function renderAnalysis() {
+  const days = +$('#fPeriod').value;
+  const size = +$('#fSize').value;
+  const ck = $('#fLevel').value;
+  let list = await Store.range('summaries', App.player.id, days ? daysAgoISO(days) : null, null);
+  if (size) list = list.filter(s => s.size === size);
+  if (ck !== '0') list = list.filter(s => s.courseKey === ck);
+  list.sort((a, b) => a.at < b.at ? -1 : 1);
+
+  const box = $('#analysisBody');
+  if (!list.length) {
+    box.innerHTML = `<div class="card"><div class="empty">この条件の記録はまだありません。</div></div>`;
+    return;
+  }
+
+  const totalMs = sum(list.map(s => s.elapsedMs));
+  const perfects = list.filter(s => s.perfect).length;
+
+  let h = `<div class="sec"><h2>まとめ<span class="sub">${list.length}局</span></h2>
+    <div class="stats">
+      ${statTile('解いた数', list.length, '局')}
+      ${statTile('合計時間', fmtDur(totalMs))}
+      ${statTile('ノーミス・ノーヒント', perfects, '局')}
+      ${statTile('平均ミス', (avg(list.map(s => s.mistakes))).toFixed(1), '回')}
+      ${statTile('平均の基準比', avg(list.map(s => s.ratio)).toFixed(2), '倍')}
+      ${statTile('ヒントを使った局', list.filter(s => s.hintsE + s.hintsR > 0).length, '局')}
+    </div></div>`;
+
+  // --- E. 上達曲線（レシオ）---
+  h += `<div class="sec"><h2>E. 上達曲線<span class="sub">基準時間との比。小さいほど速い</span></h2><div class="card">
+    ${lineChart(list.map((s, i) => ({
+      label: fmtDate(s.at), y: s.ratio,
+      title: `${fmtDateTime(s.at)} ${s.size}×${s.size} ${courseByKey(s.courseKey).label} ${fmtClock(s.elapsedMs)}（${s.ratio.toFixed(2)}倍）`
+    })), { fmtY: v => v.toFixed(1) + '倍', guide: 1, guideLabel: '基準', color: 'var(--c1)' })}
+    <p class="lead">難しさが違う局も、この比なら1本の線で並べられます。点線（1.00倍）より下なら基準より速く解けています。</p>
+    ${tableView(['日時', 'コース', '時間', '基準比', 'ミス', 'ヒント', 'スコア'],
+      list.slice().reverse().slice(0, 40).map(s => [
+        fmtDateTime(s.at), `${s.size}×${s.size} ${courseByKey(s.courseKey).label}`,
+        fmtClock(s.elapsedMs), s.ratio.toFixed(2), String(s.mistakes),
+        String(s.hintsE + s.hintsR), fmtInt(s.score)]), '直近40局')}
+  </div></div>`;
+
+  // --- A（通算）. 考え方ごとの平均思考時間 ---
+  const tt = {}, tc = {};
+  list.forEach(s => {
+    Object.keys(s.techTime || {}).forEach(k => {
+      tt[k] = (tt[k] || 0) + s.techTime[k];
+      tc[k] = (tc[k] || 0) + s.techCount[k];
+    });
+  });
+  const rows = TECH_ORDER.filter(t => tc[t] >= 3).map(t => ({
+    label: TECH_NAME[t], value: tt[t] / tc[t] / 1000,
+    valueText: fmtDur(tt[t] / tc[t]), color: VIZ.cat(TECH_LV[t] - 1)
+  })).sort((a, b) => b.value - a.value);
+  if (rows.length) {
+    h += `<div class="sec"><h2>考え方ごとの平均時間<span class="sub">通算・1マスあたり</span></h2><div class="card">
+      ${barsH(rows)}
+      <p class="lead">3マス以上あらわれた考え方だけを出しています。いちばん長いものが、いま伸ばせるところです。</p>
+      ${tableView(['考え方', '平均時間', '出てきたマス数'],
+        rows.map(r => { const k = TECH_ORDER.find(t => TECH_NAME[t] === r.label);
+          return [r.label, r.valueText, String(tc[k])]; }))}
+    </div></div>`;
+  }
+
+  // --- 時間の分布 ---
+  const ratios = list.map(s => s.ratio);
+  if (ratios.length >= 12) {
+    h += `<div class="sec"><h2>基準比の分布</h2><div class="card">
+      ${histogram(ratios, v => v.toFixed(1) + '倍')}
+      <p class="lead">山が左に寄るほど、基準より速く解けた局が多いということです。</p></div></div>`;
+  }
+
+  // --- D（通算）. 癖の推移 ---
+  h += `<div class="sec"><h2>解き方の癖<span class="sub">通算</span></h2><div class="card">
+    <div class="stats">
+      ${statTile('メモを使った割合', Math.round(avg(list.map(s => s.moveCount ? s.noteMoves / s.moveCount : 0)) * 100), '%')}
+      ${statTile('平均の取り消し', avg(list.map(s => s.undos)).toFixed(1), '回')}
+      ${statTile('同ブロック連続', Math.round(avg(list.map(s => s.boxRun)) * 100), '%')}
+      ${statTile('説明だけで解けた割合', hintSelfRate(list), '%')}
+    </div>
+    <p class="lead" style="margin-top:10px">「説明だけで解けた割合」は、ヒントを使ったうち、考え方の説明だけで済み、数字を見なかった割合です。
+    ここが上がっていれば、テクニックが身についてきています。</p>
+  </div></div>`;
+
+  box.innerHTML = h;
+}
+
+function hintSelfRate(list) {
+  const e = sum(list.map(s => s.hintsE)), r = sum(list.map(s => s.hintsR));
+  if (!e && !r) return '—';
+  return Math.round(e / Math.max(1, e + r) * 100);
+}
+
+/* ===========================================================================
+   19. ホームとコース選択
+   =========================================================================== */
+async function goHome() {
+  show('home');
+  await rebuildSummaries(App.player.id);
+  const sums = await Store.byPlayer('summaries', App.player.id);
+  const p = App.player;
+  $('#homeStats').innerHTML =
+    statTile('解いた数', sums.length, '局') +
+    statTile('ノーミス・ノーヒント', p.perfect || 0, '局') +
+    statTile('合計時間', sums.length ? fmtDur(sum(sums.map(s => s.elapsedMs))) : '—') +
+    statTile('いちばん難しいクリア', hardestOf(p), '');
+
+  const list = (await Store.byPlayer('inprogress', p.id)).sort((a, b) => a.at < b.at ? 1 : -1);
+  $('#resumeBox').hidden = !list.length;
+  $('#goResume').disabled = !list.length;
+  $('#resumeDesc').textContent = list.length
+    ? `${list.length}件あります。途中から続けられます`
+    : '解きかけの盤面はありません';
+
+  $('#resumeList').innerHTML = list.map(r => {
+    const c = courseByKey(r.courseKey);
+    const filled = strToArr(r.grid).filter(v => v).length;
+    const total = r.size * r.size;
+    return `<button class="levelbtn" type="button" data-res="${esc(r.id)}">
+      <span class="lvbadge">${esc(String(r.size))}</span>
+      <span><span class="lvname">${esc(r.size)}×${esc(r.size)} ${esc(c ? c.label : '')}</span><br>
+      <span class="lvdesc">${filled}/${total}マス ・ ${fmtClock(r.elapsedMs)} ・ ${esc(fmtDateTime(r.at))}</span></span>
+      <span class="lvstat">${Math.round(filled / total * 100)}%</span></button>`;
+  }).join('');
+
+  $$('#resumeList [data-res]').forEach(b => b.addEventListener('click', async () => {
+    const rec = await Store.one('inprogress', b.dataset.res);
+    if (rec) restoreGame(rec);
+  }));
+}
+
+function hardestOf(p) {
+  const done = ALL_COURSES.filter(c => p.cleared && p.cleared[c.key]);
+  if (!done.length) return 'まだ';
+  const best = done.sort((a, b) => b.base - a.base)[0];
+  return `${sizeOfCourse(best.key)}×${sizeOfCourse(best.key)} ${best.label}`;
+}
+
+function renderNew() {
+  const size = App.size;
+  $$('#sizeBtns .sizebtn').forEach(b =>
+    b.setAttribute('aria-pressed', String(+b.dataset.size === size)));
+  $('#sizeNote').textContent = SIZE_NOTE[size];
+  $('#lvHead').textContent = size === 4 ? 'ヒントの数' : '難しさ';
+
+  const p = App.player;
+  $('#levelBtns').innerHTML = COURSES[size].map(c => {
+    const cleared = (p.cleared && p.cleared[c.key]) || 0;
+    const best = p.best && p.best[c.key];
+    return `<button class="levelbtn" type="button" data-course="${esc(c.key)}" data-lv="${c.lv}">
+      <span class="lvbadge">${esc(c.badge)}</span>
+      <span><span class="lvname">${esc(c.label)}</span><br><span class="lvdesc">${esc(c.desc)}</span></span>
+      <span class="lvstat">${cleared ? `${cleared}回クリア<br>最短 ${fmtClock(best)}` : 'まだ'}</span>
+    </button>`;
+  }).join('');
+
+  $$('#levelBtns [data-course]').forEach(b => b.addEventListener('click', () => {
+    startCourse(courseByKey(b.dataset.course));
+  }));
+
+  if (size === 4) {
+    $('#sizeNote').textContent += ' 4×4は、どう作っても「入る数字が1つだけ」で最後まで解けてしまうため、難しさではなくヒントの数で選びます。';
+  }
+}
+
+/* ===========================================================================
+   20. バックアップ
+   =========================================================================== */
+async function exportAll() {
+  const data = { app: 'nanpure', schemaVersion: 1, exportedAt: nowISO() };
+  for (const s of STORES) data[s] = await Store.all(s);
+  const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `nanpure-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  if (App.player) {
+    App.player.lastExportAt = nowISO();
+    await Store.put('players', App.player);
+  }
+  toast('書き出しました');
+  renderBackup();
+}
+
+async function importFile(file) {
+  let data;
+  try { data = JSON.parse(await file.text()); }
+  catch { toast('読み込めませんでした'); return; }
+  if (!data || data.app !== 'nanpure') { toast('このアプリの記録ではありません'); return; }
+
+  const mode = await confirmDialog('読み込み方をえらんでください',
+    'いまの記録に「足す」か、いまの記録を消して「置きかえる」かを選べます。',
+    '足す', '', null, '置きかえる');
+
+  if (mode === false) {
+    const ok = await confirmDialog('置きかえますか？', 'いまの記録はすべて消えます。取り消せません。', '置きかえる');
+    if (!ok) return;
+    for (const s of STORES) {
+      for (const r of await Store.all(s)) await Store.del(s, r[KEYOF[s]]);
+    }
+  }
+  let n = 0;
+  for (const s of STORES) {
+    for (const r of (data[s] || [])) { await Store.put(s, r); n++; }
+  }
+  toast(`${n}件読み込みました`);
+  App.player = null;
+  await renderPlayers();
+  show('player');
+}
+
+async function renderBackup() {
+  show('backup');
+  const p = App.player;
+  const last = p && p.lastExportAt;
+  const days = last ? Math.floor((Date.now() - new Date(last)) / 86400000) : null;
+  $('#exportInfo').innerHTML = last
+    ? `最後に書き出したのは ${esc(fmtDateTime(last))}（${days}日前）。` +
+      (days >= 30 ? ' <b style="color:var(--warn)">そろそろ書き出しておくと安心です。</b>' : '')
+    : 'まだ一度も書き出していません。';
+
+  const u = await Store.usage();
+  const games = await Store.byPlayer('summaries', p.id);
+  $('#usageInfo').innerHTML =
+    `保存先: <b>${Store.isFallback ? 'localStorage（IndexedDB が使えないため）' : 'IndexedDB'}</b>。` +
+    `この人の記録 ${games.length} / ${Store.limit}局。` +
+    (u.quota ? `この端末での使用量 ${(u.used / 1048576).toFixed(1)}MB。` : '');
+}
+
+/* ===========================================================================
+   21. キーボード操作
+   =========================================================================== */
+function onKey(e) {
+  if ($('#modal').classList.contains('on')) return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+
+  if (App.screen !== 'play') {
+    if (e.key === 'Escape' && App.player && App.screen !== 'home') { goHome(); e.preventDefault(); }
+    return;
+  }
+  const g = App.game;
+  if (!g || g.done) return;
+
+  if (e.key === 'Escape') { quitPlay(); e.preventDefault(); return; }
+  if (/^[1-9]$/.test(e.key)) {
+    const v = +e.key;
+    if (v <= g.geo.n) { inputNumber(v); e.preventDefault(); }
+    return;
+  }
+  switch (e.key) {
+    case 'ArrowUp': moveSel(-1, 0); e.preventDefault(); break;
+    case 'ArrowDown': moveSel(1, 0); e.preventDefault(); break;
+    case 'ArrowLeft': moveSel(0, -1); e.preventDefault(); break;
+    case 'ArrowRight': moveSel(0, 1); e.preventDefault(); break;
+    case 'Backspace': case 'Delete': eraseCell(); e.preventDefault(); break;
+    case ' ': toggleMemo(); e.preventDefault(); break;
+    case 'h': case 'H': askHint(); e.preventDefault(); break;
+    case 'z': case 'Z': if (e.ctrlKey || e.metaKey) { e.shiftKey ? redo() : undo(); e.preventDefault(); } break;
+    case 'y': case 'Y': if (e.ctrlKey || e.metaKey) { redo(); e.preventDefault(); } break;
+  }
+}
+
+function toggleMemo() {
+  const g = App.game;
+  if (!g) return;
+  g.noteMode = !g.noteMode;
+  $('#tMemo').setAttribute('aria-pressed', String(g.noteMode));
+}
+
+async function quitPlay() {
+  await saveProgress();
+  App.game = null;
+  pauseTimer();
+  goHome();
+}
+
+/* ===========================================================================
+   22. 起動
+   =========================================================================== */
+function isStandalone() {
+  return navigator.standalone === true ||
+    (matchMedia('(display-mode: standalone)').matches);
+}
+function isIOS() {
+  return /iP(hone|ad|od)/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+function bindEvents() {
+  $('#btnTheme').onclick = cycleTheme;
+  $('#btnScale').onclick = cycleScale;
+  $('#btnSwitch').onclick = () => { App.player = null; show('player'); renderPlayers(); };
+  $('#btnQuit').onclick = quitPlay;
+
+  $('#goNew').onclick = () => { show('new'); renderNew(); };
+  $('#goResume').onclick = () => { show('home'); $('#resumeBox').scrollIntoView({ behavior: 'smooth' }); };
+  $('#goAnalysis').onclick = openAnalysis;
+  $('#goBackup').onclick = renderBackup;
+  $('#newBack').onclick = goHome;
+  $('#anaBack').onclick = goHome;
+  $('#bkBack').onclick = goHome;
+
+  $$('#sizeBtns .sizebtn').forEach(b => b.onclick = () => {
+    App.size = +b.dataset.size;
+    Prefs.set('lastSize', App.size);
+    renderNew();
+  });
+  $('#btnById').onclick = () => {
+    const p = parsePuzzleId($('#puzzleIdInput').value);
+    if (!p) { toast('問題番号の形が違います（例: 9C-4F2A1B）'); return; }
+    startCourse(p.course, p.seed);
+  };
+
+  $('#tMemo').onclick = toggleMemo;
+  $('#tUndo').onclick = undo;
+  $('#tRedo').onclick = redo;
+  $('#tErase').onclick = eraseCell;
+  $('#tHint').onclick = askHint;
+
+  $('#fPeriod').onchange = renderAnalysis;
+  $('#fSize').onchange = renderAnalysis;
+  $('#fLevel').onchange = renderAnalysis;
+
+  $('#btnExport').onclick = exportAll;
+  $('#btnImport').onclick = () => $('#fileImport').click();
+  $('#fileImport').onchange = e => { if (e.target.files[0]) importFile(e.target.files[0]); e.target.value = ''; };
+  $('#btnWipe').onclick = async () => {
+    const ok = await confirmDialog('記録を消しますか？',
+      `${App.player.name} さんの記録と解きかけの盤面がすべて消えます。取り消せません。`, '消す');
+    if (!ok) return;
+    await wipePlayer(App.player.id);
+    App.player.best = {}; App.player.bestScore = {}; App.player.cleared = {}; App.player.perfect = 0;
+    await Store.put('players', App.player);
+    toast('消しました');
+    goHome();
+  };
+  $('#iosClose').onclick = () => {
+    Prefs.set('iosBannerClosed', true);
+    $('#iosBanner').classList.remove('on');
+  };
+
+  document.addEventListener('keydown', onKey);
+  window.addEventListener('resize', () => { if (App.screen === 'play') fitBoard(); });
+  window.addEventListener('orientationchange', () => setTimeout(fitBoard, 250));
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { pauseTimer(); saveProgress(); }
+    else if (App.screen === 'play' && App.game && !App.game.done) startTimer();
+  });
+  window.addEventListener('pagehide', () => { pauseTimer(); saveProgress(); });
+}
+
+async function boot() {
+  Prefs.load();
+  applyTheme(Prefs.data.theme);
+  applyScale(Prefs.data.fontScale);
+  App.size = Prefs.data.lastSize || 9;
+
+  bindEvents();
+  await Store.init();
+
+  if (navigator.storage && navigator.storage.persist) {
+    try { await navigator.storage.persist(); } catch {}
+  }
+  // Worker が使えるかを先に確かめておく。初回の生成で 1.5 秒待たされないようにする
+  ensureWorker();
+
+  await renderPlayers();
+  const last = Prefs.data.lastPlayerId;
+  if (last && await Store.one('players', last)) await selectPlayer(last);
+  else show('player');
+
+  if (isIOS() && !isStandalone() && !Prefs.data.iosBannerClosed) {
+    setTimeout(() => $('#iosBanner').classList.add('on'), 1200);
+  }
+  document.body.dataset.ready = '1';
+}
+
+boot();
+
+</script>
+</body>
+</html>
