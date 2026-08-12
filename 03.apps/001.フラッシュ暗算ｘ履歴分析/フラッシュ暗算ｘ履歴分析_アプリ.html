@@ -737,6 +737,21 @@ details.foldout .foldbody{padding:0 15px 15px;font-size:13.5px;line-height:1.75;
 }
 .toast.on{transform:translate(-50%,0);opacity:1}
 
+/* うまくいかなかったときの案内。記録の読み書きは失敗しても画面に何も出ないので、
+   黙って固まったように見えないための最後の受け皿 */
+.errbar{
+  position:fixed;left:50%;bottom:16px;transform:translateX(-50%);
+  z-index:250;width:min(520px,calc(100vw - 24px));
+  padding:14px 16px;border-radius:var(--radius);
+  background:var(--bg-elev);border:1px solid var(--ng);
+  box-shadow:var(--shadow-lg);
+  font-size:13.5px;line-height:1.7;
+}
+.errbar[hidden]{display:none}
+.errbar .errbar-head{color:var(--ng);font-weight:700}
+.errbar code{font-size:11.5px;color:var(--fg-faint);word-break:break-all}
+.errbar .btnrow{margin-top:10px;justify-content:flex-end}
+
 /* モーダル */
 .modal{
   position:fixed;inset:0;z-index:300;display:none;
@@ -1054,6 +1069,14 @@ details.foldout .foldbody{padding:0 15px 15px;font-size:13.5px;line-height:1.75;
 </main>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="errbar" id="errbar" role="alert" hidden>
+  <div id="errbarMsg"></div>
+  <div class="btnrow">
+    <button class="btn" id="errbarClose" type="button">閉じる</button>
+    <button class="btn primary" id="errbarReload" type="button">読み込みなおす</button>
+  </div>
+</div>
 
 <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
   <div class="modal-in">
@@ -1471,6 +1494,31 @@ function toast(msg, ms) {
   el.classList.add('on');
   clearTimeout(toast._t);
   toast._t = setTimeout(() => el.classList.remove('on'), ms || 2600);
+}
+
+/**
+ * うまくいかなかったことを画面に出す。
+ * 記録の読み書きは失敗しても例外が表に出ないことがあり、そのままだと
+ * 「読み込み中の表示のまま動かない」ようにしか見えない。消えるトーストではなく、
+ * 閉じるまで残る帯にして、読み込みなおす導線を必ず添える。
+ */
+function showTrouble(msg, detail) {
+  $('#errbarMsg').innerHTML =
+    `<div class="errbar-head">うまくいきませんでした</div>${esc(msg)}` +
+    (detail ? `<br><code>${esc(String(detail).slice(0, 160))}</code>` : '');
+  $('#errbar').hidden = false;
+}
+
+function hideTrouble() { $('#errbar').hidden = true; }
+
+/**
+ * ms 経っても終わらなければ onStuck を呼ぶ見張り。
+ * 戻り値の関数を呼ぶと見張りをやめる。
+ * 待っている処理そのものは止められないので、あくまで画面に案内を出すためのもの。
+ */
+function watchdog(ms, onStuck) {
+  const id = setTimeout(onStuck, ms);
+  return () => clearTimeout(id);
 }
 
 /**
@@ -2127,39 +2175,54 @@ async function finishRun() {
     questions: r.records
   };
 
-  await Store.put('sessions', session);
-  await Store.put('summaries', summarize(session));
-
-  // プレイヤー側の更新
-  const p = App.player;
-  p.playCount = (p.playCount || 0) + 1;
-  p.lastPlayAt = session.at;
-
   const okCount = r.records.filter(x => x.u === x.a).length;
   const rate = okCount / r.records.length;
   let newStars = 0, starUp = false, cleared = false, unlockedMaster = false;
 
-  if (r.meta.mode === 'step') {
-    newStars = rate >= 1 ? 3 : rate >= 0.9 ? 2 : rate >= LIMITS.clearRate ? 1 : 0;
-    cleared = newStars > 0;
-    const prev = p.progress[r.meta.stageId] || { stars: 0, bestScore: 0 };
-    if (newStars > prev.stars) starUp = true;
-    p.progress[r.meta.stageId] = {
-      stars: Math.max(prev.stars, newStars),
-      bestScore: Math.max(prev.bestScore || 0, session.score),
-      clearedAt: prev.clearedAt || (cleared ? session.at : null)
-    };
-    if (!p.unlocked.includes('master') && canUnlockMaster(p)) {
-      p.unlocked.push('master');
-      unlockedMaster = true;
-    }
-  } else {
-    const key = 'free:' + cfgKey(session.cfg);
-    p.best[key] = Math.max(p.best[key] || 0, session.score);
-  }
+  // 保存でつまずいても、結果は必ず見せる。
+  // 記録の書き込みは失敗しても返ってこなくても画面に何も出ないため、
+  // 見張りを付けて「保存できていない」ことだけは必ず伝える
+  hideTrouble();
+  const stop = watchdog(10000, () => showTrouble(
+    'この回の記録の保存に時間がかかっています。読み込みなおしてから、もう一度あそんでください。'));
 
-  await Store.put('players', p);
-  await trimSessions(p.id);
+  try {
+    await Store.put('sessions', session);
+    await Store.put('summaries', summarize(session));
+
+    // プレイヤー側の更新
+    const p = App.player;
+    p.playCount = (p.playCount || 0) + 1;
+    p.lastPlayAt = session.at;
+
+    if (r.meta.mode === 'step') {
+      newStars = rate >= 1 ? 3 : rate >= 0.9 ? 2 : rate >= LIMITS.clearRate ? 1 : 0;
+      cleared = newStars > 0;
+      const prev = p.progress[r.meta.stageId] || { stars: 0, bestScore: 0 };
+      if (newStars > prev.stars) starUp = true;
+      p.progress[r.meta.stageId] = {
+        stars: Math.max(prev.stars, newStars),
+        bestScore: Math.max(prev.bestScore || 0, session.score),
+        clearedAt: prev.clearedAt || (cleared ? session.at : null)
+      };
+      if (!p.unlocked.includes('master') && canUnlockMaster(p)) {
+        p.unlocked.push('master');
+        unlockedMaster = true;
+      }
+    } else {
+      const key = 'free:' + cfgKey(session.cfg);
+      p.best[key] = Math.max(p.best[key] || 0, session.score);
+    }
+
+    await Store.put('players', p);
+    await trimSessions(p.id);
+    stop();
+  } catch (e) {
+    stop();
+    showTrouble(
+      'この回の記録を保存できませんでした。結果は出しますが、記録には残りません。',
+      e && e.message);
+  }
 
   showResult(session, { newStars, starUp, cleared, unlockedMaster });
 }
@@ -2438,7 +2501,10 @@ async function rebuildSummaries(playerId, onProgress) {
     const part = stale.slice(i, i + CHUNK).map(summarize);
     await Store.putMany('summaries', part);
     if (onProgress) onProgress(Math.min(i + CHUNK, stale.length), stale.length);
-    await new Promise(r => (window.requestIdleCallback || setTimeout)(r, { timeout: 60 }));
+    // 画面を描き直す隙をつくるだけなので、必ず短く返る setTimeout を使う。
+    // requestIdleCallback は「ブラウザが暇になったら」なので、環境によっては
+    // timeout を指定しても何十秒も戻ってこず、読み込み中のまま固まって見える
+    await new Promise(r => setTimeout(r, 0));
   }
   return stale.length;
 }
@@ -3112,14 +3178,27 @@ async function openHistory() {
     `<div class="card"><div class="progress-line"><i style="width:30%"></i></div>
      <p style="margin-top:10px;font-size:13.5px;color:var(--fg-muted)">記録を読み込んでいます…</p></div>`;
 
-  // 分析ロジックが更新されていれば、生ログから作り直す
-  await rebuildSummaries(App.player.id, (done, total) => {
-    $('#historyBody').innerHTML =
-      `<div class="card"><div class="progress-line"><i style="width:${Math.round(done / total * 100)}%"></i></div>
-       <p style="margin-top:10px;font-size:13.5px;color:var(--fg-muted)">記録を集計しなおしています（${done} / ${total}）</p></div>`;
-  });
+  hideTrouble();
+  const stop = watchdog(10000, () => showTrouble(
+    '記録の読み込みに時間がかかっています。読み込みなおしてみてください。'));
 
-  await loadHistory();
+  try {
+    // 分析ロジックが更新されていれば、生ログから作り直す
+    await rebuildSummaries(App.player.id, (done, total) => {
+      $('#historyBody').innerHTML =
+        `<div class="card"><div class="progress-line"><i style="width:${Math.round(done / total * 100)}%"></i></div>
+         <p style="margin-top:10px;font-size:13.5px;color:var(--fg-muted)">記録を集計しなおしています（${done} / ${total}）</p></div>`;
+    });
+
+    await loadHistory();
+    stop();
+  } catch (e) {
+    stop();
+    $('#historyBody').innerHTML =
+      `<div class="empty" style="margin-top:16px">記録を読み込めませんでした。<br>
+       読み込みなおしても直らないときは、いちど閉じてから開きなおしてみてください。</div>`;
+    showTrouble('記録を読み込めませんでした。', e && e.message);
+  }
 }
 
 async function loadHistory() {
@@ -3581,6 +3660,15 @@ function isSafari() {
 }
 
 function bindEvents() {
+  /* うまくいかなかったときの案内。どこで起きても最後はここで拾う */
+  $('#errbarClose').addEventListener('click', hideTrouble);
+  $('#errbarReload').addEventListener('click', () => location.reload());
+  window.addEventListener('error', e =>
+    showTrouble('画面の処理でエラーが起きました。', e.message));
+  window.addEventListener('unhandledrejection', e =>
+    showTrouble('記録の読み書きでエラーが起きました。',
+                (e.reason && e.reason.message) || e.reason));
+
   /* ヘッダー */
   $('#btnTheme').addEventListener('click', cycleTheme);
   $('#btnQuit').addEventListener('click', async () => {
