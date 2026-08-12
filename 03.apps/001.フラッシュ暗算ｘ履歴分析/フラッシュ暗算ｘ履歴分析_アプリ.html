@@ -493,6 +493,24 @@ body[data-fs="lg"] .flash-num{font-size:clamp(4.4rem,25vw,13rem)}
   animation:pop .5s ease both;
 }
 @keyframes pop{from{opacity:0;transform:scale(.7)}60%{opacity:1;transform:scale(1.04)}to{transform:scale(1)}}
+/* 問題が始まる直前の合図。文字が薄くなって消えたらフラッシュ開始 */
+.ready-cue{
+  font-size:clamp(2.2rem,10vw,4.6rem);
+  font-weight:800;line-height:1;letter-spacing:.1em;
+  color:var(--accent);
+  user-select:none;
+  animation:readyFade 1s ease-in forwards;
+}
+@keyframes readyFade{
+  0%{opacity:0;transform:scale(.96)}
+  14%{opacity:1;transform:scale(1)}
+  50%{opacity:.92}
+  100%{opacity:0}
+}
+/* 動きを減らす設定のときは、薄れる演出をやめて1秒はっきり出す */
+@media (prefers-reduced-motion:reduce){
+  .ready-cue{animation:none;opacity:1}
+}
 .flash-hint{font-size:15px;color:var(--fg-muted);text-align:center;padding:0 20px}
 
 /* 回答中は数字を出さないので、表示エリアを縮めてテンキーを画面内に収める */
@@ -1207,7 +1225,8 @@ const LIMITS = {
   intervalMin: 0.15,
   intervalMax: 1.50,
   answerTimeout: 30000,
-  clearRate: 0.8
+  clearRate: 0.8,
+  readyCue: 1000                 // 問題が始まる直前の「Ready」を出しておく時間
 };
 
 /** 分析ロジックのバージョン。上げるとサマリが再計算される */
@@ -1972,7 +1991,19 @@ function nextQuestion() {
   $('#playCount').textContent = `${r.idx + 1} / ${r.questions.length}`;
   $('#playBar').style.width = `${r.idx / r.questions.length * 100}%`;
 
-  flashTerms(r.questions[r.idx], () => enterAnswerPhase());
+  // いきなり数字が出ると身構える間がないので、合図をはさんでから始める
+  readyCue(() => flashTerms(r.questions[r.idx], () => enterAnswerPhase()));
+}
+
+function readyCue(done) {
+  const r = App.run;
+  const stage = $('#flashStage');
+  stage.innerHTML = '<div class="ready-cue">Ready</div>';
+  r.timer = setTimeout(() => {
+    if (!App.run || App.run.phase === 'done') return;
+    stage.innerHTML = '';
+    done();
+  }, LIMITS.readyCue);
 }
 
 function flashTerms(q, done) {
