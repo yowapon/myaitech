@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="auto">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fbfbfa">
+<meta name="description" content="ナンプレの解き方10種類を、実際の盤面の図で1つずつ解説します。アプリのヒントに出る手筋の名前から探せます。">
+<title>ナンプレ 解き方ガイド</title>
+<style>
+/* ============================================================
+   トークン。アプリ本体（ナンプレｘ解き方分析）と同じ名前・同じ値を使う。
+   図の見た目を盤面と揃えるためで、読者が図と実画面を頭の中でつなげられる
+   ============================================================ */
+:root{
+  --bg:#fbfbfa; --bg-elev:#ffffff; --bg-sunk:#f2f1ee;
+  --fg:#37352f; --fg-muted:#7c7469; --fg-faint:#a8a29a;
+  --border:#e4e2dd; --border-strong:#cfccc5;
+  --accent:#2f6fb3; --accent-soft:#e8f0f8; --accent-fg:#ffffff;
+  --ok:#2f7a52; --ok-soft:#e7f3ec;
+  --ng:#b93b34; --ng-soft:#fbeceb;
+  --warn:#a9760f; --warn-soft:#fdf3e2;
+  --radius:12px; --radius-sm:8px;
+  --shadow:0 1px 2px rgba(15,15,15,.06), 0 4px 12px rgba(15,15,15,.05);
+  /* 盤面 */
+  --cell:#ffffff; --cell-given:#f4f2ef; --cell-sel:#d8e6f5;
+  --line:#cfccc5; --line-strong:#8d8880;
+  --fig-band:#e5e1d7; --fig-wing:#d3ecdc;
+  /* 手筋の数の帯（アプリの分析画面と同じ5段階） */
+  --q1:#cde2fb; --q2:#9ec5f4; --q3:#5598e7; --q4:#256abf; --q5:#0d366b;
+  --font:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP","Yu Gothic UI",Meiryo,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#191919; --bg-elev:#232323; --bg-sunk:#141414;
+    --fg:#e9e7e3; --fg-muted:#9d978d; --fg-faint:#6f6a63;
+    --border:#333230; --border-strong:#474540;
+    --accent:#6ea8dd; --accent-soft:#1d2c3a;
+    --ok:#5cb98a; --ok-soft:#16281f;
+    --ng:#e8736a; --ng-soft:#301c1a;
+    --warn:#d7a13c; --warn-soft:#2d2517;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 4px 12px rgba(0,0,0,.28);
+    --cell:#232323; --cell-given:#1c1c1c; --cell-sel:#26405a;
+    --line:#3a3937; --line-strong:#6d6862;
+    --fig-band:#33322e; --fig-wing:#1e3a2b;
+    --q1:#12304f; --q2:#1c4a79; --q3:#2f6fb3; --q4:#5b9ada; --q5:#a8cdf0;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#191919; --bg-elev:#232323; --bg-sunk:#141414;
+  --fg:#e9e7e3; --fg-muted:#9d978d; --fg-faint:#6f6a63;
+  --border:#333230; --border-strong:#474540;
+  --accent:#6ea8dd; --accent-soft:#1d2c3a;
+  --ok:#5cb98a; --ok-soft:#16281f;
+  --ng:#e8736a; --ng-soft:#301c1a;
+  --warn:#d7a13c; --warn-soft:#2d2517;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 4px 12px rgba(0,0,0,.28);
+  --cell:#232323; --cell-given:#1c1c1c; --cell-sel:#26405a;
+  --line:#3a3937; --line-strong:#6d6862;
+  --fig-band:#33322e; --fig-wing:#1e3a2b;
+  --q1:#12304f; --q2:#1c4a79; --q3:#2f6fb3; --q4:#5b9ada; --q5:#a8cdf0;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font-family:var(--font); font-size:16px; line-height:1.85;
+  -webkit-text-size-adjust:100%;
+}
+.layout{display:flex; align-items:flex-start; max-width:1120px; margin:0 auto}
+
+/* ---------- 目次サイドバー ---------- */
+#sidebar{
+  position:sticky; top:0; flex:0 0 244px; height:100vh;
+  padding:26px 12px 40px; overflow-y:auto;
+  border-right:1px solid var(--border); background:var(--bg-sunk);
+}
+#sidebar .toc-label{
+  font-size:11px; letter-spacing:.09em; color:var(--fg-faint);
+  padding:0 10px; margin-bottom:10px; font-weight:700;
+}
+#toc a{
+  display:block; padding:6px 10px; margin:1px 0; border-radius:6px;
+  color:var(--fg-muted); text-decoration:none; font-size:13px; line-height:1.5;
+  border-left:2px solid transparent;
+}
+#toc a:hover{background:var(--bg-elev); color:var(--fg)}
+#toc a.active{background:var(--accent-soft); color:var(--accent); font-weight:700; border-left-color:var(--accent)}
+#toc a.sub{padding-left:22px; font-size:12.5px}
+#toc .lv{color:var(--fg-faint); font-size:11px; margin-right:5px}
+
+/* ---------- 本文 ---------- */
+main{flex:1 1 auto; min-width:0; padding:48px 56px 120px; max-width:840px}
+h1{font-size:34px; line-height:1.3; margin:.2em 0 .3em; font-weight:800; letter-spacing:-.01em}
+h2{font-size:24px; margin:2.4em 0 .5em; padding-bottom:.32em; border-bottom:1px solid var(--border); font-weight:700}
+h3{font-size:17.5px; margin:2em 0 .4em; font-weight:700}
+h4{font-size:15px; margin:1.4em 0 .3em; font-weight:700}
+p{margin:.75em 0}
+a{color:var(--accent)}
+.eyebrow{font-size:12px; letter-spacing:.1em; color:var(--accent); font-weight:800}
+.lead{font-size:17px; color:var(--fg-muted); line-height:1.9}
+.meta{display:flex; flex-wrap:wrap; gap:7px; margin:16px 0 4px}
+.chip{font-size:12.5px; padding:3px 11px; border-radius:999px; background:var(--bg-sunk); border:1px solid var(--border); color:var(--fg-muted)}
+strong{font-weight:700}
+mark{background:var(--warn-soft); color:inherit; padding:0 3px; border-radius:3px}
+ul,ol{padding-left:1.4em} li{margin:.34em 0}
+hr{border:0; border-top:1px solid var(--border); margin:2.6em 0}
+
+/* ---------- 手筋の早見（冒頭のジャンプ） ---------- */
+.jump{display:grid; grid-template-columns:repeat(auto-fill,minmax(158px,1fr)); gap:8px; margin:18px 0 6px}
+.jump a{
+  display:flex; align-items:center; gap:8px; text-decoration:none;
+  padding:9px 11px; border:1px solid var(--border); border-radius:var(--radius-sm);
+  background:var(--bg-elev); color:var(--fg); font-size:13.5px; line-height:1.45;
+}
+.jump a:hover{border-color:var(--accent); background:var(--accent-soft)}
+.jump .lvb{
+  flex:0 0 20px; height:20px; border-radius:5px; display:grid; place-items:center;
+  font-size:11px; font-weight:800; background:var(--accent-soft); color:var(--accent);
+}
+
+/* ---------- 図 ---------- */
+.figure{
+  margin:1.5em 0 1.3em; padding:18px 16px 14px; border:1px solid var(--border);
+  border-radius:var(--radius); background:var(--bg-elev); box-shadow:var(--shadow);
+}
+.figure svg{display:block; width:100%; max-width:440px; height:auto; margin:0 auto}
+.figure figcaption{
+  margin-top:13px; padding-top:11px; border-top:1px solid var(--border);
+  font-size:13px; color:var(--fg-muted); text-align:center; line-height:1.7;
+}
+.legend{display:flex; flex-wrap:wrap; justify-content:center; gap:6px 14px; margin-top:12px; font-size:12px; color:var(--fg-muted)}
+.legend span{display:inline-flex; align-items:center; gap:5px}
+.legend i{width:15px; height:15px; border-radius:3px; display:inline-block; border:1px solid var(--border-strong)}
+.lg-focus{background:var(--cell-sel); border-color:var(--accent)}
+.lg-wing{background:var(--fig-wing); border-color:var(--ok)}
+.lg-elim{background:var(--warn-soft); border-color:var(--warn)}
+.lg-band{background:var(--fig-band)}
+
+/* ---------- コールアウト ---------- */
+.callout{display:flex; gap:12px; padding:14px 16px; margin:1.3em 0; border-radius:var(--radius); background:var(--bg-sunk); border-left:3px solid var(--fg-faint)}
+.callout .ico{flex:0 0 auto; font-size:17px; line-height:1.6}
+.callout p:first-child{margin-top:0} .callout p:last-child{margin-bottom:0}
+.callout.tip{background:var(--accent-soft); border-left-color:var(--accent)}
+.callout.warn{background:var(--warn-soft); border-left-color:var(--warn)}
+.callout.key{background:var(--ok-soft); border-left-color:var(--ok)}
+.callout.miss{background:var(--ng-soft); border-left-color:var(--ng)}
+
+/* ---------- アプリのヒント文の引用 ---------- */
+.hintq{
+  margin:1.3em 0; padding:13px 16px; border:1px dashed var(--border-strong);
+  border-radius:var(--radius); background:var(--bg-sunk);
+}
+.hintq .ht{font-size:11.5px; font-weight:800; letter-spacing:.06em; color:var(--fg-faint); display:block; margin-bottom:5px}
+.hintq p{margin:0; font-size:14.5px}
+.hintq .nm{font-weight:800; color:var(--accent)}
+
+/* ---------- 別名 ---------- */
+.aka{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:.9em 0 0; font-size:12.5px; color:var(--fg-muted)}
+.aka b{font-weight:700; color:var(--fg-faint); font-size:11.5px; letter-spacing:.05em}
+.aka span{padding:2px 9px; border:1px solid var(--border); border-radius:999px; background:var(--bg-sunk)}
+
+/* ---------- カード ---------- */
+.cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:11px; margin:1.3em 0}
+.card{padding:15px; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg-elev)}
+.card h4{margin:0 0 5px; font-size:14.5px; font-weight:700}
+.card p{margin:0; font-size:13.5px; color:var(--fg-muted); line-height:1.75}
+
+/* ---------- 表 ---------- */
+.tw{overflow-x:auto; margin:1.3em 0}
+table{width:100%; border-collapse:collapse; font-size:14px; min-width:min(100%,420px)}
+th,td{border:1px solid var(--border); padding:9px 11px; text-align:left; vertical-align:top}
+th{background:var(--bg-sunk); font-weight:700}
+td.n{white-space:nowrap}
+th.lvcell{white-space:nowrap; font-size:13px; line-height:1.5}
+th.lvcell span{font-weight:400; color:var(--fg-muted); font-size:12px}
+
+/* ---------- クイズ ---------- */
+.quiz{margin:2.2em 0; padding:20px 22px; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg-sunk)}
+.quiz .qtag{display:inline-block; font-size:11px; font-weight:800; letter-spacing:.06em; color:var(--accent); background:var(--accent-soft); padding:3px 10px; border-radius:999px; margin-bottom:9px}
+.quiz .qtext{font-weight:700; font-size:16px; margin:0 0 13px; line-height:1.7}
+.quiz .opts{display:flex; flex-direction:column; gap:8px}
+.quiz button.opt{
+  text-align:left; font:inherit; font-size:14.5px; color:var(--fg); cursor:pointer;
+  padding:11px 13px; border:1px solid var(--border-strong); border-radius:var(--radius-sm);
+  background:var(--bg-elev); display:flex; gap:10px; align-items:flex-start; line-height:1.65;
+}
+.quiz button.opt:hover:not(:disabled){border-color:var(--accent); background:var(--accent-soft)}
+.quiz button.opt:disabled{cursor:default}
+.quiz button.opt .mk{flex:0 0 18px; font-weight:800; color:var(--fg-faint)}
+.quiz button.opt.correct{background:var(--ok-soft); border-color:var(--ok)}
+.quiz button.opt.correct .mk{color:var(--ok)}
+.quiz button.opt.wrong{background:var(--ng-soft); border-color:var(--ng)}
+.quiz button.opt.wrong .mk{color:var(--ng)}
+.quiz .explain{display:none; margin-top:13px; padding:13px 15px; border-radius:var(--radius-sm); background:var(--bg-elev); border:1px solid var(--border); font-size:14px; line-height:1.8}
+.quiz .explain.show{display:block}
+.quiz .verdict{font-weight:800; margin-bottom:3px}
+.quiz .verdict.ok{color:var(--ok)} .quiz .verdict.ng{color:var(--ng)}
+
+/* ---------- 戻る・テーマ ---------- */
+.topbar{display:flex; gap:10px; align-items:center; justify-content:space-between; margin-bottom:22px}
+.backlink{
+  display:inline-flex; align-items:center; gap:6px; text-decoration:none;
+  font-size:13.5px; color:var(--fg-muted); padding:6px 12px;
+  border:1px solid var(--border); border-radius:999px; background:var(--bg-elev);
+}
+.backlink:hover{border-color:var(--accent); color:var(--accent)}
+#themeBtn{
+  width:36px; height:36px; border-radius:9px; cursor:pointer; flex:0 0 auto;
+  border:1px solid var(--border-strong); background:var(--bg-elev); color:var(--fg);
+  font-size:15px; line-height:1; display:grid; place-items:center;
+}
+#themeBtn:hover{background:var(--bg-sunk)}
+.verfoot{margin-top:44px; padding-top:16px; border-top:1px solid var(--border); font-size:12px; color:var(--fg-faint); line-height:1.9}
+
+/* ---------- 盤面図の共通クラス ---------- */
+.bc-band{fill:var(--fig-band)}
+.bc-focus{fill:var(--cell-sel)}
+.bc-wing{fill:var(--fig-wing)}
+.bc-elim{fill:var(--warn-soft)}
+.bc-focus-o{fill:none; stroke:var(--accent); stroke-width:2.5; rx:2}
+.bc-elim-o{fill:none; stroke:var(--warn); stroke-width:2.5; rx:2}
+.bc-outline{fill:none; stroke:var(--accent); stroke-width:3}
+.bc-l1{stroke:var(--line); stroke-width:1}
+.bc-l2{stroke:var(--line-strong); stroke-width:2}
+.bc-hdr{fill:var(--fg-faint); font:600 12px var(--font); text-anchor:middle}
+.bc-given{fill:var(--fg); font:600 21px var(--font); text-anchor:middle}
+.bc-answer{fill:var(--accent); font:800 21px var(--font); text-anchor:middle}
+.bc-cand{fill:var(--accent); font:700 14px var(--font); text-anchor:middle}
+.bc-cand1{fill:var(--accent); font:800 18px var(--font); text-anchor:middle}
+.bc-cand-n{fill:var(--fg-faint); font:600 14px var(--font); text-anchor:middle}
+.bc-cand-n1{fill:var(--fg-faint); font:700 18px var(--font); text-anchor:middle}
+.bc-off{fill:var(--ng); font:700 14px var(--font); text-anchor:middle; opacity:.85}
+.bc-off1{fill:var(--ng); font:800 18px var(--font); text-anchor:middle; opacity:.85}
+.bc-strike{stroke:var(--ng); stroke-width:1.5}
+.bc-link{stroke:var(--accent); stroke-width:2.5; opacity:.5; stroke-linecap:round}
+.bc-link-d{stroke:var(--ng); stroke-width:2; stroke-dasharray:5 4; opacity:.8; stroke-linecap:round}
+.bc-head{fill:var(--ng); opacity:.8}
+
+/* ---------- 説明図の共通クラス ---------- */
+.d-box{fill:var(--bg-sunk); stroke:var(--border-strong); stroke-width:1.5}
+.d-box-a{fill:var(--accent-soft); stroke:var(--accent); stroke-width:1.5}
+.d-box-w{fill:var(--warn-soft); stroke:var(--warn); stroke-width:1.5}
+.d-cell{fill:var(--cell); stroke:var(--line-strong); stroke-width:1.5}
+.d-t{fill:var(--fg); font:700 14px var(--font); text-anchor:middle}
+.d-s{fill:var(--fg-muted); font:400 12px var(--font); text-anchor:middle}
+.d-s2{fill:var(--fg-muted); font:400 11px var(--font)}
+.d-rt{fill:var(--fg); font:700 12px var(--font); text-anchor:end}
+.d-lt{fill:var(--fg-muted); font:600 11px var(--font)}
+.d-num{fill:var(--fg); font:700 17px var(--font); text-anchor:middle}
+.d-num-a{fill:var(--accent); font:800 17px var(--font); text-anchor:middle}
+.d-num-x{fill:var(--ng); font:700 17px var(--font); text-anchor:middle; opacity:.85}
+.d-mini{fill:var(--accent); font:700 12px var(--font); text-anchor:middle}
+.d-mini-x{fill:var(--ng); font:700 12px var(--font); text-anchor:middle; opacity:.85}
+.d-arrow{stroke:var(--fg-faint); stroke-width:2; fill:none; stroke-linecap:round}
+.d-arrow-a{stroke:var(--accent); stroke-width:2; fill:none; stroke-linecap:round}
+.d-head{fill:var(--fg-faint)}
+.d-head-a{fill:var(--accent)}
+.d-strike{stroke:var(--ng); stroke-width:1.6}
+.d-q1{fill:var(--q1)} .d-q2{fill:var(--q2)} .d-q3{fill:var(--q3)} .d-q4{fill:var(--q4)} .d-q5{fill:var(--q5)}
+
+/* ---------- レスポンシブ ---------- */
+@media (max-width:940px){
+  #sidebar{display:none}
+  main{padding:26px 18px 90px}
+  h1{font-size:27px} h2{font-size:20.5px} h3{font-size:16.5px}
+  body{font-size:15.5px}
+}
+@media print{
+  #sidebar,#themeBtn{display:none} main{max-width:none; padding:0}
+  .quiz .explain{display:block}
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <aside id="sidebar">
+    <div class="toc-label">目次</div>
+    <nav id="toc">
+      <a href="#about">このガイドについて</a>
+      <a href="#overview">1. 難しさと手筋の地図</a>
+      <a href="#basics">2. 土台 ──「仲間」と「候補」</a>
+      <a href="#nakedSingle"><span class="lv">Lv1</span>入る数字が1つ</a>
+      <a href="#hiddenSingle"><span class="lv">Lv2</span>置ける場所が1つ</a>
+      <a href="#branch">3. 分かれ道</a>
+      <a href="#pointing"><span class="lv">Lv3</span>ブロックで絞る</a>
+      <a href="#claiming"><span class="lv">Lv3</span>行・列で絞る</a>
+      <a href="#nakedPair"><span class="lv">Lv4</span>裸のペア</a>
+      <a href="#nakedTriple" class="sub">裸のトリプル</a>
+      <a href="#hiddenPair"><span class="lv">Lv4</span>隠れたペア</a>
+      <a href="#hiddenTriple" class="sub">隠れたトリプル</a>
+      <a href="#xWing"><span class="lv">Lv5</span>X-Wing</a>
+      <a href="#xyWing"><span class="lv">Lv5</span>XY-Wing</a>
+      <a href="#stuck">4. 手が止まったときは</a>
+      <a href="#summary">まとめ</a>
+    </nav>
+  </aside>
+
+  <main>
+
+    <div class="topbar">
+      <a class="backlink" href="%E3%83%8A%E3%83%B3%E3%83%97%E3%83%AC%EF%BD%98%E8%A7%A3%E3%81%8D%E6%96%B9%E5%88%86%E6%9E%90_%E3%82%A2%E3%83%97%E3%83%AA.html">← アプリにもどる</a>
+      <button id="themeBtn" type="button" aria-label="配色を切り替える">🌙</button>
+    </div>
+
+    <header>
+      <div class="eyebrow">ナンプレｘ解き方分析</div>
+      <h1>解き方ガイド</h1>
+      <p class="lead">ヒントに出てくる手筋を、実際の盤面の図で1つずつ。<strong>10種類あります。</strong>言葉だけでは伝わらないものばかりなので、どの節も図が先です。</p>
+      <div class="meta">
+        <span class="chip">ルールを知っている人向け</span>
+        <span class="chip">通しで約20分</span>
+        <span class="chip">必要なところだけ読めます</span>
+      </div>
+    </header>
+
+    <section id="about">
+      <h2>このガイドについて</h2>
+
+      <p>ナンプレのヒントは、たいてい<strong>手筋の名前と一文の説明</strong>しか出しません。「そのマスに入りうる数字が1つしかない」と言われても、<strong>どこを見ればそれが分かるのか</strong>が書かれていなければ、次の一手にはつながりません。盤面のどこと どこがつながっているか、という<strong>位置の話</strong>を、言葉だけで伝えようとしているのが原因です。</p>
+
+      <p>そこでこのガイドは、全部の手筋に<strong>実際の盤面の図</strong>を付けました。図はどれも、このアプリが作った本物の問題から取っています。</p>
+
+      <div class="callout key">
+        <span class="ico">🎯</span>
+        <div>
+          <p><strong>読み終えるとできるようになること</strong></p>
+          <ol>
+            <li>ヒントに出た手筋の名前を見て、盤面の<strong>どこを見ればいいか</strong>が分かる</li>
+            <li>数字が入る手筋と、<strong>候補が消えるだけの手筋</strong>の違いが分かる</li>
+            <li>手が止まったとき、<strong>何から順に試すか</strong>を自分で回せる</li>
+          </ol>
+        </div>
+      </div>
+
+      <h3>ヒントに出た名前から探す</h3>
+      <p>ヒントの中の「くわしく」から来た方は、その手筋の節だけ読めば十分です。上から順に読む必要はありません。</p>
+      <div class="jump">
+        <a href="#nakedSingle"><span class="lvb">1</span>入る数字が1つ</a>
+        <a href="#hiddenSingle"><span class="lvb">2</span>置ける場所が1つ</a>
+        <a href="#pointing"><span class="lvb">3</span>ブロックで絞る</a>
+        <a href="#claiming"><span class="lvb">3</span>行・列で絞る</a>
+        <a href="#nakedPair"><span class="lvb">4</span>2マスの候補ペア</a>
+        <a href="#nakedTriple"><span class="lvb">4</span>3マスの候補組</a>
+        <a href="#hiddenPair"><span class="lvb">4</span>2数字が2マスに</a>
+        <a href="#hiddenTriple"><span class="lvb">4</span>3数字が3マスに</a>
+        <a href="#xWing"><span class="lvb">5</span>X-Wing</a>
+        <a href="#xyWing"><span class="lvb">5</span>XY-Wing</a>
+      </div>
+
+      <div class="callout tip">
+        <span class="ico">💡</span>
+        <div><p>ただし、<strong>Lv3以上の手筋だけを読んでも使えるようになりません。</strong>「<a href="#basics">土台</a>」と「<a href="#branch">分かれ道</a>」の2節だけは、先に目を通してください。合わせて3分ほどです。</p></div>
+      </div>
+    </section>
+
+    <section id="overview">
+      <h2>1. 難しさと手筋の地図</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 400 262" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="難易度が上がるほど必要な手筋の数が増えることを示した棒グラフ">
+          <text x="200" y="14" class="d-s">おぼえる手筋の数（下の段のぶんも全部使う）</text>
+          <text x="6" y="49" class="d-lt">Lv1</text><text x="96" y="49" class="d-rt">やさしい</text><rect x="104" y="33" width="23" height="22" rx="3" class="d-q1"/><text x="134" y="49" class="d-lt">1種類</text><text x="6" y="93" class="d-lt">Lv2</text><text x="96" y="93" class="d-rt">ふつう</text><rect x="104" y="77" width="23" height="22" rx="0" class="d-q1"/><rect x="127" y="77" width="23" height="22" rx="3" class="d-q2"/><text x="157" y="93" class="d-lt">2種類</text><text x="6" y="137" class="d-lt">Lv3</text><text x="96" y="137" class="d-rt">むずかしい</text><rect x="104" y="121" width="23" height="22" rx="0" class="d-q1"/><rect x="127" y="121" width="23" height="22" rx="0" class="d-q2"/><rect x="150" y="121" width="46" height="22" rx="3" class="d-q3"/><text x="203" y="137" class="d-lt">4種類</text><text x="6" y="181" class="d-lt">Lv4</text><text x="96" y="173" class="d-rt">とても</text><text x="96" y="187" class="d-rt">むずかしい</text><rect x="104" y="165" width="23" height="22" rx="0" class="d-q1"/><rect x="127" y="165" width="23" height="22" rx="0" class="d-q2"/><rect x="150" y="165" width="46" height="22" rx="0" class="d-q3"/><rect x="196" y="165" width="92" height="22" rx="3" class="d-q4"/><text x="295" y="181" class="d-lt">8種類</text><text x="6" y="225" class="d-lt">Lv5</text><text x="96" y="225" class="d-rt">おに</text><rect x="104" y="209" width="23" height="22" rx="0" class="d-q1"/><rect x="127" y="209" width="23" height="22" rx="0" class="d-q2"/><rect x="150" y="209" width="46" height="22" rx="0" class="d-q3"/><rect x="196" y="209" width="92" height="22" rx="0" class="d-q4"/><rect x="288" y="209" width="46" height="22" rx="3" class="d-q5"/><text x="341" y="225" class="d-lt">10種類</text><text x="200" y="252" class="d-s">※ 9×9 の場合。色の切れ目が、その段で増えた手筋です</text>
+        </svg>
+        <figcaption>図1: 難しさは「ひらめき」ではなく、<strong>使う手筋の種類の数</strong>で決まります。とてもむずかしい で一気に倍になるのが分かります</figcaption>
+      </figure>
+
+      <p>アプリの難しさは、<strong>その問題を解くのに必要な手筋の種類</strong>で決めています。運やひらめきの差ではありません。だから「むずかしい が解けない」のは頭の回転の問題ではなく、単に<strong>まだ習っていない手筋がある</strong>というだけです。</p>
+
+      <p>もうひとつ大事なのは、<strong>上の段は下の段を含む</strong>ということ。そして、上の段の手筋の出番は思ったより少ないのです。おに の問題を25局、アプリの解き手に最後まで解かせて数えたところ、<strong>打った手の 92% は Lv1 と Lv2 でした。</strong>X-Wing と XY-Wing は合わせて 2.5% しかありません。</p>
+      <p>つまり Lv5 の手筋は、行き詰まったときに数回だけ使う<strong>非常口</strong>です。そこに至るまでの大半は基本の繰り返しなので、上の段に進むほど基本の速さがものを言います。</p>
+
+      <div class="tw">
+        <table>
+          <thead><tr><th>難しさ</th><th>ここで増える手筋</th><th>よその呼び名</th></tr></thead>
+          <tbody>
+            <tr><th class="lvcell">Lv1<br><span>やさしい</span></th><td><a href="#nakedSingle">入る数字が1つ</a></td><td>単独候補 / Naked Single</td></tr>
+            <tr><th class="lvcell">Lv2<br><span>ふつう</span></th><td><a href="#hiddenSingle">置ける場所が1つ</a></td><td>唯一の置き場所 / Hidden Single</td></tr>
+            <tr><th class="lvcell">Lv3<br><span>むずかしい</span></th><td><a href="#pointing">ブロックで絞る</a><br><a href="#claiming">行・列で絞る</a></td><td>Pointing Pair<br>Claiming / Box-Line Reduction</td></tr>
+            <tr><th class="lvcell">Lv4<br><span>とても<br>むずかしい</span></th><td><a href="#nakedPair">2マスの候補ペア</a><br><a href="#nakedTriple">3マスの候補組</a><br><a href="#hiddenPair">2数字が2マスに</a><br><a href="#hiddenTriple">3数字が3マスに</a></td><td>2国同盟 / Naked Pair<br>3国同盟 / Naked Triple<br>隠れ2国同盟 / Hidden Pair<br>隠れ3国同盟 / Hidden Triple</td></tr>
+            <tr><th class="lvcell">Lv5<br><span>おに</span></th><td><a href="#xWing">X-Wing</a><br><a href="#xyWing">XY-Wing</a></td><td>井桁理論 / X-Wing<br>XY-Wing / Y-Wing</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>右端の列は、よそで調べたときのための対応表です。ナンプレの手筋は<strong>同じものが何通りもの名前で呼ばれています</strong>。このアプリでは「読んで意味が分かる名前」を優先しましたが、他の本やサイトでは英語名や「2国同盟」のほうが一般的です。</p>
+
+      <div class="callout">
+        <span class="ico">📐</span>
+        <div><p>4×4 と 6×6 に Lv3 以上が無いのは、手加減しているからではありません。<strong>盤面が小さいと、そもそも上の手筋が必要になる問題を作れない</strong>のです。4×4 はどう作っても Lv1 だけで最後まで解けてしまいます。</p></div>
+      </div>
+    </section>
+
+    <section id="basics">
+      <h2>2. 土台 ──「仲間」と「候補」</h2>
+
+      <p>この2つの言葉が分かっていないと、ヒントの文章は全部おまじないに聞こえます。逆に、ここさえ分かれば10種類のうち半分は自力で読み解けます。</p>
+
+      <h3>仲間 ── 同じ数字を置けない20マス</h3>
+
+      <figure class="figure">
+        <svg viewBox="0 0 390 390" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="選んだ1マスと、同じ行・列・ブロックにある20マスを示した盤面"><rect x="26" y="26" width="40" height="40" class="bc-band"/><rect x="26" y="66" width="40" height="40" class="bc-band"/><rect x="26" y="106" width="40" height="40" class="bc-band"/><rect x="26" y="146" width="40" height="40" class="bc-band"/><rect x="26" y="186" width="40" height="40" class="bc-band"/><rect x="26" y="226" width="40" height="40" class="bc-band"/><rect x="26" y="266" width="40" height="40" class="bc-band"/><rect x="66" y="266" width="40" height="40" class="bc-band"/><rect x="106" y="266" width="40" height="40" class="bc-band"/><rect x="26" y="306" width="40" height="40" class="bc-band"/><rect x="66" y="306" width="40" height="40" class="bc-band"/><rect x="106" y="306" width="40" height="40" class="bc-band"/><rect x="66" y="346" width="40" height="40" class="bc-band"/><rect x="106" y="346" width="40" height="40" class="bc-band"/><rect x="146" y="346" width="40" height="40" class="bc-band"/><rect x="186" y="346" width="40" height="40" class="bc-band"/><rect x="226" y="346" width="40" height="40" class="bc-band"/><rect x="266" y="346" width="40" height="40" class="bc-band"/><rect x="306" y="346" width="40" height="40" class="bc-band"/><rect x="346" y="346" width="40" height="40" class="bc-band"/><rect x="26" y="346" width="40" height="40" class="bc-focus"/><line x1="26" y1="26" x2="26" y2="386" class="bc-l2"/><line x1="26" y1="26" x2="386" y2="26" class="bc-l2"/><line x1="66" y1="26" x2="66" y2="386" class="bc-l1"/><line x1="26" y1="66" x2="386" y2="66" class="bc-l1"/><line x1="106" y1="26" x2="106" y2="386" class="bc-l1"/><line x1="26" y1="106" x2="386" y2="106" class="bc-l1"/><line x1="146" y1="26" x2="146" y2="386" class="bc-l2"/><line x1="26" y1="146" x2="386" y2="146" class="bc-l2"/><line x1="186" y1="26" x2="186" y2="386" class="bc-l1"/><line x1="26" y1="186" x2="386" y2="186" class="bc-l1"/><line x1="226" y1="26" x2="226" y2="386" class="bc-l1"/><line x1="26" y1="226" x2="386" y2="226" class="bc-l1"/><line x1="266" y1="26" x2="266" y2="386" class="bc-l2"/><line x1="26" y1="266" x2="386" y2="266" class="bc-l2"/><line x1="306" y1="26" x2="306" y2="386" class="bc-l1"/><line x1="26" y1="306" x2="386" y2="306" class="bc-l1"/><line x1="346" y1="26" x2="346" y2="386" class="bc-l1"/><line x1="26" y1="346" x2="386" y2="346" class="bc-l1"/><line x1="386" y1="26" x2="386" y2="386" class="bc-l2"/><line x1="26" y1="386" x2="386" y2="386" class="bc-l2"/><text x="46" y="17" class="bc-hdr">1</text><text x="15" y="50" class="bc-hdr">1</text><text x="86" y="17" class="bc-hdr">2</text><text x="15" y="90" class="bc-hdr">2</text><text x="126" y="17" class="bc-hdr">3</text><text x="15" y="130" class="bc-hdr">3</text><text x="166" y="17" class="bc-hdr">4</text><text x="15" y="170" class="bc-hdr">4</text><text x="206" y="17" class="bc-hdr">5</text><text x="15" y="210" class="bc-hdr">5</text><text x="246" y="17" class="bc-hdr">6</text><text x="15" y="250" class="bc-hdr">6</text><text x="286" y="17" class="bc-hdr">7</text><text x="15" y="290" class="bc-hdr">7</text><text x="326" y="17" class="bc-hdr">8</text><text x="15" y="330" class="bc-hdr">8</text><text x="366" y="17" class="bc-hdr">9</text><text x="15" y="370" class="bc-hdr">9</text><rect x="27" y="347" width="38" height="38" class="bc-focus-o"/><text x="46" y="54" class="bc-given">4</text><text x="86" y="54" class="bc-given">8</text><text x="166" y="54" class="bc-given">1</text><text x="206" y="54" class="bc-given">2</text><text x="366" y="94" class="bc-given">7</text><text x="86" y="134" class="bc-given">7</text><text x="126" y="134" class="bc-given">9</text><text x="206" y="134" class="bc-given">6</text><text x="246" y="134" class="bc-given">4</text><text x="326" y="134" class="bc-given">8</text><text x="166" y="174" class="bc-given">2</text><text x="206" y="174" class="bc-given">7</text><text x="326" y="174" class="bc-given">5</text><text x="366" y="174" class="bc-given">8</text><text x="46" y="254" class="bc-given">9</text><text x="86" y="254" class="bc-given">2</text><text x="206" y="254" class="bc-given">1</text><text x="246" y="254" class="bc-given">5</text><text x="86" y="294" class="bc-given">6</text><text x="166" y="294" class="bc-given">7</text><text x="206" y="294" class="bc-given">9</text><text x="286" y="294" class="bc-given">8</text><text x="326" y="294" class="bc-given">4</text><text x="46" y="334" class="bc-given">1</text><text x="206" y="374" class="bc-given">5</text><text x="246" y="374" class="bc-given">2</text><text x="326" y="374" class="bc-given">7</text><text x="366" y="374" class="bc-given">3</text></svg>
+        <figcaption>図2: 青いマスから見た「仲間」。同じ行の8マス、同じ列の8マス、同じブロックの4マス、合わせて<strong>20マス</strong>が灰色です</figcaption>
+      </figure>
+
+      <p>1つのマスを選ぶと、そのマスと<strong>同じ数字を置けない</strong>マスが必ず20あります。同じ行に8つ、同じ列に8つ、同じブロックに残り4つ。この20マスのことを、このガイドでは<strong>仲間</strong>と呼びます。</p>
+
+      <p>ナンプレのルールは「行・列・ブロックに同じ数字を入れない」の一言ですが、1マスの側から見ると<strong>「この20マスに出ている数字は、自分には入れられない」</strong>という形になります。手筋はすべて、この見方の上に建っています。</p>
+
+      <h3>候補 ── そのマスにまだ入れる数字</h3>
+
+      <figure class="figure">
+        <svg viewBox="0 0 380 268" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="1から9の数字が、行・列・ブロックの数字によって順に消され、最後に8だけが残る過程">
+          <text x="6" y="22" class="d-s2">① はじめ ── 1〜9 のどれでも入れそう</text><rect x="44" y="30" width="30" height="30" rx="4" class="d-cell"/><text x="59" y="51" class="d-num">1</text><rect x="76" y="30" width="30" height="30" rx="4" class="d-cell"/><text x="91" y="51" class="d-num">2</text><rect x="108" y="30" width="30" height="30" rx="4" class="d-cell"/><text x="123" y="51" class="d-num">3</text><rect x="140" y="30" width="30" height="30" rx="4" class="d-cell"/><text x="155" y="51" class="d-num">4</text><rect x="172" y="30" width="30" height="30" rx="4" class="d-cell"/><text x="187" y="51" class="d-num">5</text><rect x="204" y="30" width="30" height="30" rx="4" class="d-cell"/><text x="219" y="51" class="d-num">6</text><rect x="236" y="30" width="30" height="30" rx="4" class="d-cell"/><text x="251" y="51" class="d-num">7</text><rect x="268" y="30" width="30" height="30" rx="4" class="d-cell"/><text x="283" y="51" class="d-num">8</text><rect x="300" y="30" width="30" height="30" rx="4" class="d-cell"/><text x="315" y="51" class="d-num">9</text><text x="6" y="86" class="d-s2">② 9行目にある 2・3・5・7 を消す</text><rect x="44" y="94" width="30" height="30" rx="4" class="d-cell"/><text x="59" y="115" class="d-num">1</text><rect x="76" y="94" width="30" height="30" rx="4" class="d-cell"/><text x="91" y="115" class="d-num-x">2</text><line x1="82.0" y1="110.0" x2="100.0" y2="110.0" class="d-strike"/><rect x="108" y="94" width="30" height="30" rx="4" class="d-cell"/><text x="123" y="115" class="d-num-x">3</text><line x1="114.0" y1="110.0" x2="132.0" y2="110.0" class="d-strike"/><rect x="140" y="94" width="30" height="30" rx="4" class="d-cell"/><text x="155" y="115" class="d-num">4</text><rect x="172" y="94" width="30" height="30" rx="4" class="d-cell"/><text x="187" y="115" class="d-num-x">5</text><line x1="178.0" y1="110.0" x2="196.0" y2="110.0" class="d-strike"/><rect x="204" y="94" width="30" height="30" rx="4" class="d-cell"/><text x="219" y="115" class="d-num">6</text><rect x="236" y="94" width="30" height="30" rx="4" class="d-cell"/><text x="251" y="115" class="d-num-x">7</text><line x1="242.0" y1="110.0" x2="260.0" y2="110.0" class="d-strike"/><rect x="268" y="94" width="30" height="30" rx="4" class="d-cell"/><text x="283" y="115" class="d-num">8</text><rect x="300" y="94" width="30" height="30" rx="4" class="d-cell"/><text x="315" y="115" class="d-num">9</text><text x="6" y="150" class="d-s2">③ 1列目にある 1・4・9 を消す</text><rect x="44" y="158" width="30" height="30" rx="4" class="d-cell"/><text x="59" y="179" class="d-num-x">1</text><line x1="50.0" y1="174.0" x2="68.0" y2="174.0" class="d-strike"/><rect x="76" y="158" width="30" height="30" rx="4" class="d-cell"/><text x="91" y="179" class="d-num-x">2</text><line x1="82.0" y1="174.0" x2="100.0" y2="174.0" class="d-strike"/><rect x="108" y="158" width="30" height="30" rx="4" class="d-cell"/><text x="123" y="179" class="d-num-x">3</text><line x1="114.0" y1="174.0" x2="132.0" y2="174.0" class="d-strike"/><rect x="140" y="158" width="30" height="30" rx="4" class="d-cell"/><text x="155" y="179" class="d-num-x">4</text><line x1="146.0" y1="174.0" x2="164.0" y2="174.0" class="d-strike"/><rect x="172" y="158" width="30" height="30" rx="4" class="d-cell"/><text x="187" y="179" class="d-num-x">5</text><line x1="178.0" y1="174.0" x2="196.0" y2="174.0" class="d-strike"/><rect x="204" y="158" width="30" height="30" rx="4" class="d-cell"/><text x="219" y="179" class="d-num">6</text><rect x="236" y="158" width="30" height="30" rx="4" class="d-cell"/><text x="251" y="179" class="d-num-x">7</text><line x1="242.0" y1="174.0" x2="260.0" y2="174.0" class="d-strike"/><rect x="268" y="158" width="30" height="30" rx="4" class="d-cell"/><text x="283" y="179" class="d-num">8</text><rect x="300" y="158" width="30" height="30" rx="4" class="d-cell"/><text x="315" y="179" class="d-num-x">9</text><line x1="306.0" y1="174.0" x2="324.0" y2="174.0" class="d-strike"/><text x="6" y="214" class="d-s2">④ ブロックにある 6 を消す</text><rect x="44" y="222" width="30" height="30" rx="4" class="d-cell"/><text x="59" y="243" class="d-num-x">1</text><line x1="50.0" y1="238.0" x2="68.0" y2="238.0" class="d-strike"/><rect x="76" y="222" width="30" height="30" rx="4" class="d-cell"/><text x="91" y="243" class="d-num-x">2</text><line x1="82.0" y1="238.0" x2="100.0" y2="238.0" class="d-strike"/><rect x="108" y="222" width="30" height="30" rx="4" class="d-cell"/><text x="123" y="243" class="d-num-x">3</text><line x1="114.0" y1="238.0" x2="132.0" y2="238.0" class="d-strike"/><rect x="140" y="222" width="30" height="30" rx="4" class="d-cell"/><text x="155" y="243" class="d-num-x">4</text><line x1="146.0" y1="238.0" x2="164.0" y2="238.0" class="d-strike"/><rect x="172" y="222" width="30" height="30" rx="4" class="d-cell"/><text x="187" y="243" class="d-num-x">5</text><line x1="178.0" y1="238.0" x2="196.0" y2="238.0" class="d-strike"/><rect x="204" y="222" width="30" height="30" rx="4" class="d-cell"/><text x="219" y="243" class="d-num-x">6</text><line x1="210.0" y1="238.0" x2="228.0" y2="238.0" class="d-strike"/><rect x="236" y="222" width="30" height="30" rx="4" class="d-cell"/><text x="251" y="243" class="d-num-x">7</text><line x1="242.0" y1="238.0" x2="260.0" y2="238.0" class="d-strike"/><rect x="268" y="222" width="30" height="30" rx="4" class="d-box-a"/><text x="283" y="243" class="d-num-a">8</text><rect x="300" y="222" width="30" height="30" rx="4" class="d-cell"/><text x="315" y="243" class="d-num-x">9</text><line x1="306.0" y1="238.0" x2="324.0" y2="238.0" class="d-strike"/><text x="338" y="243" class="d-lt">← 8 だけ</text>
+        </svg>
+        <figcaption>図3: 図2の青いマスで、実際に候補を絞ってみたところ。20マスの仲間に出ている数字を消していくと、<strong>8だけが残ります</strong></figcaption>
+      </figure>
+
+      <p><strong>候補とは、そのマスにまだ入れられる数字のこと</strong>です。1〜9から、仲間に出ている数字を引いた残りにすぎません。ヒントの文章に出てくる「候補」は、すべてこの意味です。</p>
+
+      <p>そして手筋の正体は、<strong>候補を減らす手続き</strong>です。減らしていって1つになれば、そこが埋まります。ナンプレで頭を使う場面は、突き詰めるとこれしかありません。</p>
+
+      <div class="callout warn">
+        <span class="ico">✎</span>
+        <div>
+          <p><strong>候補は、書かないと使えません。</strong>頭の中だけで9マス分の候補を持ち回るのは、Lv3 から先では現実的ではありません。アプリでは <strong>✎メモ</strong> を押してから数字を押すと、小さい字で書き込めます。</p>
+          <p>設定で<strong>自動メモ</strong>を入れておくと、確定した数字を置いたときに、仲間のマスから同じ数字のメモが自動で消えます。手で消す手間がなくなるので、Lv3 以上を触るなら入れておくことを勧めます。</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="nakedSingle">
+      <h2><span class="chip">Lv1</span> 入る数字が1つ</h2>
+
+      <p>いちばん単純で、いちばん多く使う手筋です。おに の問題でも、<strong>埋まるマスのおよそ4分の3はこれ</strong>で決まります。ここが速くなると、全部の難しさが速くなります。</p>
+
+      <figure class="figure">
+        <svg viewBox="0 0 390 390" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="9行1列のマスに入れる数字が8しか残らないことを示した盤面"><rect x="26" y="26" width="40" height="40" class="bc-band"/><rect x="26" y="66" width="40" height="40" class="bc-band"/><rect x="26" y="106" width="40" height="40" class="bc-band"/><rect x="26" y="146" width="40" height="40" class="bc-band"/><rect x="26" y="186" width="40" height="40" class="bc-band"/><rect x="26" y="226" width="40" height="40" class="bc-band"/><rect x="26" y="266" width="40" height="40" class="bc-band"/><rect x="66" y="266" width="40" height="40" class="bc-band"/><rect x="106" y="266" width="40" height="40" class="bc-band"/><rect x="26" y="306" width="40" height="40" class="bc-band"/><rect x="66" y="306" width="40" height="40" class="bc-band"/><rect x="106" y="306" width="40" height="40" class="bc-band"/><rect x="66" y="346" width="40" height="40" class="bc-band"/><rect x="106" y="346" width="40" height="40" class="bc-band"/><rect x="146" y="346" width="40" height="40" class="bc-band"/><rect x="186" y="346" width="40" height="40" class="bc-band"/><rect x="226" y="346" width="40" height="40" class="bc-band"/><rect x="266" y="346" width="40" height="40" class="bc-band"/><rect x="306" y="346" width="40" height="40" class="bc-band"/><rect x="346" y="346" width="40" height="40" class="bc-band"/><rect x="26" y="346" width="40" height="40" class="bc-focus"/><rect x="26" y="26" width="40" height="40" class="bc-wing"/><rect x="26" y="226" width="40" height="40" class="bc-wing"/><rect x="66" y="266" width="40" height="40" class="bc-wing"/><rect x="26" y="306" width="40" height="40" class="bc-wing"/><rect x="186" y="346" width="40" height="40" class="bc-wing"/><rect x="226" y="346" width="40" height="40" class="bc-wing"/><rect x="306" y="346" width="40" height="40" class="bc-wing"/><rect x="346" y="346" width="40" height="40" class="bc-wing"/><line x1="26" y1="26" x2="26" y2="386" class="bc-l2"/><line x1="26" y1="26" x2="386" y2="26" class="bc-l2"/><line x1="66" y1="26" x2="66" y2="386" class="bc-l1"/><line x1="26" y1="66" x2="386" y2="66" class="bc-l1"/><line x1="106" y1="26" x2="106" y2="386" class="bc-l1"/><line x1="26" y1="106" x2="386" y2="106" class="bc-l1"/><line x1="146" y1="26" x2="146" y2="386" class="bc-l2"/><line x1="26" y1="146" x2="386" y2="146" class="bc-l2"/><line x1="186" y1="26" x2="186" y2="386" class="bc-l1"/><line x1="26" y1="186" x2="386" y2="186" class="bc-l1"/><line x1="226" y1="26" x2="226" y2="386" class="bc-l1"/><line x1="26" y1="226" x2="386" y2="226" class="bc-l1"/><line x1="266" y1="26" x2="266" y2="386" class="bc-l2"/><line x1="26" y1="266" x2="386" y2="266" class="bc-l2"/><line x1="306" y1="26" x2="306" y2="386" class="bc-l1"/><line x1="26" y1="306" x2="386" y2="306" class="bc-l1"/><line x1="346" y1="26" x2="346" y2="386" class="bc-l1"/><line x1="26" y1="346" x2="386" y2="346" class="bc-l1"/><line x1="386" y1="26" x2="386" y2="386" class="bc-l2"/><line x1="26" y1="386" x2="386" y2="386" class="bc-l2"/><text x="46" y="17" class="bc-hdr">1</text><text x="15" y="50" class="bc-hdr">1</text><text x="86" y="17" class="bc-hdr">2</text><text x="15" y="90" class="bc-hdr">2</text><text x="126" y="17" class="bc-hdr">3</text><text x="15" y="130" class="bc-hdr">3</text><text x="166" y="17" class="bc-hdr">4</text><text x="15" y="170" class="bc-hdr">4</text><text x="206" y="17" class="bc-hdr">5</text><text x="15" y="210" class="bc-hdr">5</text><text x="246" y="17" class="bc-hdr">6</text><text x="15" y="250" class="bc-hdr">6</text><text x="286" y="17" class="bc-hdr">7</text><text x="15" y="290" class="bc-hdr">7</text><text x="326" y="17" class="bc-hdr">8</text><text x="15" y="330" class="bc-hdr">8</text><text x="366" y="17" class="bc-hdr">9</text><text x="15" y="370" class="bc-hdr">9</text><rect x="27" y="347" width="38" height="38" class="bc-focus-o"/><text x="46" y="54" class="bc-given">4</text><text x="86" y="54" class="bc-given">8</text><text x="166" y="54" class="bc-given">1</text><text x="206" y="54" class="bc-given">2</text><text x="366" y="94" class="bc-given">7</text><text x="86" y="134" class="bc-given">7</text><text x="126" y="134" class="bc-given">9</text><text x="206" y="134" class="bc-given">6</text><text x="246" y="134" class="bc-given">4</text><text x="326" y="134" class="bc-given">8</text><text x="166" y="174" class="bc-given">2</text><text x="206" y="174" class="bc-given">7</text><text x="326" y="174" class="bc-given">5</text><text x="366" y="174" class="bc-given">8</text><text x="46" y="254" class="bc-given">9</text><text x="86" y="254" class="bc-given">2</text><text x="206" y="254" class="bc-given">1</text><text x="246" y="254" class="bc-given">5</text><text x="86" y="294" class="bc-given">6</text><text x="166" y="294" class="bc-given">7</text><text x="206" y="294" class="bc-given">9</text><text x="286" y="294" class="bc-given">8</text><text x="326" y="294" class="bc-given">4</text><text x="46" y="334" class="bc-given">1</text><text x="206" y="374" class="bc-given">5</text><text x="246" y="374" class="bc-given">2</text><text x="326" y="374" class="bc-given">7</text><text x="366" y="374" class="bc-given">3</text><text x="46.0" y="372.0" class="bc-cand1">8</text></svg>
+        <div class="legend">
+          <span><i class="lg-focus"></i>注目するマス</span>
+          <span><i class="lg-wing"></i>候補を消している数字</span>
+          <span><i class="lg-band"></i>そのマスの仲間</span>
+        </div>
+        <figcaption>図4: 9行1列のマス。仲間の20マスに 1・2・3・4・5・6・7・9 が出そろっているので、残るのは <strong>8</strong> だけです</figcaption>
+      </figure>
+
+      <p><strong>1つのマスに注目して、そこに入れられる数字を数える。</strong>それが1つだけなら、そのマスはその数字で確定します。図4では、9行1列の仲間に緑のマスの8個の数字が出ていて、1〜9のうち8個が消えます。残った 8 が答えです。</p>
+
+      <div class="hintq">
+        <span class="ht">アプリのヒントではこう出ます</span>
+        <p><span class="nm">入る数字が1つ</span> ── そのマスに入れられる数字が1つしか残っていません。</p>
+      </div>
+
+      <h4>見つけるコツ</h4>
+      <p>盤面全体をぼんやり眺めても見つかりません。<strong>数字が多く集まっているところを探す</strong>のが近道です。行・列・ブロックのどれかが埋まりかけていれば、その交差点は候補が少なくなっています。特に、<strong>1マスだけ空いている行・列・ブロック</strong>は無条件でここに当てはまります。</p>
+
+      <p>もうひとつ。<strong>数字を1つ置いた直後は、その仲間の20マスだけを見直す</strong>のが効率的です。盤面全体を見直す必要はありません。変化があったのはそこだけだからです。</p>
+
+      <div class="aka"><b>別名</b><span>単独候補</span><span>裸のシングル</span><span>Naked Single</span></div>
+    </section>
+
+    <section id="hiddenSingle">
+      <h2><span class="chip">Lv2</span> 置ける場所が1つ</h2>
+
+      <p>Lv1 と対になる手筋です。<strong>見る向きが逆になります。</strong>ここを乗り越えられるかどうかが、最初の分かれ目です。</p>
+
+      <figure class="figure">
+        <svg viewBox="0 0 390 390" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="1行目のなかで7を置けるマスが1つしかないことを示した盤面"><rect x="26" y="26" width="360" height="40" class="bc-band"/><rect x="226" y="26" width="40" height="40" class="bc-focus"/><rect x="66" y="106" width="40" height="40" class="bc-wing"/><rect x="346" y="66" width="40" height="40" class="bc-wing"/><rect x="306" y="346" width="40" height="40" class="bc-wing"/><line x1="26" y1="26" x2="26" y2="386" class="bc-l2"/><line x1="26" y1="26" x2="386" y2="26" class="bc-l2"/><line x1="66" y1="26" x2="66" y2="386" class="bc-l1"/><line x1="26" y1="66" x2="386" y2="66" class="bc-l1"/><line x1="106" y1="26" x2="106" y2="386" class="bc-l1"/><line x1="26" y1="106" x2="386" y2="106" class="bc-l1"/><line x1="146" y1="26" x2="146" y2="386" class="bc-l2"/><line x1="26" y1="146" x2="386" y2="146" class="bc-l2"/><line x1="186" y1="26" x2="186" y2="386" class="bc-l1"/><line x1="26" y1="186" x2="386" y2="186" class="bc-l1"/><line x1="226" y1="26" x2="226" y2="386" class="bc-l1"/><line x1="26" y1="226" x2="386" y2="226" class="bc-l1"/><line x1="266" y1="26" x2="266" y2="386" class="bc-l2"/><line x1="26" y1="266" x2="386" y2="266" class="bc-l2"/><line x1="306" y1="26" x2="306" y2="386" class="bc-l1"/><line x1="26" y1="306" x2="386" y2="306" class="bc-l1"/><line x1="346" y1="26" x2="346" y2="386" class="bc-l1"/><line x1="26" y1="346" x2="386" y2="346" class="bc-l1"/><line x1="386" y1="26" x2="386" y2="386" class="bc-l2"/><line x1="26" y1="386" x2="386" y2="386" class="bc-l2"/><text x="46" y="17" class="bc-hdr">1</text><text x="15" y="50" class="bc-hdr">1</text><text x="86" y="17" class="bc-hdr">2</text><text x="15" y="90" class="bc-hdr">2</text><text x="126" y="17" class="bc-hdr">3</text><text x="15" y="130" class="bc-hdr">3</text><text x="166" y="17" class="bc-hdr">4</text><text x="15" y="170" class="bc-hdr">4</text><text x="206" y="17" class="bc-hdr">5</text><text x="15" y="210" class="bc-hdr">5</text><text x="246" y="17" class="bc-hdr">6</text><text x="15" y="250" class="bc-hdr">6</text><text x="286" y="17" class="bc-hdr">7</text><text x="15" y="290" class="bc-hdr">7</text><text x="326" y="17" class="bc-hdr">8</text><text x="15" y="330" class="bc-hdr">8</text><text x="366" y="17" class="bc-hdr">9</text><text x="15" y="370" class="bc-hdr">9</text><rect x="227" y="27" width="38" height="38" class="bc-focus-o"/><text x="46" y="54" class="bc-given">4</text><text x="86" y="54" class="bc-given">8</text><text x="166" y="54" class="bc-given">1</text><text x="206" y="54" class="bc-given">2</text><text x="366" y="94" class="bc-given">7</text><text x="86" y="134" class="bc-given">7</text><text x="126" y="134" class="bc-given">9</text><text x="206" y="134" class="bc-given">6</text><text x="246" y="134" class="bc-given">4</text><text x="326" y="134" class="bc-given">8</text><text x="166" y="174" class="bc-given">2</text><text x="206" y="174" class="bc-given">7</text><text x="326" y="174" class="bc-given">5</text><text x="366" y="174" class="bc-given">8</text><text x="46" y="254" class="bc-given">9</text><text x="86" y="254" class="bc-given">2</text><text x="206" y="254" class="bc-given">1</text><text x="246" y="254" class="bc-given">5</text><text x="86" y="294" class="bc-given">6</text><text x="166" y="294" class="bc-given">7</text><text x="206" y="294" class="bc-given">9</text><text x="286" y="294" class="bc-given">8</text><text x="326" y="294" class="bc-given">4</text><text x="46" y="334" class="bc-given">1</text><text x="46" y="374" class="bc-given">8</text><text x="86" y="374" class="bc-given">9</text><text x="126" y="374" class="bc-given">4</text><text x="166" y="374" class="bc-given">6</text><text x="206" y="374" class="bc-given">5</text><text x="246" y="374" class="bc-given">2</text><text x="286" y="374" class="bc-given">1</text><text x="326" y="374" class="bc-given">7</text><text x="366" y="374" class="bc-given">3</text><text x="126.0" y="52.0" class="bc-off1">7</text><line x1="119.0" y1="47.0" x2="133.0" y2="47.0" class="bc-strike"/><text x="246.0" y="52.0" class="bc-cand1">7</text><text x="286.0" y="52.0" class="bc-off1">7</text><line x1="279.0" y1="47.0" x2="293.0" y2="47.0" class="bc-strike"/><text x="326.0" y="52.0" class="bc-off1">7</text><line x1="319.0" y1="47.0" x2="333.0" y2="47.0" class="bc-strike"/><text x="366.0" y="52.0" class="bc-off1">7</text><line x1="359.0" y1="47.0" x2="373.0" y2="47.0" class="bc-strike"/></svg>
+        <div class="legend">
+          <span><i class="lg-focus"></i>7 を置けるマス</span>
+          <span><i class="lg-wing"></i>じゃまをしている 7</span>
+          <span><i class="lg-band"></i>いま見ている行</span>
+        </div>
+        <figcaption>図5: 1行目に <strong>7</strong> を置けるか、空きマスを1つずつ試したところ。赤い 7 は置けないマス。置けるのは1つだけです</figcaption>
+      </figure>
+
+      <p>Lv1 が「<strong>マス</strong>から見て、入る数字は何か」だったのに対し、Lv2 は「<strong>数字</strong>から見て、置ける場所はどこか」を数えます。行・列・ブロックのどれか1つを選び、そこにまだ無い数字を1つ決めて、置ける空きマスを数える。1か所しかなければ、そこで確定です。</p>
+
+      <p>図5では、1行目に 7 がまだありません。空きマスは5つ。ところが緑の 7 が3つ、それぞれ別の方向からにらんでいて、4つのマスが失格になります。<strong>残った1マスが 7 です。</strong></p>
+
+      <div class="callout miss">
+        <span class="ico">⚠</span>
+        <div><p><strong>よくある勘違い。</strong>「そのマスの候補が1つになった」わけではありません。図5で確定したマスには、7 以外の候補もまだ残っています。それでも 7 で確定します。<strong>1行目のどこかに必ず 7 が入る以上、置ける場所がそこしか無いなら、そこが 7 だからです。</strong>この理屈が飲み込めれば、Lv2 は完全に自分のものになります。</p></div>
+      </div>
+
+      <div class="hintq">
+        <span class="ht">アプリのヒントではこう出ます</span>
+        <p><span class="nm">置ける場所が1つ</span> ── その行（列・ブロック）を見渡すと、その数字を置けるマスがそこしかありません。</p>
+      </div>
+
+      <h4>2つの違いを1つの表に</h4>
+      <div class="tw">
+        <table>
+          <thead><tr><th></th><th>Lv1 入る数字が1つ</th><th>Lv2 置ける場所が1つ</th></tr></thead>
+          <tbody>
+            <tr><th>出発点</th><td>1つの<strong>マス</strong></td><td>1つの<strong>数字</strong></td></tr>
+            <tr><th>数えるもの</th><td>そのマスに入る数字の数</td><td>その数字を置けるマスの数</td></tr>
+            <tr><th>見る範囲</th><td>仲間の20マス</td><td>行・列・ブロックのどれか1つ</td></tr>
+            <tr><th>確定の理由</th><td>ほかに入れる数字が無い</td><td>ほかに置ける場所が無い</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>見つけるコツ</h4>
+      <p><strong>数字を1つ決めて、盤面全体でその数字だけを追う</strong>やり方が効きます。たとえば 7 と決めたら、7 がすでにある行・列・ブロックを塗りつぶすように見ていき、7 が入れる場所が1か所しかないブロックを探す。数字を変えて9回繰り返すと、たいてい何か見つかります。</p>
+
+      <p>アプリでは、数字パッドの数字を押すと<strong>同じ数字のマスが色づく</strong>ので、この探し方と相性がいいです。</p>
+
+      <div class="aka"><b>別名</b><span>唯一の置き場所</span><span>隠れたシングル</span><span>Hidden Single</span></div>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 1</span>
+      <p class="qtext">あるマスの候補は「3・5・8」の3つ残っています。ところが、そのマスを含む列を見渡すと、<strong>5 を置けるマスはそこしかありません</strong>。このマスはどうなりますか。</p>
+      <div class="opts">
+        <button class="opt" data-correct><span class="mk">A</span><span>5 で確定する</span></button>
+        <button class="opt"><span class="mk">B</span><span>候補が3つ残っているので、まだ確定しない</span></button>
+        <button class="opt"><span class="mk">C</span><span>3・5・8 のどれかに絞られたが、決められない</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p><strong>A が正解です。</strong>列には 1〜9 が1つずつ入るので、5 もどこかに必ず入ります。置ける場所がそこしか無ければ、そこが 5 です。<br>
+        B は Lv1 の見方（そのマスの候補を数える）にとらわれた答え。候補が3つ残っていても確定します。<br>
+        C も同じ勘違いです。<strong>マスから見るか、数字から見るか。</strong>Lv2 は数字から見ます。</p>
+      </div>
+    </div>
+
+    <section id="branch">
+      <h2>3. 分かれ道 ── ここでほとんどの人がつまずきます</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 400 258" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="マスが決まる手筋と、候補が消えるだけの手筋の対比。候補を消したあとは下の段の手筋に戻る">
+          <rect x="8" y="26" width="182" height="152" rx="6" class="d-box-a"/><rect x="210" y="26" width="182" height="152" rx="6" class="d-box-w"/><text x="99" y="50" class="d-t">マスが決まる</text><text x="301" y="50" class="d-t">候補が消えるだけ</text><text x="99" y="68" class="d-s">Lv1・Lv2</text><text x="301" y="68" class="d-s">Lv3・Lv4・Lv5</text><rect x="72" y="80" width="54" height="54" rx="4" class="d-cell"/><text x="99" y="118" class="d-num-a" style="font-size:26px">8</text><text x="99" y="158" class="d-s">盤面に数字が増える</text><rect x="274" y="80" width="54" height="54" rx="4" class="d-cell"/><text x="287" y="100" class="d-mini-x">1</text><line x1="281.0" y1="95.0" x2="293.0" y2="95.0" class="d-strike"/><text x="301" y="100" class="d-mini">4</text><text x="315" y="100" class="d-mini">8</text><text x="287" y="120" class="d-mini-x">9</text><line x1="281.0" y1="115.0" x2="293.0" y2="115.0" class="d-strike"/><text x="301" y="158" class="d-s">見た目は変わらない</text><path d="M301 186 V 220 H 105" class="d-arrow-a" fill="none"/><line x1="105" y1="220" x2="99" y2="190" class="d-arrow-a"/><polygon points="99.0,190.0 102.9,195.8 97.6,196.9" class="d-head-a"/><text x="200" y="244" class="d-s">候補が消えたら、もう一度 Lv1・Lv2 をさがす</text>
+        </svg>
+        <figcaption>図6: Lv3 から上の手筋は、<strong>数字を1つも書き込みません</strong>。候補を消すだけです。消したあと、もう一度 Lv1・Lv2 を探すと埋まります</figcaption>
+      </figure>
+
+      <p>ここから先の手筋は、性質がはっきり変わります。<strong>Lv1 と Lv2 は、マスに数字が入る手筋。Lv3 から上は、候補が消えるだけの手筋です。</strong></p>
+
+      <p>アプリでヒントを押したとき、「候補をけずれます」と出て<strong>盤面が何も変わらない</strong>ことがあります。故障ではありません。その手筋の仕事は、メモの中の小さい数字を減らすことだけだからです。</p>
+
+      <p>では何の役に立つのか。<strong>減らした結果、どこかのマスの候補が1つになるからです。</strong>候補を消したら、もう一度 Lv1 と Lv2 を探し直す。この往復がナンプレの後半戦です。</p>
+
+      <div class="callout key">
+        <span class="ico">🔁</span>
+        <div><p><strong>Lv3以上 → 候補が減る → Lv1・Lv2 で埋まる → また止まる → Lv3以上。</strong>この輪をぐるぐる回すのが、むずかしい 以上の解き方です。上の手筋だけで最後まで押し切ることはありません。</p></div>
+      </div>
+
+      <div class="callout warn">
+        <span class="ico">✎</span>
+        <div><p><strong>メモを書いていないと、Lv3 以上は使えません。</strong>消す相手が画面に無いからです。ここから先に進むなら、<a href="#basics">✎メモ</a>を先に用意してください。</p></div>
+      </div>
+    </section>
+
+    <section id="pointing">
+      <h2><span class="chip">Lv3</span> ブロックで絞る</h2>
+
+      <p>ブロックの中で数字が一列に閉じこめられている、という形を使います。ここから<strong>「候補を消すだけ」の手筋</strong>に入ります。</p>
+
+      <figure class="figure">
+        <svg viewBox="0 0 390 390" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ブロックの中で9が2行目に並ぶため、同じ行の別ブロックから9を消せることを示した盤面"><rect x="26" y="66" width="360" height="40" class="bc-band"/><rect x="146" y="66" width="40" height="40" class="bc-focus"/><rect x="226" y="66" width="40" height="40" class="bc-focus"/><rect x="306" y="66" width="40" height="40" class="bc-elim"/><line x1="26" y1="26" x2="26" y2="386" class="bc-l2"/><line x1="26" y1="26" x2="386" y2="26" class="bc-l2"/><line x1="66" y1="26" x2="66" y2="386" class="bc-l1"/><line x1="26" y1="66" x2="386" y2="66" class="bc-l1"/><line x1="106" y1="26" x2="106" y2="386" class="bc-l1"/><line x1="26" y1="106" x2="386" y2="106" class="bc-l1"/><line x1="146" y1="26" x2="146" y2="386" class="bc-l2"/><line x1="26" y1="146" x2="386" y2="146" class="bc-l2"/><line x1="186" y1="26" x2="186" y2="386" class="bc-l1"/><line x1="26" y1="186" x2="386" y2="186" class="bc-l1"/><line x1="226" y1="26" x2="226" y2="386" class="bc-l1"/><line x1="26" y1="226" x2="386" y2="226" class="bc-l1"/><line x1="266" y1="26" x2="266" y2="386" class="bc-l2"/><line x1="26" y1="266" x2="386" y2="266" class="bc-l2"/><line x1="306" y1="26" x2="306" y2="386" class="bc-l1"/><line x1="26" y1="306" x2="386" y2="306" class="bc-l1"/><line x1="346" y1="26" x2="346" y2="386" class="bc-l1"/><line x1="26" y1="346" x2="386" y2="346" class="bc-l1"/><line x1="386" y1="26" x2="386" y2="386" class="bc-l2"/><line x1="26" y1="386" x2="386" y2="386" class="bc-l2"/><text x="46" y="17" class="bc-hdr">1</text><text x="15" y="50" class="bc-hdr">1</text><text x="86" y="17" class="bc-hdr">2</text><text x="15" y="90" class="bc-hdr">2</text><text x="126" y="17" class="bc-hdr">3</text><text x="15" y="130" class="bc-hdr">3</text><text x="166" y="17" class="bc-hdr">4</text><text x="15" y="170" class="bc-hdr">4</text><text x="206" y="17" class="bc-hdr">5</text><text x="15" y="210" class="bc-hdr">5</text><text x="246" y="17" class="bc-hdr">6</text><text x="15" y="250" class="bc-hdr">6</text><text x="286" y="17" class="bc-hdr">7</text><text x="15" y="290" class="bc-hdr">7</text><text x="326" y="17" class="bc-hdr">8</text><text x="15" y="330" class="bc-hdr">8</text><text x="366" y="17" class="bc-hdr">9</text><text x="15" y="370" class="bc-hdr">9</text><rect x="146" y="26" width="120" height="120" class="bc-outline"/><rect x="147" y="67" width="38" height="38" class="bc-focus-o"/><rect x="227" y="67" width="38" height="38" class="bc-focus-o"/><rect x="307" y="67" width="38" height="38" class="bc-elim-o"/><line x1="246" y1="100" x2="326" y2="100" class="bc-link-d"/><polygon points="326.0,100.0 320.5,102.4 320.5,97.6" class="bc-head"/><text x="46" y="54" class="bc-given">4</text><text x="86" y="54" class="bc-given">8</text><text x="166" y="54" class="bc-given">1</text><text x="206" y="54" class="bc-given">2</text><text x="246" y="54" class="bc-given">7</text><text x="86" y="94" class="bc-given">1</text><text x="286" y="94" class="bc-given">4</text><text x="366" y="94" class="bc-given">7</text><text x="86" y="134" class="bc-given">7</text><text x="126" y="134" class="bc-given">9</text><text x="206" y="134" class="bc-given">6</text><text x="246" y="134" class="bc-given">4</text><text x="326" y="134" class="bc-given">8</text><text x="366" y="134" class="bc-given">1</text><text x="86" y="174" class="bc-given">4</text><text x="126" y="174" class="bc-given">1</text><text x="166" y="174" class="bc-given">2</text><text x="206" y="174" class="bc-given">7</text><text x="326" y="174" class="bc-given">5</text><text x="366" y="174" class="bc-given">8</text><text x="46" y="214" class="bc-given">7</text><text x="326" y="214" class="bc-given">1</text><text x="46" y="254" class="bc-given">9</text><text x="86" y="254" class="bc-given">2</text><text x="206" y="254" class="bc-given">1</text><text x="246" y="254" class="bc-given">5</text><text x="286" y="254" class="bc-given">7</text><text x="86" y="294" class="bc-given">6</text><text x="166" y="294" class="bc-given">7</text><text x="206" y="294" class="bc-given">9</text><text x="246" y="294" class="bc-given">1</text><text x="286" y="294" class="bc-given">8</text><text x="326" y="294" class="bc-given">4</text><text x="46" y="334" class="bc-given">1</text><text x="126" y="334" class="bc-given">7</text><text x="46" y="374" class="bc-given">8</text><text x="86" y="374" class="bc-given">9</text><text x="126" y="374" class="bc-given">4</text><text x="166" y="374" class="bc-given">6</text><text x="206" y="374" class="bc-given">5</text><text x="246" y="374" class="bc-given">2</text><text x="286" y="374" class="bc-given">1</text><text x="326" y="374" class="bc-given">7</text><text x="366" y="374" class="bc-given">3</text><text x="166.0" y="92.0" class="bc-cand1">9</text><text x="246.0" y="92.0" class="bc-cand1">9</text><text x="326.0" y="92.0" class="bc-off1">9</text><line x1="319.0" y1="87.0" x2="333.0" y2="87.0" class="bc-strike"/></svg>
+        <div class="legend">
+          <span><i class="lg-focus"></i>9 を置けるマス</span>
+          <span><i class="lg-elim"></i>9 を消せるマス</span>
+          <span><i class="lg-band"></i>その行</span>
+        </div>
+        <figcaption>図7: 青枠のブロックで <strong>9</strong> が入れるのは2行目の2マスだけ。だから 9 はこのブロックの中で必ず2行目に入り、同じ2行目の別ブロックからは 9 を消せます</figcaption>
+      </figure>
+
+      <p>図7の青枠のブロックには、まだ 9 がありません。そして 9 を置けるマスは、<strong>2行目の2つだけ</strong>です。どちらに入るかは分かりませんが、<mark>このブロックの 9 は2行目のどこかにある</mark>ことだけは確実です。</p>
+
+      <p>2行目には 9 が1つしか入りません。それがこのブロックの中で使われてしまう以上、<strong>同じ2行目の、別のブロックにあるマスには 9 は入れません。</strong>だから消せます。</p>
+
+      <p>ブロックの中の情報が、行の外側へ効いていく。これが「ブロックで絞る」の向きです。</p>
+
+      <div class="hintq">
+        <span class="ht">アプリのヒントではこう出ます</span>
+        <p><span class="nm">ブロックで絞る</span> ── ブロックの中で、その数字が1つの行（列）にしか入りません。だから同じ行（列）の他のブロックからは、その数字を消せます。</p>
+      </div>
+
+      <h4>見つけるコツ</h4>
+      <p>ブロックを1つ選び、<strong>まだ入っていない数字を1つずつ</strong>、置ける場所がどこかを見ます。それが1行（または1列）に並んだら当たりです。2マスに限られていれば必ず一直線ですし、3マスでも同じ行に並ぶことがあります。</p>
+
+      <div class="aka"><b>別名</b><span>Pointing Pair</span><span>Locked Candidates</span><span>ブロック内直線</span></div>
+    </section>
+
+    <section id="claiming">
+      <h2><span class="chip">Lv3</span> 行・列で絞る</h2>
+
+      <p>ひとつ前と<strong>向きだけが逆</strong>の手筋です。並べて覚えるのがいちばん早いので、図7と見比べてください。</p>
+
+      <figure class="figure">
+        <svg viewBox="0 0 390 390" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="列のなかで9が1つのブロックに収まるため、そのブロックの他のマスから9を消せることを示した盤面"><rect x="266" y="26" width="40" height="360" class="bc-band"/><rect x="266" y="146" width="40" height="40" class="bc-focus"/><rect x="266" y="186" width="40" height="40" class="bc-focus"/><rect x="346" y="186" width="40" height="40" class="bc-elim"/><line x1="26" y1="26" x2="26" y2="386" class="bc-l2"/><line x1="26" y1="26" x2="386" y2="26" class="bc-l2"/><line x1="66" y1="26" x2="66" y2="386" class="bc-l1"/><line x1="26" y1="66" x2="386" y2="66" class="bc-l1"/><line x1="106" y1="26" x2="106" y2="386" class="bc-l1"/><line x1="26" y1="106" x2="386" y2="106" class="bc-l1"/><line x1="146" y1="26" x2="146" y2="386" class="bc-l2"/><line x1="26" y1="146" x2="386" y2="146" class="bc-l2"/><line x1="186" y1="26" x2="186" y2="386" class="bc-l1"/><line x1="26" y1="186" x2="386" y2="186" class="bc-l1"/><line x1="226" y1="26" x2="226" y2="386" class="bc-l1"/><line x1="26" y1="226" x2="386" y2="226" class="bc-l1"/><line x1="266" y1="26" x2="266" y2="386" class="bc-l2"/><line x1="26" y1="266" x2="386" y2="266" class="bc-l2"/><line x1="306" y1="26" x2="306" y2="386" class="bc-l1"/><line x1="26" y1="306" x2="386" y2="306" class="bc-l1"/><line x1="346" y1="26" x2="346" y2="386" class="bc-l1"/><line x1="26" y1="346" x2="386" y2="346" class="bc-l1"/><line x1="386" y1="26" x2="386" y2="386" class="bc-l2"/><line x1="26" y1="386" x2="386" y2="386" class="bc-l2"/><text x="46" y="17" class="bc-hdr">1</text><text x="15" y="50" class="bc-hdr">1</text><text x="86" y="17" class="bc-hdr">2</text><text x="15" y="90" class="bc-hdr">2</text><text x="126" y="17" class="bc-hdr">3</text><text x="15" y="130" class="bc-hdr">3</text><text x="166" y="17" class="bc-hdr">4</text><text x="15" y="170" class="bc-hdr">4</text><text x="206" y="17" class="bc-hdr">5</text><text x="15" y="210" class="bc-hdr">5</text><text x="246" y="17" class="bc-hdr">6</text><text x="15" y="250" class="bc-hdr">6</text><text x="286" y="17" class="bc-hdr">7</text><text x="15" y="290" class="bc-hdr">7</text><text x="326" y="17" class="bc-hdr">8</text><text x="15" y="330" class="bc-hdr">8</text><text x="366" y="17" class="bc-hdr">9</text><text x="15" y="370" class="bc-hdr">9</text><rect x="266" y="146" width="120" height="120" class="bc-outline"/><rect x="267" y="147" width="38" height="38" class="bc-focus-o"/><rect x="267" y="187" width="38" height="38" class="bc-focus-o"/><rect x="347" y="187" width="38" height="38" class="bc-elim-o"/><line x1="286" y1="220" x2="366" y2="220" class="bc-link-d"/><polygon points="366.0,220.0 360.5,222.4 360.5,217.6" class="bc-head"/><text x="46" y="54" class="bc-given">4</text><text x="86" y="54" class="bc-given">8</text><text x="166" y="54" class="bc-given">1</text><text x="206" y="54" class="bc-given">2</text><text x="246" y="54" class="bc-given">7</text><text x="286" y="54" class="bc-given">5</text><text x="86" y="94" class="bc-given">1</text><text x="286" y="94" class="bc-given">4</text><text x="366" y="94" class="bc-given">7</text><text x="86" y="134" class="bc-given">7</text><text x="126" y="134" class="bc-given">9</text><text x="206" y="134" class="bc-given">6</text><text x="246" y="134" class="bc-given">4</text><text x="326" y="134" class="bc-given">8</text><text x="366" y="134" class="bc-given">1</text><text x="46" y="174" class="bc-given">6</text><text x="86" y="174" class="bc-given">4</text><text x="126" y="174" class="bc-given">1</text><text x="166" y="174" class="bc-given">2</text><text x="206" y="174" class="bc-given">7</text><text x="326" y="174" class="bc-given">5</text><text x="366" y="174" class="bc-given">8</text><text x="46" y="214" class="bc-given">7</text><text x="86" y="214" class="bc-given">3</text><text x="126" y="214" class="bc-given">5</text><text x="246" y="214" class="bc-given">6</text><text x="326" y="214" class="bc-given">1</text><text x="46" y="254" class="bc-given">9</text><text x="86" y="254" class="bc-given">2</text><text x="126" y="254" class="bc-given">8</text><text x="206" y="254" class="bc-given">1</text><text x="246" y="254" class="bc-given">5</text><text x="286" y="254" class="bc-given">7</text><text x="86" y="294" class="bc-given">6</text><text x="166" y="294" class="bc-given">7</text><text x="206" y="294" class="bc-given">9</text><text x="246" y="294" class="bc-given">1</text><text x="286" y="294" class="bc-given">8</text><text x="326" y="294" class="bc-given">4</text><text x="366" y="294" class="bc-given">5</text><text x="46" y="334" class="bc-given">1</text><text x="86" y="334" class="bc-given">5</text><text x="126" y="334" class="bc-given">7</text><text x="286" y="334" class="bc-given">6</text><text x="46" y="374" class="bc-given">8</text><text x="86" y="374" class="bc-given">9</text><text x="126" y="374" class="bc-given">4</text><text x="166" y="374" class="bc-given">6</text><text x="206" y="374" class="bc-given">5</text><text x="246" y="374" class="bc-given">2</text><text x="286" y="374" class="bc-given">1</text><text x="326" y="374" class="bc-given">7</text><text x="366" y="374" class="bc-given">3</text><text x="286.0" y="172.0" class="bc-cand1">9</text><text x="286.0" y="212.0" class="bc-cand1">9</text><text x="366.0" y="212.0" class="bc-off1">9</text><line x1="359.0" y1="207.0" x2="373.0" y2="207.0" class="bc-strike"/></svg>
+        <div class="legend">
+          <span><i class="lg-focus"></i>9 を置けるマス</span>
+          <span><i class="lg-elim"></i>9 を消せるマス</span>
+          <span><i class="lg-band"></i>その列</span>
+        </div>
+        <figcaption>図8: 7列目で <strong>9</strong> が入れるのは2マスだけで、どちらも青枠のブロックの中。だから 9 はこのブロックの7列目に入り、ブロック内の他のマスからは 9 を消せます</figcaption>
+      </figure>
+
+      <p>図8では、灰色の7列目に 9 がありません。9 を置けるマスは2つあり、<strong>その2つがどちらも同じブロックに入っています。</strong></p>
+
+      <p>7列目のどこかには必ず 9 が入ります。その候補地が全部このブロックの中にあるなら、<mark>このブロックの 9 は、7列目のマスで決まり</mark>です。ならば、同じブロックの<strong>7列目以外</strong>のマスからは 9 を消せます。</p>
+
+      <div class="callout tip">
+        <span class="ico">🔃</span>
+        <div>
+          <p><strong>2つの違いは、どちらが先に「閉じこめられている」かだけです。</strong></p>
+          <p>ブロックで絞る … <strong>ブロック</strong>の中の候補が1つの行に閉じこもる → <strong>行</strong>の外側から消す（内 → 外）<br>
+          行・列で絞る … <strong>行や列</strong>の中の候補が1つのブロックに閉じこもる → <strong>ブロック</strong>の内側から消す（外 → 内）</p>
+        </div>
+      </div>
+
+      <div class="hintq">
+        <span class="ht">アプリのヒントではこう出ます</span>
+        <p><span class="nm">行・列で絞る</span> ── その行（列）で、その数字が1つのブロックにしか入りません。だからそのブロックの他のマスからは、その数字を消せます。</p>
+      </div>
+
+      <div class="aka"><b>別名</b><span>Claiming</span><span>Box-Line Reduction</span><span>Locked Candidates Type 2</span></div>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 2</span>
+      <p class="qtext">「5行目で <strong>4</strong> を置けるマスが3つあり、その3つとも同じブロックに入っている」── この形から言えることは？</p>
+      <div class="opts">
+        <button class="opt"><span class="mk">A</span><span>5行目の他のマスから 4 を消せる</span></button>
+        <button class="opt" data-correct><span class="mk">B</span><span>そのブロックの、5行目以外のマスから 4 を消せる</span></button>
+        <button class="opt"><span class="mk">C</span><span>3マスのうち、真ん中が 4 で確定する</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p><strong>B が正解です。</strong>行の候補がブロックに閉じこもっている形なので「行・列で絞る」。行がブロックの内側へ効きます。<br>
+        A は向きが逆です。3マスとも5行目にあるので、5行目の他のマスにはもともと 4 の候補がありません。消すものがありません。<br>
+        C は言い過ぎです。この手筋でマスが確定することはありません。<a href="#branch">候補が消えるだけ</a>です。</p>
+      </div>
+    </div>
+
+    <section id="nakedPair">
+      <h2><span class="chip">Lv4</span> 2マスの候補ペア</h2>
+
+      <p>ここから「同じ候補を持つマスの組」を見る手筋になります。理屈は<strong>席とりに似ています</strong>。</p>
+
+      <figure class="figure">
+        <svg viewBox="0 0 380 146" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="2つのマスが1と9だけを候補に持つとき、同じ並びの他のマスから1と9が消せることを示した模式図">
+          <text x="190" y="16" class="d-s">同じ行（列・ブロック）の中の5マス</text><rect x="60" y="32" width="48" height="48" rx="4" class="d-box-a"/><text x="77" y="62" class="d-mini">1</text><text x="91" y="62" class="d-mini">9</text><rect x="112" y="32" width="48" height="48" rx="4" class="d-box-a"/><text x="129" y="62" class="d-mini">1</text><text x="143" y="62" class="d-mini">9</text><rect x="164" y="32" width="48" height="48" rx="4" class="d-cell"/><text x="181" y="62" class="d-mini">2</text><text x="195" y="62" class="d-mini">4</text><rect x="216" y="32" width="48" height="48" rx="4" class="d-box-w"/><text x="226" y="62" class="d-mini-x">1</text><line x1="220.0" y1="57.0" x2="232.0" y2="57.0" class="d-strike"/><text x="240" y="62" class="d-mini">4</text><text x="254" y="62" class="d-mini-x">9</text><line x1="248.0" y1="57.0" x2="260.0" y2="57.0" class="d-strike"/><rect x="268" y="32" width="48" height="48" rx="4" class="d-cell"/><text x="285" y="62" class="d-mini">6</text><text x="299" y="62" class="d-mini">8</text><path d="M60 88 v6 H 160 v-6" class="d-arrow" fill="none"/><text x="110" y="112" class="d-s">1 と 9 は、この2マスで使い切る</text><line x1="240" y1="118" x2="240" y2="94" class="d-arrow"/><polygon points="240.0,94.0 242.7,100.4 237.3,100.4" class="d-head"/><text x="246" y="132" class="d-s2">だからここから消せる</text>
+        </svg>
+        <figcaption>図9: しくみ。2つのマスが <strong>1 と 9 しか持たない</strong>なら、1 と 9 はこの2マスで使い切られます</figcaption>
+      </figure>
+
+      <p>同じ行（列・ブロック）の中に、候補が<strong>まったく同じ2つの数字だけ</strong>のマスが2つある。これが「2マスの候補ペア」です。</p>
+
+      <p>この2マスには 1 と 9 のどちらかが入り、もう片方にはもう一方が入ります。順番は分かりません。<strong>それでも、1 と 9 がこの2マスで使い切られることだけは確実です。</strong>2つの席に2人の客が座るなら、どちらがどちらでも、他の人はもう座れません。</p>
+
+      <p>だから、<mark>同じ行の他のマスから 1 と 9 を消せます。</mark></p>
+
+      <figure class="figure">
+        <svg viewBox="0 0 390 390" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="同じ2つの候補だけを持つ2マスが、同じ行の他のマスからその2つを消すことを示した盤面"><rect x="26" y="306" width="360" height="40" class="bc-band"/><rect x="146" y="306" width="40" height="40" class="bc-focus"/><rect x="346" y="306" width="40" height="40" class="bc-focus"/><rect x="306" y="306" width="40" height="40" class="bc-elim"/><line x1="26" y1="26" x2="26" y2="386" class="bc-l2"/><line x1="26" y1="26" x2="386" y2="26" class="bc-l2"/><line x1="66" y1="26" x2="66" y2="386" class="bc-l1"/><line x1="26" y1="66" x2="386" y2="66" class="bc-l1"/><line x1="106" y1="26" x2="106" y2="386" class="bc-l1"/><line x1="26" y1="106" x2="386" y2="106" class="bc-l1"/><line x1="146" y1="26" x2="146" y2="386" class="bc-l2"/><line x1="26" y1="146" x2="386" y2="146" class="bc-l2"/><line x1="186" y1="26" x2="186" y2="386" class="bc-l1"/><line x1="26" y1="186" x2="386" y2="186" class="bc-l1"/><line x1="226" y1="26" x2="226" y2="386" class="bc-l1"/><line x1="26" y1="226" x2="386" y2="226" class="bc-l1"/><line x1="266" y1="26" x2="266" y2="386" class="bc-l2"/><line x1="26" y1="266" x2="386" y2="266" class="bc-l2"/><line x1="306" y1="26" x2="306" y2="386" class="bc-l1"/><line x1="26" y1="306" x2="386" y2="306" class="bc-l1"/><line x1="346" y1="26" x2="346" y2="386" class="bc-l1"/><line x1="26" y1="346" x2="386" y2="346" class="bc-l1"/><line x1="386" y1="26" x2="386" y2="386" class="bc-l2"/><line x1="26" y1="386" x2="386" y2="386" class="bc-l2"/><text x="46" y="17" class="bc-hdr">1</text><text x="15" y="50" class="bc-hdr">1</text><text x="86" y="17" class="bc-hdr">2</text><text x="15" y="90" class="bc-hdr">2</text><text x="126" y="17" class="bc-hdr">3</text><text x="15" y="130" class="bc-hdr">3</text><text x="166" y="17" class="bc-hdr">4</text><text x="15" y="170" class="bc-hdr">4</text><text x="206" y="17" class="bc-hdr">5</text><text x="15" y="210" class="bc-hdr">5</text><text x="246" y="17" class="bc-hdr">6</text><text x="15" y="250" class="bc-hdr">6</text><text x="286" y="17" class="bc-hdr">7</text><text x="15" y="290" class="bc-hdr">7</text><text x="326" y="17" class="bc-hdr">8</text><text x="15" y="330" class="bc-hdr">8</text><text x="366" y="17" class="bc-hdr">9</text><text x="15" y="370" class="bc-hdr">9</text><rect x="147" y="307" width="38" height="38" class="bc-focus-o"/><rect x="347" y="307" width="38" height="38" class="bc-focus-o"/><rect x="307" y="307" width="38" height="38" class="bc-elim-o"/><text x="46" y="54" class="bc-given">4</text><text x="86" y="54" class="bc-given">9</text><text x="166" y="54" class="bc-given">2</text><text x="286" y="54" class="bc-given">5</text><text x="326" y="54" class="bc-given">7</text><text x="366" y="54" class="bc-given">6</text><text x="126" y="94" class="bc-given">7</text><text x="166" y="94" class="bc-given">5</text><text x="246" y="94" class="bc-given">4</text><text x="86" y="134" class="bc-given">5</text><text x="126" y="134" class="bc-given">2</text><text x="166" y="134" class="bc-given">7</text><text x="206" y="134" class="bc-given">9</text><text x="286" y="134" class="bc-given">1</text><text x="366" y="134" class="bc-given">4</text><text x="46" y="174" class="bc-given">9</text><text x="86" y="174" class="bc-given">7</text><text x="166" y="174" class="bc-given">8</text><text x="206" y="174" class="bc-given">5</text><text x="46" y="214" class="bc-given">5</text><text x="86" y="214" class="bc-given">2</text><text x="126" y="214" class="bc-given">3</text><text x="166" y="214" class="bc-given">4</text><text x="206" y="214" class="bc-given">7</text><text x="246" y="214" class="bc-given">1</text><text x="286" y="214" class="bc-given">9</text><text x="326" y="214" class="bc-given">6</text><text x="366" y="214" class="bc-given">8</text><text x="46" y="254" class="bc-given">8</text><text x="126" y="254" class="bc-given">4</text><text x="206" y="254" class="bc-given">2</text><text x="246" y="254" class="bc-given">9</text><text x="286" y="254" class="bc-given">7</text><text x="326" y="254" class="bc-given">5</text><text x="46" y="294" class="bc-given">2</text><text x="126" y="294" class="bc-given">9</text><text x="206" y="294" class="bc-given">4</text><text x="246" y="294" class="bc-given">5</text><text x="286" y="294" class="bc-given">3</text><text x="366" y="294" class="bc-given">7</text><text x="46" y="334" class="bc-given">7</text><text x="86" y="334" class="bc-given">3</text><text x="126" y="334" class="bc-given">5</text><text x="246" y="334" class="bc-given">2</text><text x="46" y="374" class="bc-given">1</text><text x="86" y="374" class="bc-given">4</text><text x="246" y="374" class="bc-given">7</text><text x="366" y="374" class="bc-given">5</text><text x="159.5" y="331.0" class="bc-cand">1</text><text x="172.5" y="331.0" class="bc-cand">9</text><text x="199.5" y="331.0" class="bc-cand-n">6</text><text x="212.5" y="331.0" class="bc-cand-n">8</text><text x="273.0" y="331.0" class="bc-cand-n">4</text><text x="286.0" y="331.0" class="bc-cand-n">6</text><text x="299.0" y="331.0" class="bc-cand-n">8</text><text x="313.0" y="323.8" class="bc-off">1</text><line x1="308.2" y1="320.3" x2="317.8" y2="320.3" class="bc-strike"/><text x="326.0" y="323.8" class="bc-cand">4</text><text x="339.0" y="323.8" class="bc-cand">8</text><text x="326.0" y="338.3" class="bc-off">9</text><line x1="321.2" y1="334.8" x2="330.8" y2="334.8" class="bc-strike"/><text x="359.5" y="331.0" class="bc-cand">1</text><text x="372.5" y="331.0" class="bc-cand">9</text></svg>
+        <div class="legend">
+          <span><i class="lg-focus"></i>ペアの2マス</span>
+          <span><i class="lg-elim"></i>候補を消せるマス</span>
+          <span><i class="lg-band"></i>その行</span>
+        </div>
+        <figcaption>図10: 実際の盤面。8行目の2マスがどちらも「1・9」だけ。同じ行の青枠でないマスから 1 と 9 が消えます</figcaption>
+      </figure>
+
+      <p>図10の8行目には、他にも候補を持つマスがあります。消えるのは、<strong>1 か 9 を候補に持っているマスだけ</strong>です。「6・8」のマスは無関係なので、そのまま残ります。</p>
+
+      <div class="hintq">
+        <span class="ht">アプリのヒントではこう出ます</span>
+        <p><span class="nm">2マスの候補ペア</span> ── 2つのマスが同じ2つの候補だけを持っています。その2つの数字は必ずこの2マスに入るので、同じ行・列・ブロックの他のマスからは消せます。</p>
+      </div>
+
+      <h3 id="nakedTriple">3マスの候補組（トリプル）</h3>
+
+      <p>同じ考え方を3マスに広げたものです。ただし、ここに<strong>大きな落とし穴</strong>があります。</p>
+
+      <figure class="figure">
+        <svg viewBox="0 0 390 390" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="3マスに3つの数字が閉じこもり、同じ列の他のマスからその数字を消すことを示した盤面"><rect x="306" y="26" width="40" height="360" class="bc-band"/><rect x="306" y="26" width="40" height="40" class="bc-focus"/><rect x="306" y="106" width="40" height="40" class="bc-focus"/><rect x="306" y="306" width="40" height="40" class="bc-focus"/><rect x="306" y="146" width="40" height="40" class="bc-elim"/><rect x="306" y="186" width="40" height="40" class="bc-elim"/><rect x="306" y="266" width="40" height="40" class="bc-elim"/><line x1="26" y1="26" x2="26" y2="386" class="bc-l2"/><line x1="26" y1="26" x2="386" y2="26" class="bc-l2"/><line x1="66" y1="26" x2="66" y2="386" class="bc-l1"/><line x1="26" y1="66" x2="386" y2="66" class="bc-l1"/><line x1="106" y1="26" x2="106" y2="386" class="bc-l1"/><line x1="26" y1="106" x2="386" y2="106" class="bc-l1"/><line x1="146" y1="26" x2="146" y2="386" class="bc-l2"/><line x1="26" y1="146" x2="386" y2="146" class="bc-l2"/><line x1="186" y1="26" x2="186" y2="386" class="bc-l1"/><line x1="26" y1="186" x2="386" y2="186" class="bc-l1"/><line x1="226" y1="26" x2="226" y2="386" class="bc-l1"/><line x1="26" y1="226" x2="386" y2="226" class="bc-l1"/><line x1="266" y1="26" x2="266" y2="386" class="bc-l2"/><line x1="26" y1="266" x2="386" y2="266" class="bc-l2"/><line x1="306" y1="26" x2="306" y2="386" class="bc-l1"/><line x1="26" y1="306" x2="386" y2="306" class="bc-l1"/><line x1="346" y1="26" x2="346" y2="386" class="bc-l1"/><line x1="26" y1="346" x2="386" y2="346" class="bc-l1"/><line x1="386" y1="26" x2="386" y2="386" class="bc-l2"/><line x1="26" y1="386" x2="386" y2="386" class="bc-l2"/><text x="46" y="17" class="bc-hdr">1</text><text x="15" y="50" class="bc-hdr">1</text><text x="86" y="17" class="bc-hdr">2</text><text x="15" y="90" class="bc-hdr">2</text><text x="126" y="17" class="bc-hdr">3</text><text x="15" y="130" class="bc-hdr">3</text><text x="166" y="17" class="bc-hdr">4</text><text x="15" y="170" class="bc-hdr">4</text><text x="206" y="17" class="bc-hdr">5</text><text x="15" y="210" class="bc-hdr">5</text><text x="246" y="17" class="bc-hdr">6</text><text x="15" y="250" class="bc-hdr">6</text><text x="286" y="17" class="bc-hdr">7</text><text x="15" y="290" class="bc-hdr">7</text><text x="326" y="17" class="bc-hdr">8</text><text x="15" y="330" class="bc-hdr">8</text><text x="366" y="17" class="bc-hdr">9</text><text x="15" y="370" class="bc-hdr">9</text><rect x="307" y="27" width="38" height="38" class="bc-focus-o"/><rect x="307" y="107" width="38" height="38" class="bc-focus-o"/><rect x="307" y="307" width="38" height="38" class="bc-focus-o"/><rect x="307" y="147" width="38" height="38" class="bc-elim-o"/><rect x="307" y="187" width="38" height="38" class="bc-elim-o"/><rect x="307" y="267" width="38" height="38" class="bc-elim-o"/><text x="86" y="54" class="bc-given">4</text><text x="206" y="54" class="bc-given">7</text><text x="286" y="54" class="bc-given">2</text><text x="366" y="54" class="bc-given">9</text><text x="206" y="94" class="bc-given">9</text><text x="246" y="94" class="bc-given">2</text><text x="326" y="94" class="bc-given">8</text><text x="366" y="94" class="bc-given">4</text><text x="206" y="134" class="bc-given">1</text><text x="286" y="134" class="bc-given">5</text><text x="366" y="134" class="bc-given">3</text><text x="126" y="174" class="bc-given">4</text><text x="246" y="174" class="bc-given">8</text><text x="286" y="174" class="bc-given">9</text><text x="46" y="214" class="bc-given">6</text><text x="166" y="214" class="bc-given">2</text><text x="206" y="214" class="bc-given">4</text><text x="246" y="214" class="bc-given">9</text><text x="366" y="214" class="bc-given">1</text><text x="166" y="254" class="bc-given">7</text><text x="286" y="254" class="bc-given">8</text><text x="326" y="254" class="bc-given">4</text><text x="46" y="294" class="bc-given">8</text><text x="86" y="294" class="bc-given">9</text><text x="126" y="294" class="bc-given">1</text><text x="206" y="294" class="bc-given">6</text><text x="46" y="334" class="bc-given">5</text><text x="86" y="334" class="bc-given">6</text><text x="126" y="334" class="bc-given">3</text><text x="166" y="334" class="bc-given">9</text><text x="206" y="334" class="bc-given">2</text><text x="366" y="334" class="bc-given">8</text><text x="46" y="374" class="bc-given">4</text><text x="86" y="374" class="bc-given">2</text><text x="126" y="374" class="bc-given">7</text><text x="206" y="374" class="bc-given">8</text><text x="326" y="374" class="bc-given">9</text><text x="319.5" y="51.0" class="bc-cand">1</text><text x="332.5" y="51.0" class="bc-cand">6</text><text x="319.5" y="131.0" class="bc-cand">6</text><text x="332.5" y="131.0" class="bc-cand">7</text><text x="313.0" y="163.8" class="bc-cand">2</text><text x="326.0" y="163.8" class="bc-cand">3</text><text x="339.0" y="163.8" class="bc-cand">5</text><text x="319.5" y="178.3" class="bc-off">6</text><line x1="314.7" y1="174.8" x2="324.3" y2="174.8" class="bc-strike"/><text x="332.5" y="178.3" class="bc-off">7</text><line x1="327.7" y1="174.8" x2="337.3" y2="174.8" class="bc-strike"/><text x="313.0" y="211.0" class="bc-cand">3</text><text x="326.0" y="211.0" class="bc-cand">5</text><text x="339.0" y="211.0" class="bc-off">7</text><line x1="334.2" y1="207.5" x2="343.8" y2="207.5" class="bc-strike"/><text x="313.0" y="283.8" class="bc-cand">2</text><text x="326.0" y="283.8" class="bc-cand">3</text><text x="339.0" y="283.8" class="bc-cand">5</text><text x="326.0" y="298.3" class="bc-off">7</text><line x1="321.2" y1="294.8" x2="330.8" y2="294.8" class="bc-strike"/><text x="319.5" y="331.0" class="bc-cand">1</text><text x="332.5" y="331.0" class="bc-cand">7</text></svg>
+        <div class="legend">
+          <span><i class="lg-focus"></i>3マスの組</span>
+          <span><i class="lg-elim"></i>候補を消せるマス</span>
+          <span><i class="lg-band"></i>その列</span>
+        </div>
+        <figcaption>図11: 8列目の3マスは「1・6」「6・7」「1・7」。<strong>候補は同じではありません</strong>が、3マスで使う数字は 1・6・7 の3つだけです</figcaption>
+      </figure>
+
+      <div class="callout miss">
+        <span class="ico">⚠</span>
+        <div><p><strong>3マスの候補が全部同じである必要はありません。</strong>「1・6・7」が3マスにきれいに並んでいる形を探すと、まず見つかりません。実際に多いのは図11のように<strong>2つずつ</strong>持っている形です。数えるのは<strong>3マスに出てくる数字の種類</strong>で、それが3つなら成立します。</p></div>
+      </div>
+
+      <p>図11の3マスに出てくる数字は 1・6・7 の3種類だけ。<strong>3つの席に3人の客</strong>なので、この3マスで 1・6・7 は使い切られます。同じ8列目の他のマスからは、1 も 6 も 7 も消せます。</p>
+
+      <div class="aka"><b>別名</b><span>2国同盟 / 3国同盟</span><span>裸のペア / トリプル</span><span>Naked Pair / Triple</span></div>
+    </section>
+
+    <section id="hiddenPair">
+      <h2><span class="chip">Lv4</span> 2数字が2マスに</h2>
+
+      <p>1つ前と形は似ていますが、<strong>数えるものが違います。</strong>ここも Lv1 と Lv2 の関係と同じで、マスから見るか、数字から見るかの違いです。</p>
+
+      <figure class="figure">
+        <svg viewBox="0 0 390 390" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="2つの数字が同じ2マスにしか入らないため、その2マスの他の候補を消せることを示した盤面"><rect x="26" y="266" width="360" height="40" class="bc-band"/><rect x="66" y="266" width="40" height="40" class="bc-focus"/><rect x="306" y="266" width="40" height="40" class="bc-focus"/><line x1="26" y1="26" x2="26" y2="386" class="bc-l2"/><line x1="26" y1="26" x2="386" y2="26" class="bc-l2"/><line x1="66" y1="26" x2="66" y2="386" class="bc-l1"/><line x1="26" y1="66" x2="386" y2="66" class="bc-l1"/><line x1="106" y1="26" x2="106" y2="386" class="bc-l1"/><line x1="26" y1="106" x2="386" y2="106" class="bc-l1"/><line x1="146" y1="26" x2="146" y2="386" class="bc-l2"/><line x1="26" y1="146" x2="386" y2="146" class="bc-l2"/><line x1="186" y1="26" x2="186" y2="386" class="bc-l1"/><line x1="26" y1="186" x2="386" y2="186" class="bc-l1"/><line x1="226" y1="26" x2="226" y2="386" class="bc-l1"/><line x1="26" y1="226" x2="386" y2="226" class="bc-l1"/><line x1="266" y1="26" x2="266" y2="386" class="bc-l2"/><line x1="26" y1="266" x2="386" y2="266" class="bc-l2"/><line x1="306" y1="26" x2="306" y2="386" class="bc-l1"/><line x1="26" y1="306" x2="386" y2="306" class="bc-l1"/><line x1="346" y1="26" x2="346" y2="386" class="bc-l1"/><line x1="26" y1="346" x2="386" y2="346" class="bc-l1"/><line x1="386" y1="26" x2="386" y2="386" class="bc-l2"/><line x1="26" y1="386" x2="386" y2="386" class="bc-l2"/><text x="46" y="17" class="bc-hdr">1</text><text x="15" y="50" class="bc-hdr">1</text><text x="86" y="17" class="bc-hdr">2</text><text x="15" y="90" class="bc-hdr">2</text><text x="126" y="17" class="bc-hdr">3</text><text x="15" y="130" class="bc-hdr">3</text><text x="166" y="17" class="bc-hdr">4</text><text x="15" y="170" class="bc-hdr">4</text><text x="206" y="17" class="bc-hdr">5</text><text x="15" y="210" class="bc-hdr">5</text><text x="246" y="17" class="bc-hdr">6</text><text x="15" y="250" class="bc-hdr">6</text><text x="286" y="17" class="bc-hdr">7</text><text x="15" y="290" class="bc-hdr">7</text><text x="326" y="17" class="bc-hdr">8</text><text x="15" y="330" class="bc-hdr">8</text><text x="366" y="17" class="bc-hdr">9</text><text x="15" y="370" class="bc-hdr">9</text><rect x="67" y="267" width="38" height="38" class="bc-focus-o"/><rect x="307" y="267" width="38" height="38" class="bc-focus-o"/><text x="46" y="54" class="bc-given">7</text><text x="126" y="54" class="bc-given">9</text><text x="286" y="54" class="bc-given">8</text><text x="326" y="54" class="bc-given">4</text><text x="366" y="54" class="bc-given">5</text><text x="166" y="94" class="bc-given">8</text><text x="246" y="94" class="bc-given">9</text><text x="366" y="94" class="bc-given">3</text><text x="46" y="134" class="bc-given">3</text><text x="86" y="134" class="bc-given">8</text><text x="126" y="134" class="bc-given">2</text><text x="206" y="134" class="bc-given">5</text><text x="366" y="134" class="bc-given">9</text><text x="46" y="174" class="bc-given">4</text><text x="86" y="174" class="bc-given">2</text><text x="206" y="174" class="bc-given">1</text><text x="286" y="174" class="bc-given">9</text><text x="326" y="174" class="bc-given">5</text><text x="366" y="174" class="bc-given">7</text><text x="46" y="214" class="bc-given">9</text><text x="166" y="214" class="bc-given">5</text><text x="246" y="214" class="bc-given">2</text><text x="286" y="214" class="bc-given">4</text><text x="366" y="214" class="bc-given">1</text><text x="126" y="254" class="bc-given">1</text><text x="166" y="254" class="bc-given">9</text><text x="206" y="254" class="bc-given">4</text><text x="366" y="254" class="bc-given">2</text><text x="46" y="294" class="bc-given">2</text><text x="206" y="294" class="bc-given">3</text><text x="286" y="294" class="bc-given">5</text><text x="366" y="294" class="bc-given">6</text><text x="46" y="334" class="bc-given">6</text><text x="166" y="334" class="bc-given">1</text><text x="246" y="334" class="bc-given">5</text><text x="366" y="334" class="bc-given">8</text><text x="86" y="374" class="bc-given">3</text><text x="126" y="374" class="bc-given">5</text><text x="286" y="374" class="bc-given">7</text><text x="366" y="374" class="bc-given">4</text><text x="73.0" y="291.0" class="bc-cand">1</text><text x="86.0" y="291.0" class="bc-off">7</text><line x1="81.2" y1="287.5" x2="90.8" y2="287.5" class="bc-strike"/><text x="99.0" y="291.0" class="bc-cand">9</text><text x="119.5" y="291.0" class="bc-cand-n">7</text><text x="132.5" y="291.0" class="bc-cand-n">8</text><text x="159.5" y="291.0" class="bc-cand-n">4</text><text x="172.5" y="291.0" class="bc-cand-n">7</text><text x="233.0" y="291.0" class="bc-cand-n">4</text><text x="246.0" y="291.0" class="bc-cand-n">7</text><text x="259.0" y="291.0" class="bc-cand-n">8</text><text x="319.5" y="291.0" class="bc-cand">1</text><text x="332.5" y="291.0" class="bc-cand">9</text></svg>
+        <div class="legend">
+          <span><i class="lg-focus"></i>2つの数字が入るマス</span>
+          <span><i class="lg-band"></i>その行</span>
+        </div>
+        <figcaption>図12: 7行目で、<strong>1 と 9 を置けるのはこの2マスだけ</strong>。だから左のマスに残っていた 7 は消せます</figcaption>
+      </figure>
+
+      <p>行・列・ブロックのどれか1つの中で、<strong>2つの数字が、同じ2マスにしか入らない</strong>。これが「2数字が2マスに」です。</p>
+
+      <p>1 と 9 はこの行のどこかに必ず入り、置ける場所はその2マスしかない。ということは、<strong>その2マスは 1 と 9 で埋まってしまいます。</strong>他の数字が入る余地はありません。</p>
+
+      <p>だから消えるのは、<mark>そのマス自身に残っていた余分な候補</mark>です。ここが1つ前と逆です。</p>
+
+      <div class="tw">
+        <table>
+          <thead><tr><th></th><th>2マスの候補ペア</th><th>2数字が2マスに</th></tr></thead>
+          <tbody>
+            <tr><th>探すもの</th><td>候補が2つだけの<strong>マス</strong>を2つ</td><td>置ける場所が2つだけの<strong>数字</strong>を2つ</td></tr>
+            <tr><th>数える対象</th><td>マスの中の候補の数</td><td>その数字を置けるマスの数</td></tr>
+            <tr><th>候補が消えるのは</th><td><strong>他の</strong>マス</td><td><strong>その2マス自身</strong></td></tr>
+            <tr><th>見た目</th><td>すぐ気づく（候補が2つで目立つ）</td><td>気づきにくい（他の候補に埋もれている）</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>「隠れた」と呼ばれるのは、この形が<strong>他の候補の陰に隠れて見えにくい</strong>からです。図12の左のマスは「1・7・9」で、ぱっと見ではただの3候補のマスにしか見えません。</p>
+
+      <div class="hintq">
+        <span class="ht">アプリのヒントではこう出ます</span>
+        <p><span class="nm">2数字が2マスに</span> ── 2つの数字が、その行（列・ブロック）で同じ2マスにしか入りません。だからその2マスの他の候補は消せます。</p>
+      </div>
+
+      <h3 id="hiddenTriple">3数字が3マスに（トリプル）</h3>
+
+      <figure class="figure">
+        <svg viewBox="0 0 390 390" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="3つの数字が同じ3マスにしか入らないため、その3マスの他の候補を消せることを示した盤面"><rect x="26" y="186" width="360" height="40" class="bc-band"/><rect x="66" y="186" width="40" height="40" class="bc-focus"/><rect x="186" y="186" width="40" height="40" class="bc-focus"/><rect x="306" y="186" width="40" height="40" class="bc-focus"/><line x1="26" y1="26" x2="26" y2="386" class="bc-l2"/><line x1="26" y1="26" x2="386" y2="26" class="bc-l2"/><line x1="66" y1="26" x2="66" y2="386" class="bc-l1"/><line x1="26" y1="66" x2="386" y2="66" class="bc-l1"/><line x1="106" y1="26" x2="106" y2="386" class="bc-l1"/><line x1="26" y1="106" x2="386" y2="106" class="bc-l1"/><line x1="146" y1="26" x2="146" y2="386" class="bc-l2"/><line x1="26" y1="146" x2="386" y2="146" class="bc-l2"/><line x1="186" y1="26" x2="186" y2="386" class="bc-l1"/><line x1="26" y1="186" x2="386" y2="186" class="bc-l1"/><line x1="226" y1="26" x2="226" y2="386" class="bc-l1"/><line x1="26" y1="226" x2="386" y2="226" class="bc-l1"/><line x1="266" y1="26" x2="266" y2="386" class="bc-l2"/><line x1="26" y1="266" x2="386" y2="266" class="bc-l2"/><line x1="306" y1="26" x2="306" y2="386" class="bc-l1"/><line x1="26" y1="306" x2="386" y2="306" class="bc-l1"/><line x1="346" y1="26" x2="346" y2="386" class="bc-l1"/><line x1="26" y1="346" x2="386" y2="346" class="bc-l1"/><line x1="386" y1="26" x2="386" y2="386" class="bc-l2"/><line x1="26" y1="386" x2="386" y2="386" class="bc-l2"/><text x="46" y="17" class="bc-hdr">1</text><text x="15" y="50" class="bc-hdr">1</text><text x="86" y="17" class="bc-hdr">2</text><text x="15" y="90" class="bc-hdr">2</text><text x="126" y="17" class="bc-hdr">3</text><text x="15" y="130" class="bc-hdr">3</text><text x="166" y="17" class="bc-hdr">4</text><text x="15" y="170" class="bc-hdr">4</text><text x="206" y="17" class="bc-hdr">5</text><text x="15" y="210" class="bc-hdr">5</text><text x="246" y="17" class="bc-hdr">6</text><text x="15" y="250" class="bc-hdr">6</text><text x="286" y="17" class="bc-hdr">7</text><text x="15" y="290" class="bc-hdr">7</text><text x="326" y="17" class="bc-hdr">8</text><text x="15" y="330" class="bc-hdr">8</text><text x="366" y="17" class="bc-hdr">9</text><text x="15" y="370" class="bc-hdr">9</text><rect x="67" y="187" width="38" height="38" class="bc-focus-o"/><rect x="187" y="187" width="38" height="38" class="bc-focus-o"/><rect x="307" y="187" width="38" height="38" class="bc-focus-o"/><text x="46" y="54" class="bc-given">1</text><text x="86" y="54" class="bc-given">5</text><text x="126" y="54" class="bc-given">6</text><text x="206" y="54" class="bc-given">9</text><text x="286" y="54" class="bc-given">8</text><text x="326" y="54" class="bc-given">2</text><text x="366" y="54" class="bc-given">3</text><text x="46" y="94" class="bc-given">4</text><text x="86" y="94" class="bc-given">7</text><text x="126" y="94" class="bc-given">8</text><text x="206" y="94" class="bc-given">2</text><text x="286" y="94" class="bc-given">5</text><text x="326" y="94" class="bc-given">6</text><text x="366" y="94" class="bc-given">9</text><text x="126" y="134" class="bc-given">2</text><text x="166" y="134" class="bc-given">5</text><text x="206" y="134" class="bc-given">8</text><text x="246" y="134" class="bc-given">6</text><text x="286" y="134" class="bc-given">4</text><text x="326" y="134" class="bc-given">1</text><text x="366" y="134" class="bc-given">7</text><text x="46" y="174" class="bc-given">7</text><text x="126" y="174" class="bc-given">9</text><text x="246" y="174" class="bc-given">2</text><text x="286" y="174" class="bc-given">6</text><text x="326" y="174" class="bc-given">5</text><text x="366" y="174" class="bc-given">4</text><text x="46" y="214" class="bc-given">6</text><text x="166" y="214" class="bc-given">9</text><text x="246" y="214" class="bc-given">5</text><text x="366" y="214" class="bc-given">2</text><text x="46" y="254" class="bc-given">2</text><text x="126" y="254" class="bc-given">5</text><text x="166" y="254" class="bc-given">6</text><text x="286" y="254" class="bc-given">9</text><text x="46" y="294" class="bc-given">5</text><text x="86" y="294" class="bc-given">6</text><text x="246" y="294" class="bc-given">9</text><text x="286" y="294" class="bc-given">2</text><text x="326" y="294" class="bc-given">4</text><text x="126" y="334" class="bc-given">4</text><text x="166" y="334" class="bc-given">2</text><text x="206" y="334" class="bc-given">6</text><text x="286" y="334" class="bc-given">7</text><text x="366" y="334" class="bc-given">5</text><text x="46" y="374" class="bc-given">8</text><text x="86" y="374" class="bc-given">2</text><text x="126" y="374" class="bc-given">7</text><text x="206" y="374" class="bc-given">5</text><text x="326" y="374" class="bc-given">9</text><text x="366" y="374" class="bc-given">6</text><text x="73.0" y="203.8" class="bc-off">1</text><line x1="68.2" y1="200.3" x2="77.8" y2="200.3" class="bc-strike"/><text x="86.0" y="203.8" class="bc-off">3</text><line x1="81.2" y1="200.3" x2="90.8" y2="200.3" class="bc-strike"/><text x="99.0" y="203.8" class="bc-cand">4</text><text x="86.0" y="218.3" class="bc-cand">8</text><text x="119.5" y="211.0" class="bc-cand-n">1</text><text x="132.5" y="211.0" class="bc-cand-n">3</text><text x="193.0" y="203.8" class="bc-off">1</text><line x1="188.2" y1="200.3" x2="197.8" y2="200.3" class="bc-strike"/><text x="206.0" y="203.8" class="bc-off">3</text><line x1="201.2" y1="200.3" x2="210.8" y2="200.3" class="bc-strike"/><text x="219.0" y="203.8" class="bc-cand">4</text><text x="206.0" y="218.3" class="bc-cand">7</text><text x="279.5" y="211.0" class="bc-cand-n">1</text><text x="292.5" y="211.0" class="bc-cand-n">3</text><text x="313.0" y="211.0" class="bc-off">3</text><line x1="308.2" y1="207.5" x2="317.8" y2="207.5" class="bc-strike"/><text x="326.0" y="211.0" class="bc-cand">7</text><text x="339.0" y="211.0" class="bc-cand">8</text></svg>
+        <div class="legend">
+          <span><i class="lg-focus"></i>3つの数字が入るマス</span>
+          <span><i class="lg-band"></i>その行</span>
+        </div>
+        <figcaption>図13: 5行目で <strong>4・7・8</strong> を置けるのはこの3マスだけ。3マスに残っていた 1 と 3 は消せます</figcaption>
+      </figure>
+
+      <p>3つに広げただけで、理屈は同じです。トリプルのときも、<strong>3つの数字が3マス全部に入る必要はありません。</strong>「4 は2マスにしか入らない」でも構いません。<strong>3つの数字の置き場所を合わせたら、ちょうど3マスになる</strong>──これが条件です。</p>
+
+      <p>この手筋は目で探すのが本当に大変です。行き詰まったときに、ヒントで教えてもらって「そういう形だったのか」と確認するのが現実的な使い方だと思います。</p>
+
+      <div class="aka"><b>別名</b><span>隠れ2国同盟 / 隠れ3国同盟</span><span>隠れたペア / トリプル</span><span>Hidden Pair / Triple</span></div>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 3</span>
+      <p class="qtext">ある行に、候補が「2・6」のマスと「2・6」のマスが1つずつあります。この行の他のマスの候補はどうなりますか。</p>
+      <div class="opts">
+        <button class="opt"><span class="mk">A</span><span>その2マスから、2 と 6 以外の候補が消える</span></button>
+        <button class="opt" data-correct><span class="mk">B</span><span>他のマスから、2 と 6 が消える</span></button>
+        <button class="opt"><span class="mk">C</span><span>2 と 6 のどちらがどちらに入るかも決まる</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p><strong>B が正解です。</strong>候補が2つだけのマスが2つ ＝ <a href="#nakedPair">2マスの候補ペア</a>。2 と 6 はこの2マスで使い切られるので、他のマスから消せます。<br>
+        A は「<a href="#hiddenPair">2数字が2マスに</a>」の結論です。そちらは<strong>その2マス自身</strong>の余分な候補が消えます。ただし今回はもともと2つしか持っていないので、消すものがありません。<br>
+        C は決まりません。<strong>どちらがどちらかは分からないまま</strong>で、それでも他のマスからは消せる、というのがこの手筋の面白いところです。</p>
+      </div>
+    </div>
+
+    <section id="xWing">
+      <h2><span class="chip">Lv5</span> X-Wing</h2>
+
+      <p>ここから、<strong>離れた4つのマスを結ぶ</strong>手筋になります。名前は英語のままですが、やっていることは Lv3 の「ブロックで絞る」の親戚です。</p>
+
+      <figure class="figure">
+        <svg viewBox="0 0 390 390" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="2つの行で6が同じ2列にしか入らず、その列の他の行から6を消せることを示した盤面"><rect x="66" y="26" width="40" height="360" class="bc-band"/><rect x="146" y="26" width="40" height="360" class="bc-band"/><rect x="66" y="226" width="40" height="40" class="bc-focus"/><rect x="146" y="226" width="40" height="40" class="bc-focus"/><rect x="66" y="266" width="40" height="40" class="bc-focus"/><rect x="146" y="266" width="40" height="40" class="bc-focus"/><rect x="146" y="306" width="40" height="40" class="bc-elim"/><rect x="146" y="346" width="40" height="40" class="bc-elim"/><line x1="26" y1="26" x2="26" y2="386" class="bc-l2"/><line x1="26" y1="26" x2="386" y2="26" class="bc-l2"/><line x1="66" y1="26" x2="66" y2="386" class="bc-l1"/><line x1="26" y1="66" x2="386" y2="66" class="bc-l1"/><line x1="106" y1="26" x2="106" y2="386" class="bc-l1"/><line x1="26" y1="106" x2="386" y2="106" class="bc-l1"/><line x1="146" y1="26" x2="146" y2="386" class="bc-l2"/><line x1="26" y1="146" x2="386" y2="146" class="bc-l2"/><line x1="186" y1="26" x2="186" y2="386" class="bc-l1"/><line x1="26" y1="186" x2="386" y2="186" class="bc-l1"/><line x1="226" y1="26" x2="226" y2="386" class="bc-l1"/><line x1="26" y1="226" x2="386" y2="226" class="bc-l1"/><line x1="266" y1="26" x2="266" y2="386" class="bc-l2"/><line x1="26" y1="266" x2="386" y2="266" class="bc-l2"/><line x1="306" y1="26" x2="306" y2="386" class="bc-l1"/><line x1="26" y1="306" x2="386" y2="306" class="bc-l1"/><line x1="346" y1="26" x2="346" y2="386" class="bc-l1"/><line x1="26" y1="346" x2="386" y2="346" class="bc-l1"/><line x1="386" y1="26" x2="386" y2="386" class="bc-l2"/><line x1="26" y1="386" x2="386" y2="386" class="bc-l2"/><text x="46" y="17" class="bc-hdr">1</text><text x="15" y="50" class="bc-hdr">1</text><text x="86" y="17" class="bc-hdr">2</text><text x="15" y="90" class="bc-hdr">2</text><text x="126" y="17" class="bc-hdr">3</text><text x="15" y="130" class="bc-hdr">3</text><text x="166" y="17" class="bc-hdr">4</text><text x="15" y="170" class="bc-hdr">4</text><text x="206" y="17" class="bc-hdr">5</text><text x="15" y="210" class="bc-hdr">5</text><text x="246" y="17" class="bc-hdr">6</text><text x="15" y="250" class="bc-hdr">6</text><text x="286" y="17" class="bc-hdr">7</text><text x="15" y="290" class="bc-hdr">7</text><text x="326" y="17" class="bc-hdr">8</text><text x="15" y="330" class="bc-hdr">8</text><text x="366" y="17" class="bc-hdr">9</text><text x="15" y="370" class="bc-hdr">9</text><rect x="67" y="227" width="38" height="38" class="bc-focus-o"/><rect x="147" y="227" width="38" height="38" class="bc-focus-o"/><rect x="67" y="267" width="38" height="38" class="bc-focus-o"/><rect x="147" y="267" width="38" height="38" class="bc-focus-o"/><rect x="147" y="307" width="38" height="38" class="bc-elim-o"/><rect x="147" y="347" width="38" height="38" class="bc-elim-o"/><line x1="86" y1="246" x2="166" y2="246" class="bc-link"/><line x1="86" y1="286" x2="166" y2="286" class="bc-link"/><line x1="86" y1="246" x2="86" y2="286" class="bc-link"/><line x1="166" y1="246" x2="166" y2="286" class="bc-link"/><text x="46" y="54" class="bc-given">4</text><text x="86" y="54" class="bc-given">9</text><text x="166" y="54" class="bc-given">2</text><text x="286" y="54" class="bc-given">5</text><text x="326" y="54" class="bc-given">7</text><text x="366" y="54" class="bc-given">6</text><text x="126" y="94" class="bc-given">7</text><text x="166" y="94" class="bc-given">5</text><text x="246" y="94" class="bc-given">4</text><text x="86" y="134" class="bc-given">5</text><text x="126" y="134" class="bc-given">2</text><text x="166" y="134" class="bc-given">7</text><text x="206" y="134" class="bc-given">9</text><text x="286" y="134" class="bc-given">1</text><text x="366" y="134" class="bc-given">4</text><text x="46" y="174" class="bc-given">9</text><text x="86" y="174" class="bc-given">7</text><text x="166" y="174" class="bc-given">8</text><text x="206" y="174" class="bc-given">5</text><text x="46" y="214" class="bc-given">5</text><text x="86" y="214" class="bc-given">2</text><text x="126" y="214" class="bc-given">3</text><text x="166" y="214" class="bc-given">4</text><text x="206" y="214" class="bc-given">7</text><text x="246" y="214" class="bc-given">1</text><text x="286" y="214" class="bc-given">9</text><text x="326" y="214" class="bc-given">6</text><text x="366" y="214" class="bc-given">8</text><text x="46" y="254" class="bc-given">8</text><text x="126" y="254" class="bc-given">4</text><text x="206" y="254" class="bc-given">2</text><text x="246" y="254" class="bc-given">9</text><text x="286" y="254" class="bc-given">7</text><text x="326" y="254" class="bc-given">5</text><text x="46" y="294" class="bc-given">2</text><text x="126" y="294" class="bc-given">9</text><text x="206" y="294" class="bc-given">4</text><text x="246" y="294" class="bc-given">5</text><text x="286" y="294" class="bc-given">3</text><text x="366" y="294" class="bc-given">7</text><text x="46" y="334" class="bc-given">7</text><text x="86" y="334" class="bc-given">3</text><text x="126" y="334" class="bc-given">5</text><text x="246" y="334" class="bc-given">2</text><text x="46" y="374" class="bc-given">1</text><text x="86" y="374" class="bc-given">4</text><text x="246" y="374" class="bc-given">7</text><text x="366" y="374" class="bc-given">5</text><text x="46.0" y="92.0" class="bc-cand-n1">6</text><text x="206.0" y="92.0" class="bc-cand-n1">6</text><text x="46.0" y="132.0" class="bc-cand-n1">6</text><text x="246.0" y="132.0" class="bc-cand-n1">6</text><text x="126.0" y="172.0" class="bc-cand-n1">6</text><text x="246.0" y="172.0" class="bc-cand-n1">6</text><text x="86.0" y="252.0" class="bc-cand1">6</text><text x="166.0" y="252.0" class="bc-cand1">6</text><text x="86.0" y="292.0" class="bc-cand1">6</text><text x="166.0" y="292.0" class="bc-cand1">6</text><text x="166.0" y="332.0" class="bc-off1">6</text><line x1="159.0" y1="327.0" x2="173.0" y2="327.0" class="bc-strike"/><text x="206.0" y="332.0" class="bc-cand-n1">6</text><text x="286.0" y="332.0" class="bc-cand-n1">6</text><text x="126.0" y="372.0" class="bc-cand-n1">6</text><text x="166.0" y="372.0" class="bc-off1">6</text><line x1="159.0" y1="367.0" x2="173.0" y2="367.0" class="bc-strike"/><text x="206.0" y="372.0" class="bc-cand-n1">6</text><text x="286.0" y="372.0" class="bc-cand-n1">6</text></svg>
+        <div class="legend">
+          <span><i class="lg-focus"></i>長方形の4隅</span>
+          <span><i class="lg-elim"></i>6 を消せるマス</span>
+          <span><i class="lg-band"></i>その2つの列</span>
+        </div>
+        <figcaption>図14: 6行目と7行目のどちらも、<strong>6</strong> が入るのは2列目と4列目だけ。4つのマスが長方形になります</figcaption>
+      </figure>
+
+      <p>灰色の小さい 6 は、盤面で 6 を置けるマス全部です。そのなかで<strong>6行目と7行目に注目</strong>してください。どちらの行も、6 が入れるのは<strong>2列目と4列目の2か所だけ</strong>です。</p>
+
+      <p>ここから何が言えるか、順に追います。</p>
+
+      <ol>
+        <li>6行目の 6 は、2列目か4列目のどちらかに入る</li>
+        <li>7行目の 6 も、2列目か4列目のどちらかに入る</li>
+        <li>同じ列に 6 は2つ置けないので、<strong>片方が2列目なら、もう片方は必ず4列目</strong>になる</li>
+        <li>つまり組み合わせは<strong>2通りしかなく、どちらでも2列目と4列目に1つずつ 6 が入る</strong></li>
+        <li>2列目と4列目の 6 は、この4マスで使い切られる</li>
+      </ol>
+
+      <p>結論として、<mark>2列目と4列目の、6行目・7行目以外のマスからは 6 を消せます。</mark>図14では4列目の下2マスが該当します。</p>
+
+      <div class="callout tip">
+        <span class="ico">🔲</span>
+        <div><p>日本語では<strong>井桁理論</strong>とも呼ばれます。4つのマスが長方形の4隅に来て、井桁のように見えるからです。行で見つけたら列から消す、列で見つけたら行から消す──<strong>見つけた向きと消す向きは必ず直角</strong>になります。</p></div>
+      </div>
+
+      <div class="hintq">
+        <span class="ht">アプリのヒントではこう出ます</span>
+        <p><span class="nm">X-Wing</span> ── 2つの行で、その数字が同じ2つの列にしか入りません。すると、その2列の他の行からは、その数字を消せます。</p>
+      </div>
+
+      <h4>見つけるコツ</h4>
+      <p>数字を1つ決めて、<strong>その数字だけのメモを縦に読む</strong>ことです。ある数字について「置ける場所がちょうど2か所」の行を探し、それが2本見つかったら、<strong>列の番号が一致しているか</strong>を確かめる。一致していれば X-Wing です。3か所以上ある行は対象外です。</p>
+
+      <div class="aka"><b>別名</b><span>井桁理論</span><span>X-Wing</span><span>Fish（の最小形）</span></div>
+    </section>
+
+    <section id="xyWing">
+      <h2><span class="chip">Lv5</span> XY-Wing</h2>
+
+      <p>このガイドで<strong>いちばん手ごわい手筋</strong>です。ただし、考え方そのものは「2通りしかないなら、両方試せばいい」という素朴なものです。</p>
+
+      <figure class="figure">
+        <svg viewBox="0 0 390 390" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="軸のマスと2枚の翼がつながり、両方から見えるマスから3を消せることを示した盤面"><rect x="146" y="66" width="40" height="40" class="bc-band"/><rect x="146" y="106" width="40" height="40" class="bc-band"/><rect x="186" y="186" width="40" height="40" class="bc-focus"/><rect x="186" y="66" width="40" height="40" class="bc-wing"/><rect x="146" y="226" width="40" height="40" class="bc-wing"/><rect x="146" y="66" width="40" height="40" class="bc-elim"/><rect x="146" y="106" width="40" height="40" class="bc-elim"/><line x1="26" y1="26" x2="26" y2="386" class="bc-l2"/><line x1="26" y1="26" x2="386" y2="26" class="bc-l2"/><line x1="66" y1="26" x2="66" y2="386" class="bc-l1"/><line x1="26" y1="66" x2="386" y2="66" class="bc-l1"/><line x1="106" y1="26" x2="106" y2="386" class="bc-l1"/><line x1="26" y1="106" x2="386" y2="106" class="bc-l1"/><line x1="146" y1="26" x2="146" y2="386" class="bc-l2"/><line x1="26" y1="146" x2="386" y2="146" class="bc-l2"/><line x1="186" y1="26" x2="186" y2="386" class="bc-l1"/><line x1="26" y1="186" x2="386" y2="186" class="bc-l1"/><line x1="226" y1="26" x2="226" y2="386" class="bc-l1"/><line x1="26" y1="226" x2="386" y2="226" class="bc-l1"/><line x1="266" y1="26" x2="266" y2="386" class="bc-l2"/><line x1="26" y1="266" x2="386" y2="266" class="bc-l2"/><line x1="306" y1="26" x2="306" y2="386" class="bc-l1"/><line x1="26" y1="306" x2="386" y2="306" class="bc-l1"/><line x1="346" y1="26" x2="346" y2="386" class="bc-l1"/><line x1="26" y1="346" x2="386" y2="346" class="bc-l1"/><line x1="386" y1="26" x2="386" y2="386" class="bc-l2"/><line x1="26" y1="386" x2="386" y2="386" class="bc-l2"/><text x="46" y="17" class="bc-hdr">1</text><text x="15" y="50" class="bc-hdr">1</text><text x="86" y="17" class="bc-hdr">2</text><text x="15" y="90" class="bc-hdr">2</text><text x="126" y="17" class="bc-hdr">3</text><text x="15" y="130" class="bc-hdr">3</text><text x="166" y="17" class="bc-hdr">4</text><text x="15" y="170" class="bc-hdr">4</text><text x="206" y="17" class="bc-hdr">5</text><text x="15" y="210" class="bc-hdr">5</text><text x="246" y="17" class="bc-hdr">6</text><text x="15" y="250" class="bc-hdr">6</text><text x="286" y="17" class="bc-hdr">7</text><text x="15" y="290" class="bc-hdr">7</text><text x="326" y="17" class="bc-hdr">8</text><text x="15" y="330" class="bc-hdr">8</text><text x="366" y="17" class="bc-hdr">9</text><text x="15" y="370" class="bc-hdr">9</text><rect x="187" y="187" width="38" height="38" class="bc-focus-o"/><rect x="147" y="67" width="38" height="38" class="bc-elim-o"/><rect x="147" y="107" width="38" height="38" class="bc-elim-o"/><line x1="206" y1="206" x2="206" y2="86" class="bc-link"/><line x1="206" y1="206" x2="166" y2="246" class="bc-link"/><text x="46" y="54" class="bc-given">4</text><text x="86" y="54" class="bc-given">8</text><text x="166" y="54" class="bc-given">1</text><text x="206" y="54" class="bc-given">2</text><text x="246" y="54" class="bc-given">7</text><text x="286" y="54" class="bc-given">5</text><text x="86" y="94" class="bc-given">1</text><text x="286" y="94" class="bc-given">4</text><text x="366" y="94" class="bc-given">7</text><text x="86" y="134" class="bc-given">7</text><text x="126" y="134" class="bc-given">9</text><text x="206" y="134" class="bc-given">6</text><text x="246" y="134" class="bc-given">4</text><text x="326" y="134" class="bc-given">8</text><text x="366" y="134" class="bc-given">1</text><text x="46" y="174" class="bc-given">6</text><text x="86" y="174" class="bc-given">4</text><text x="126" y="174" class="bc-given">1</text><text x="166" y="174" class="bc-given">2</text><text x="206" y="174" class="bc-given">7</text><text x="326" y="174" class="bc-given">5</text><text x="366" y="174" class="bc-given">8</text><text x="46" y="214" class="bc-given">7</text><text x="86" y="214" class="bc-given">3</text><text x="126" y="214" class="bc-given">5</text><text x="246" y="214" class="bc-given">6</text><text x="326" y="214" class="bc-given">1</text><text x="46" y="254" class="bc-given">9</text><text x="86" y="254" class="bc-given">2</text><text x="126" y="254" class="bc-given">8</text><text x="206" y="254" class="bc-given">1</text><text x="246" y="254" class="bc-given">5</text><text x="286" y="254" class="bc-given">7</text><text x="86" y="294" class="bc-given">6</text><text x="166" y="294" class="bc-given">7</text><text x="206" y="294" class="bc-given">9</text><text x="246" y="294" class="bc-given">1</text><text x="286" y="294" class="bc-given">8</text><text x="326" y="294" class="bc-given">4</text><text x="366" y="294" class="bc-given">5</text><text x="46" y="334" class="bc-given">1</text><text x="86" y="334" class="bc-given">5</text><text x="126" y="334" class="bc-given">7</text><text x="286" y="334" class="bc-given">6</text><text x="46" y="374" class="bc-given">8</text><text x="86" y="374" class="bc-given">9</text><text x="126" y="374" class="bc-given">4</text><text x="166" y="374" class="bc-given">6</text><text x="206" y="374" class="bc-given">5</text><text x="246" y="374" class="bc-given">2</text><text x="286" y="374" class="bc-given">1</text><text x="326" y="374" class="bc-given">7</text><text x="366" y="374" class="bc-given">3</text><text x="166.0" y="92.0" class="bc-off1">3</text><line x1="159.0" y1="87.0" x2="173.0" y2="87.0" class="bc-strike"/><text x="199.5" y="91.0" class="bc-cand">3</text><text x="212.5" y="91.0" class="bc-cand">8</text><text x="166.0" y="132.0" class="bc-off1">3</text><line x1="159.0" y1="127.0" x2="173.0" y2="127.0" class="bc-strike"/><text x="199.5" y="211.0" class="bc-cand">4</text><text x="212.5" y="211.0" class="bc-cand">8</text><text x="159.5" y="251.0" class="bc-cand">3</text><text x="172.5" y="251.0" class="bc-cand">4</text></svg>
+        <div class="legend">
+          <span><i class="lg-focus"></i>軸（中心のマス）</span>
+          <span><i class="lg-wing"></i>翼（両側のマス）</span>
+          <span><i class="lg-elim"></i>3 を消せるマス</span>
+        </div>
+        <figcaption>図15: 軸「4・8」と、翼「3・8」「3・4」。軸から翼へは、それぞれ数字が1つずつ共通しています</figcaption>
+      </figure>
+
+      <p>候補が<strong>2つだけ</strong>のマスを3つ使います。役割に名前を付けると分かりやすくなります。</p>
+
+      <ul>
+        <li><strong>軸</strong> … 中心になるマス。図では「4・8」</li>
+        <li><strong>翼</strong> … 軸の仲間であるマス2つ。図では「3・8」と「3・4」</li>
+      </ul>
+
+      <p>軸と翼は、<strong>それぞれ数字を1つずつ共有</strong>します。「3・8」の翼とは 8 を、「3・4」の翼とは 4 を分け合っています。そして<strong>2枚の翼どうしは、軸と共有していない数字を共通で持ちます</strong>。ここでは <strong>3</strong> です。この 3 が主役になります。</p>
+
+      <figure class="figure">
+        <svg viewBox="0 0 400 236" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="軸が4のときと8のときで場合分けしても、どちらでも翼のどちらかが3になることを示した図">
+          <rect x="6" y="26" width="188" height="146" rx="6" class="d-box"/><text x="100" y="18" class="d-t">軸が 4 のとき</text><rect x="78" y="40" width="44" height="40" rx="4" class="d-box-a"/><text x="100" y="67" class="d-num-a">4</text><text x="100" y="36" class="d-s2" text-anchor="middle">軸</text><rect x="30" y="110" width="44" height="40" rx="4" class="d-box-w"/><text x="44" y="137" class="d-num">3</text><text x="60" y="137" class="d-num">8</text><line x1="100" y1="82" x2="52" y2="106" class="d-arrow"/><polygon points="52.0,106.0 56.5,100.7 59.0,105.6" class="d-head"/><rect x="126" y="110" width="44" height="40" rx="4" class="d-box-w"/><text x="148" y="137" class="d-num-a">3</text><line x1="100" y1="82" x2="148" y2="106" class="d-arrow"/><polygon points="148.0,106.0 141.0,105.6 143.5,100.7" class="d-head"/><text x="24" y="124" class="d-s2" text-anchor="end">翼</text><text x="176" y="124" class="d-s2" text-anchor="start">翼</text><text x="100" y="190" class="d-s">右の翼が 3 になる</text><rect x="206" y="26" width="188" height="146" rx="6" class="d-box"/><text x="300" y="18" class="d-t">軸が 8 のとき</text><rect x="278" y="40" width="44" height="40" rx="4" class="d-box-a"/><text x="300" y="67" class="d-num-a">8</text><text x="300" y="36" class="d-s2" text-anchor="middle">軸</text><rect x="230" y="110" width="44" height="40" rx="4" class="d-box-w"/><text x="252" y="137" class="d-num-a">3</text><line x1="300" y1="82" x2="252" y2="106" class="d-arrow"/><polygon points="252.0,106.0 256.5,100.7 259.0,105.6" class="d-head"/><rect x="326" y="110" width="44" height="40" rx="4" class="d-box-w"/><text x="340" y="137" class="d-num">3</text><text x="356" y="137" class="d-num">4</text><line x1="300" y1="82" x2="348" y2="106" class="d-arrow"/><polygon points="348.0,106.0 341.0,105.6 343.5,100.7" class="d-head"/><text x="224" y="124" class="d-s2" text-anchor="end">翼</text><text x="376" y="124" class="d-s2" text-anchor="start">翼</text><text x="300" y="190" class="d-s">左の翼が 3 になる</text><rect x="6" y="200" width="388" height="32" rx="6" class="d-box-a"/><text x="200" y="220" class="d-t" style="font-size:12.5px">どちらでも 3 が現れる → 両方から見えるマスの 3 は消せる</text>
+        </svg>
+        <figcaption>図16: 軸は 4 か 8 のどちらかです。<strong>どちらに転んでも、翼のどちらかが 3 になります</strong>（図15の3マスを、見やすいように並べ直しています）</figcaption>
+      </figure>
+
+      <p>軸に入るのは 4 か 8 のどちらかです。両方を試してみます。</p>
+
+      <ul>
+        <li><strong>軸が 4 なら</strong> … 「3・4」の翼は 4 を使えないので <strong>3</strong> になる</li>
+        <li><strong>軸が 8 なら</strong> … 「3・8」の翼は 8 を使えないので <strong>3</strong> になる</li>
+      </ul>
+
+      <p>どちらの場合も、<strong>2枚の翼のどちらかが 3 になります。</strong>軸がどちらでも結論が同じなので、答えを決めなくても先へ進めます。</p>
+
+      <p>そうすると、<mark>2枚の翼の両方から見えるマスには、3 は入れません。</mark>どちらの翼が 3 になっても、そのマスは 3 をふさがれるからです。図15でオレンジになっている2マスが、それにあたります。「3・8」の翼（2行5列）とは同じブロック、「3・4」の翼（6行4列）とは同じ列でつながっているので、どちらの翼からも見えています。</p>
+
+      <div class="callout key">
+        <span class="ico">🧠</span>
+        <div><p>これは「とりあえず入れてみて、だめなら戻す」総当たりとは違います。<strong>2通りしかないことを確かめたうえで、両方の結論が一致することを示している</strong>ので、あてずっぽうの要素がありません。ナンプレの手筋で場合分けが出てくるのは、ここが最初です。</p></div>
+      </div>
+
+      <div class="hintq">
+        <span class="ht">アプリのヒントではこう出ます</span>
+        <p><span class="nm">XY-Wing</span> ── 候補が2つずつの3マスが鎖のようにつながっています。どちらに転んでも同じ数字が確定するので、共通のマスからその数字を消せます。</p>
+      </div>
+
+      <h4>見つけるコツ</h4>
+      <p><strong>候補が2つだけのマスに印を付けていく</strong>のが出発点です。そのなかから、仲間どうしになっている3つの組を探します。3マスに出てくる数字がちょうど3種類（図なら 3・4・8）なら、XY-Wing の形です。</p>
+
+      <div class="aka"><b>別名</b><span>XY-Wing</span><span>Y-Wing</span><span>3マスの鎖</span></div>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 4</span>
+      <p class="qtext">X-Wing を探しています。「3行目で <strong>2</strong> が入るのは1列目と5列目、7行目で 2 が入るのは1列目と<strong>6列目</strong>」でした。X-Wing は成立しますか。</p>
+      <div class="opts">
+        <button class="opt"><span class="mk">A</span><span>成立する。どちらも2か所ずつなので条件を満たしている</span></button>
+        <button class="opt" data-correct><span class="mk">B</span><span>成立しない。列がそろっていない</span></button>
+        <button class="opt"><span class="mk">C</span><span>成立する。1列目が共通しているので、1列目から消せる</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p><strong>B が正解です。</strong>X-Wing は<strong>2つの行が、まったく同じ2つの列</strong>を使っているときだけ成立します。5列目と6列目がずれているので長方形になりません。<br>
+        A は「2か所ずつ」だけを条件と誤解した答え。場所の一致が要ります。<br>
+        C も違います。1列目が共通でも、3行目の 2 が5列目に、7行目の 2 が1列目に入る形があり得るので、1列目を使い切るとは言えません。</p>
+      </div>
+    </div>
+
+    <section id="stuck">
+      <h2>4. 手が止まったときは</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 380 404" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="メモを書き、下の段の手筋から順に探し、候補が消えたら下の段へ戻る手順のフローチャート">
+          <rect x="22" y="18" width="226" height="38" rx="6" class="d-box-a"/><text x="135" y="42" class="d-t" style="font-size:13px">メモ（候補）を書く</text><line x1="135" y1="56" x2="135" y2="69" class="d-arrow"/><polygon points="135.0,69.0 132.3,62.6 137.7,62.6" class="d-head"/><rect x="22" y="72" width="226" height="38" rx="6" class="d-box"/><text x="135" y="96" class="d-t" style="font-size:13px">Lv1  入る数字が1つ</text><line x1="135" y1="110" x2="135" y2="123" class="d-arrow"/><polygon points="135.0,123.0 132.3,116.6 137.7,116.6" class="d-head"/><rect x="22" y="126" width="226" height="38" rx="6" class="d-box"/><text x="135" y="150" class="d-t" style="font-size:13px">Lv2  置ける場所が1つ</text><line x1="135" y1="164" x2="135" y2="177" class="d-arrow"/><polygon points="135.0,177.0 132.3,170.6 137.7,170.6" class="d-head"/><rect x="22" y="180" width="226" height="38" rx="6" class="d-box"/><text x="135" y="204" class="d-t" style="font-size:13px">Lv3  ブロック／行・列で絞る</text><line x1="135" y1="218" x2="135" y2="231" class="d-arrow"/><polygon points="135.0,231.0 132.3,224.6 137.7,224.6" class="d-head"/><rect x="22" y="234" width="226" height="38" rx="6" class="d-box"/><text x="135" y="258" class="d-t" style="font-size:13px">Lv4  ペア・トリプル</text><line x1="135" y1="272" x2="135" y2="285" class="d-arrow"/><polygon points="135.0,285.0 132.3,278.6 137.7,278.6" class="d-head"/><rect x="22" y="288" width="226" height="38" rx="6" class="d-box"/><text x="135" y="312" class="d-t" style="font-size:13px">Lv5  X-Wing・XY-Wing</text><line x1="248" y1="199" x2="322" y2="199" class="d-arrow"/><line x1="248" y1="253" x2="322" y2="253" class="d-arrow"/><line x1="248" y1="307" x2="322" y2="307" class="d-arrow"/><path d="M322 307 V 91" class="d-arrow" fill="none"/><line x1="322" y1="91" x2="252" y2="91" class="d-arrow"/><polygon points="252.0,91.0 258.4,88.3 258.4,93.7" class="d-head"/><text x="348" y="200" class="d-s2" text-anchor="middle" transform="rotate(-90 348 200)">候補が消えたら</text><text x="364" y="200" class="d-s2" text-anchor="middle" transform="rotate(-90 364 200)">Lv1 にもどる</text><text x="190" y="370" class="d-s">必ず下から順に。上から探しても、まず見つかりません</text><text x="190" y="390" class="d-s">アプリのヒントも、これと同じ順で探しています</text>
+        </svg>
+        <figcaption>図17: 探す順番。<strong>必ず下の段から</strong>。候補が1つでも消えたら、Lv1 に戻ります</figcaption>
+      </figure>
+
+      <p>行き詰まったとき、いきなり X-Wing を探すのは効率が悪すぎます。上の手筋ほど成立する形が少ないので、探す時間の割に見つかりません。<strong>必ず下から順に</strong>試してください。アプリのヒントも、まったく同じ順で探しています。</p>
+
+      <p>そして忘れやすいのが、図17の右側の戻り矢印です。<strong>Lv3 以上で候補を1つでも消したら、必ず Lv1 と Lv2 に戻ります。</strong>消した直後がいちばん埋まりやすい瞬間だからです。上の手筋を続けて2つ3つ使う必要は、めったにありません。</p>
+
+      <div class="callout tip">
+        <span class="ico">📊</span>
+        <div><p>アプリの<strong>解き方分析</strong>を見ると、自分がどの手筋で時間を使っているか、どこで手が止まりやすいかが出ます。「置ける場所が1つ」で毎回止まっているなら、<a href="#hiddenSingle">Lv2 の見つけ方</a>を練習するのがいちばん効きます。</p></div>
+      </div>
+
+      <div class="callout warn">
+        <span class="ico">🚧</span>
+        <div>
+          <p>ヒントを押して「<strong>先に直すところがあります</strong>」と出たときは、すでに入れた数字のどこかが正解と違っています。<strong>間違いが1つでも残っていると、その先は論理では進めません。</strong>手筋を探しても見つからないのは当然なので、まずそのマスを直してください。場所はヒントが教えてくれます。</p>
+          <p>アプリが作る問題は、必ずこの10種類の範囲で最後まで解けるように作ってあります。<strong>行き詰まったとしても、勘で置かなければならない場面は来ません。</strong></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="summary">
+      <h2>まとめ</h2>
+
+      <div class="cards">
+        <div class="card"><h4>候補がすべての土台</h4><p>手筋は全部「候補を減らす手続き」です。メモを書かないと Lv3 から先は使えません。</p></div>
+        <div class="card"><h4>マスから見るか、数字から見るか</h4><p>Lv1 と Lv2、ペアと隠れペアは、同じ形を逆から見たものです。</p></div>
+        <div class="card"><h4>上の手筋は候補を消すだけ</h4><p>数字は入りません。消したら Lv1・Lv2 に戻る。この往復が後半戦です。</p></div>
+      </div>
+
+      <p>10種類を一度に覚える必要はありません。<strong>いま解いている難しさの1つ上まで</strong>を知っていれば十分です。むずかしい を解いているなら Lv3 まで。そこが安定してから、とてもむずかしい に進んでください。</p>
+
+      <p class="lead" style="margin-top:1.6em"><a href="%E3%83%8A%E3%83%B3%E3%83%97%E3%83%AC%EF%BD%98%E8%A7%A3%E3%81%8D%E6%96%B9%E5%88%86%E6%9E%90_%E3%82%A2%E3%83%97%E3%83%AA.html">← アプリにもどって解く</a></p>
+
+      <div class="verfoot" id="verfoot"></div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+// ---- 配色（アプリと同じ auto / light / dark の3状態） ----
+(function(){
+  var root = document.documentElement, btn = document.getElementById('themeBtn');
+  var KEY = 'nanpre-guide-theme';
+  try { var saved = localStorage.getItem(KEY); if (saved) root.setAttribute('data-theme', saved); } catch (e) {}
+  function isDark(){
+    var t = root.getAttribute('data-theme');
+    if (t === 'dark') return true;
+    if (t === 'light') return false;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  function sync(){ btn.textContent = isDark() ? '☀️' : '🌙'; }
+  sync();
+  btn.addEventListener('click', function(){
+    var next = isDark() ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem(KEY, next); } catch (e) {}
+    sync();
+  });
+})();
+
+// ---- 目次のスクロール連動 ----
+(function(){
+  var links = [].slice.call(document.querySelectorAll('#toc a'));
+  var map = {};
+  links.forEach(function(a){
+    var el = document.querySelector(a.getAttribute('href'));
+    if (el) map[el.id] = a;
+  });
+  var targets = Object.keys(map).map(function(id){ return document.getElementById(id); });
+  if (!targets.length || !window.IntersectionObserver) return;
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (!e.isIntersecting) return;
+      links.forEach(function(a){ a.classList.remove('active'); });
+      map[e.target.id].classList.add('active');
+    });
+  }, { rootMargin: '-12% 0px -72% 0px', threshold: 0 });
+  targets.forEach(function(t){ io.observe(t); });
+})();
+
+// ---- クイズ（3択・即時採点） ----
+(function(){
+  document.querySelectorAll('[data-quiz]').forEach(function(q){
+    var opts = [].slice.call(q.querySelectorAll('.opt'));
+    var box = q.querySelector('.explain'), verdict = q.querySelector('.verdict');
+    opts.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if (btn.disabled) return;
+        var ok = btn.hasAttribute('data-correct');
+        opts.forEach(function(o){
+          o.disabled = true;
+          if (o.hasAttribute('data-correct')) o.classList.add('correct');
+        });
+        if (!ok) btn.classList.add('wrong');
+        verdict.textContent = ok ? '正解です' : '惜しい ── 正解は緑の選択肢です';
+        verdict.className = 'verdict ' + (ok ? 'ok' : 'ng');
+        box.classList.add('show');
+      });
+    });
+  });
+})();
+
+// ---- 版と更新日時（アプリの .verfoot と同じ理由で出す） ----
+(function(){
+  var GUIDE_VERSION = 'v1.0';
+  var el = document.getElementById('verfoot');
+  var stamp = '';
+  try {
+    var d = new Date(document.lastModified);
+    if (!isNaN(d)) {
+      stamp = d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' +
+              String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    }
+  } catch (e) {}
+  el.innerHTML = 'ナンプレ 解き方ガイド ' + GUIDE_VERSION + (stamp ? '　更新 ' + stamp : '') +
+    '<br>このガイドの文章・図版は、すべて本アプリのために書き下ろしたものです。図に使った盤面も、アプリの問題づくりの仕組みで作りました。' +
+    '<br>外部への通信は一切ありません。端末に保存するのは、このページの配色の選択だけです。';
+})();
+</script>
+</body>
+</html>
