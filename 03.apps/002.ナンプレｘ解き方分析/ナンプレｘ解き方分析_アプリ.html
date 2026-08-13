@@ -267,6 +267,25 @@ input[type=text],input[type=date],select{
 .levelbtn[data-lv="5"] .lvbadge{background:var(--fg); color:var(--bg)}
 .lvstat{margin-left:auto; text-align:right; font-size:11px; color:var(--fg-faint); flex:none; line-height:1.5}
 
+/* ホームの主役。同じ見た目のボタンが5つ並んでいると、初見でどれを押すか決められない。
+   「あたらしく解く」だけを大きく色付きにして、残りは下の .subnav へ落とす */
+.levelbtn.hero{padding:17px 15px; border-color:var(--accent); background:var(--accent-soft)}
+.levelbtn.hero .lvbadge{width:44px; height:44px; border-radius:11px; font-size:20px;
+  background:var(--accent); color:var(--bg)}
+.levelbtn.hero .lvname{font-size:17px}
+
+/* ガイド・分析・バックアップ。解きかけは難しさごとに1件＝最大9件並ぶので、
+   これらは必ず解きかけ一覧より上に置く。下だと件数しだいで画面外に落ちる */
+.subnav{display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-top:9px}
+.subbtn{
+  display:flex; flex-direction:column; align-items:center; gap:5px; text-align:center;
+  padding:11px 6px; border:1px solid var(--border-strong); border-radius:11px; background:var(--bg-elev);
+  color:inherit; text-decoration:none;
+}
+.subbtn:hover{border-color:var(--accent)}
+.subbtn .sbi{font-size:17px; line-height:1}
+.subbtn .sbl{font-size:11.5px; font-weight:700; line-height:1.45; color:var(--fg-muted)}
+
 /* 解き方ガイドへの導線。別タブで開くので、そうと分かる印を必ず添える */
 a.levelbtn{color:inherit; text-decoration:none}
 .exticon{flex:none; width:13px; height:13px; margin-left:5px}
@@ -527,30 +546,28 @@ body.playing .verfoot{display:none}   /* 解いている間は盤面と数字パ
   <div class="sec">
     <h2>なにをしますか？</h2>
     <div class="levels">
-      <button class="levelbtn" id="goNew" type="button">
+      <button class="levelbtn hero" id="goNew" type="button">
         <span class="lvbadge">＋</span>
         <span><span class="lvname">あたらしく解く</span><br><span class="lvdesc">サイズと難しさを選ぶと、その場で問題をつくります</span></span>
       </button>
-      <button class="levelbtn" id="goResume" type="button">
-        <span class="lvbadge">▶</span>
-        <span><span class="lvname">つづきから</span><br><span class="lvdesc" id="resumeDesc">解きかけの盤面はありません</span></span>
-      </button>
-      <a class="levelbtn" id="goGuide" href="%E3%83%8A%E3%83%B3%E3%83%97%E3%83%AC%EF%BD%98%E8%A7%A3%E3%81%8D%E6%96%B9%E5%88%86%E6%9E%90_%E8%A7%A3%E3%81%8D%E6%96%B9%E3%82%AC%E3%82%A4%E3%83%89.html" target="_blank" rel="noopener">
-        <span class="lvbadge">📖</span>
-        <span><span class="lvname">解き方ガイド<svg class="exticon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h5v5"/><path d="M14 2 7.5 8.5"/><path d="M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5"/></svg></span><br><span class="lvdesc">ヒントに出る10の手筋を、盤面の図で解説します。別タブで開きます</span></span>
+    </div>
+    <div class="subnav">
+      <a class="subbtn" id="goGuide" href="%E3%83%8A%E3%83%B3%E3%83%97%E3%83%AC%EF%BD%98%E8%A7%A3%E3%81%8D%E6%96%B9%E5%88%86%E6%9E%90_%E8%A7%A3%E3%81%8D%E6%96%B9%E3%82%AC%E3%82%A4%E3%83%89.html" target="_blank" rel="noopener">
+        <span class="sbi" aria-hidden="true">📖</span>
+        <span class="sbl">解き方ガイド<svg class="exticon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h5v5"/><path d="M14 2 7.5 8.5"/><path d="M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5"/></svg></span>
       </a>
-      <button class="levelbtn" id="goAnalysis" type="button">
-        <span class="lvbadge">📊</span>
-        <span><span class="lvname">解き方分析</span><br><span class="lvdesc">どこで手が止まったか、どう解いたかを記録から見ます</span></span>
+      <button class="subbtn" id="goAnalysis" type="button">
+        <span class="sbi" aria-hidden="true">📊</span>
+        <span class="sbl">解き方分析</span>
       </button>
-      <button class="levelbtn" id="goBackup" type="button">
-        <span class="lvbadge">💾</span>
-        <span><span class="lvname">記録とバックアップ</span><br><span class="lvdesc">記録の書き出し・読み込みと、記録が消える条件</span></span>
+      <button class="subbtn" id="goBackup" type="button">
+        <span class="sbi" aria-hidden="true">💾</span>
+        <span class="sbl">記録とバックアップ</span>
       </button>
     </div>
   </div>
   <div class="sec" id="resumeBox" hidden>
-    <h2>解きかけの盤面<span class="sub">続きから解けます<span class="touch-only">・左へスワイプすると消せます</span></span></h2>
+    <h2>つづきから<span class="sub"><span id="resumeDesc"></span>・そのまま続けられます<span class="touch-only">・左へスワイプすると消せます</span></span></h2>
     <div class="levels" id="resumeList"></div>
   </div>
   <div class="sec">
@@ -3236,10 +3253,7 @@ async function renderResumeList() {
   if (!p) return;
   const list = (await Store.byPlayer('inprogress', p.id)).sort((a, b) => a.at < b.at ? 1 : -1);
   $('#resumeBox').hidden = !list.length;
-  $('#goResume').disabled = !list.length;
-  $('#resumeDesc').textContent = list.length
-    ? `${list.length}件あります。途中から続けられます`
-    : '解きかけの盤面はありません';
+  $('#resumeDesc').textContent = `${list.length}件`;
 
   $('#resumeList').innerHTML = list.map(r => {
     const c = courseByKey(r.courseKey);
@@ -3442,7 +3456,6 @@ function bindEvents() {
   $('#btnQuit').onclick = quitPlay;
 
   $('#goNew').onclick = () => { show('new'); renderNew(); };
-  $('#goResume').onclick = () => { show('home'); $('#resumeBox').scrollIntoView({ behavior: 'smooth' }); };
   $('#goAnalysis').onclick = openAnalysis;
   $('#goBackup').onclick = renderBackup;
   $('#newBack').onclick = goHome;
@@ -3504,7 +3517,7 @@ function bindEvents() {
    日時は `document.lastModified`（＝いま読み込まれているファイルの更新時刻）を使う。
    手で書く必要がないうえ、**キャッシュに古いものが残っていれば古い日時がそのまま出る**ので、
    版の食い違いをこの1行で判断できる。版番号だけはこのファイルを直したときに上げる */
-const APP_VERSION = 'v1.7';
+const APP_VERSION = 'v1.8';
 
 function showVersion() {
   const el = $('#verfoot');
