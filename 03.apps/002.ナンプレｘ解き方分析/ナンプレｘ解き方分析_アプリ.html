@@ -2163,26 +2163,12 @@ function redo() {
    11. ヒント（2段階）
    1回目は「なぜそのマスが決まるか」だけを見せる。2回目で数字を開示する
    =========================================================================== */
-function askHint() {
+async function askHint() {
   const g = App.game;
   if (!g || g.done) return;
 
-  if (g.hintState) {                       // 2回目 → 数字を開示して置く
-    const h = g.hintState;
-    snapshot();
-    g.grid[h.cell] = h.value;
-    g.notes[h.cell] = 0;
-    g.hints.reveal++;
-    logMove(h.cell, h.value, 'h', 0);
-    if (Prefs.data.autoNotes) clearPeerNotes(h.cell, h.value);
-    g.sel = h.cell;
-    g.hintState = null;
-    paintBoard();
-    $('#board').children[h.cell].classList.add('flash');
-    saveProgressSoon();
-    checkDone();
-    return;
-  }
+  // 「自分で考える」で保留にしたヒントが残っているときは、もう一度押せば開示する
+  if (g.hintState) { revealHint(); return; }
 
   // 自分が入れた誤りが残っていると、その先を論理で進められない
   const dup = duplicateCells(g);
@@ -2219,10 +2205,12 @@ function askHint() {
     g.hintState = { cell: step.cell, value: step.value, tech: step.tech };
     g.sel = step.cell;
     paintBoard();
-    confirmDialog('つぎの1マス',
+    const ok = await confirmDialog('つぎの1マス',
       `${r}行${c}列 が決まります。理由は「${name}」です。`,
       '数字を見る', `<p class="lead" style="margin-top:8px">${esc(techHelp(step.tech))}</p>`,
       null, '自分で考える');
+    // ダイアログを出している間に別の盤面へ移っていたら、そちらへ書き込まない
+    if (ok && App.game === g) revealHint();
     return;
   }
 
@@ -2233,6 +2221,25 @@ function askHint() {
   confirmDialog('候補をけずれます',
     `${cells} に注目してください。「${name}」の形になっています。`,
     'わかった', `<p class="lead" style="margin-top:8px">${esc(techHelp(step.tech))}</p>`, null, false);
+}
+
+/** 保留中のヒントの数字を、そのマスへ置く */
+function revealHint() {
+  const g = App.game;
+  if (!g || g.done || !g.hintState) return;
+  const h = g.hintState;
+  snapshot();
+  g.grid[h.cell] = h.value;
+  g.notes[h.cell] = 0;
+  g.hints.reveal++;
+  logMove(h.cell, h.value, 'h', 0);
+  if (Prefs.data.autoNotes) clearPeerNotes(h.cell, h.value);
+  g.sel = h.cell;
+  g.hintState = null;
+  paintBoard();
+  $('#board').children[h.cell].classList.add('flash');
+  saveProgressSoon();
+  checkDone();
 }
 
 function highlightCells(list) {
