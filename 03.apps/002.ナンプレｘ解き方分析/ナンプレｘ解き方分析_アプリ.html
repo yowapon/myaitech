@@ -211,19 +211,24 @@ body.playing main{padding:0; max-width:none}
    プレイヤー
    ============================================================ */
 .players{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px}
+/* 「消す」はカードの中ではなく、カードと同じ枠（.pslot）の上に重ねる。
+   button の中に button を書くと、HTMLのパーサーがカードを先に閉じてしまい、
+   「消す」がカードの外に素のボタンとして並ぶ（→ issue-0024） */
+.pslot{position:relative; display:flex}
+.pslot > .pcard{flex:1; min-width:0}
 .pcard{
   position:relative; text-align:left; padding:13px 14px;
   border:1px solid var(--border-strong); border-radius:var(--radius);
   background:var(--bg-elev);
 }
 .pcard:hover{border-color:var(--accent)}
-.pcard .pname{font-weight:700; font-size:15.5px; margin-bottom:2px; word-break:break-all}
+.pcard .pname{font-weight:700; font-size:15.5px; margin-bottom:2px; word-break:break-all; padding-right:24px}
 .pcard .pmeta{font-size:11.5px; color:var(--fg-faint)}
-.pcard .pdel{
+.pslot > .pdel{
   position:absolute; top:6px; right:6px; width:26px; height:26px;
   border:none; background:transparent; color:var(--fg-faint); font-size:14px; border-radius:7px;
 }
-.pcard .pdel:hover{background:var(--ng-soft); color:var(--ng)}
+.pslot > .pdel:hover{background:var(--ng-soft); color:var(--ng)}
 .pcard.add{border-style:dashed; color:var(--fg-muted); display:flex; align-items:center; justify-content:center; min-height:74px}
 input[type=text],input[type=date],select{
   width:100%; padding:9px 11px; font:inherit; font-size:15px;
@@ -1695,19 +1700,18 @@ async function renderPlayers() {
 
   box.innerHTML = list.map(p => {
     const n = games.filter(g => g.playerId === p.id).length;
-    return `<button class="pcard" type="button" data-id="${esc(p.id)}">
-      <div class="pname">${esc(p.name)}</div>
-      <div class="pmeta">${n ? `${n}問クリア` : 'まだ記録はありません'}</div>
+    return `<div class="pslot">
+      <button class="pcard" type="button" data-id="${esc(p.id)}">
+        <div class="pname">${esc(p.name)}</div>
+        <div class="pmeta">${n ? `${n}問クリア` : 'まだ記録はありません'}</div>
+      </button>
       <button class="pdel" type="button" data-del="${esc(p.id)}" aria-label="${esc(p.name)}を消す">✕</button>
-    </button>`;
+    </div>`;
   }).join('') +
   (list.length < LIMITS.players
     ? `<button class="pcard add" type="button" id="pAdd">＋ 人をふやす</button>` : '');
 
-  $$('.pcard[data-id]', box).forEach(b => b.addEventListener('click', e => {
-    if (e.target.closest('[data-del]')) return;
-    selectPlayer(b.dataset.id);
-  }));
+  $$('.pcard[data-id]', box).forEach(b => b.addEventListener('click', () => selectPlayer(b.dataset.id)));
   $$('[data-del]', box).forEach(b => b.addEventListener('click', async e => {
     e.stopPropagation();
     const p = list.find(x => x.id === b.dataset.del);
@@ -3461,7 +3465,7 @@ function bindEvents() {
    日時は `document.lastModified`（＝いま読み込まれているファイルの更新時刻）を使う。
    手で書く必要がないうえ、**キャッシュに古いものが残っていれば古い日時がそのまま出る**ので、
    版の食い違いをこの1行で判断できる。版番号だけはこのファイルを直したときに上げる */
-const APP_VERSION = 'v1.4';
+const APP_VERSION = 'v1.5';
 
 function showVersion() {
   const el = $('#verfoot');
