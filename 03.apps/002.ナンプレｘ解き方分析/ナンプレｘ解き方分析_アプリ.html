@@ -2161,14 +2161,13 @@ function redo() {
 
 /* ===========================================================================
    11. ヒント（2段階）
-   1回目は「なぜそのマスが決まるか」だけを見せる。2回目で数字を開示する
+   1回目は「なぜそのマスが決まるか」だけを見せ、そのダイアログの中で数字を開示する。
+   「自分で考える」で閉じたあと押し直したときは、黙って数字を入れずに説明からやり直す
+   （どちらを選んだかを覚えていて勝手に置かれると、押した覚えのない数字が増える）
    =========================================================================== */
 async function askHint() {
   const g = App.game;
   if (!g || g.done) return;
-
-  // 「自分で考える」で保留にしたヒントが残っているときは、もう一度押せば開示する
-  if (g.hintState) { revealHint(); return; }
 
   // 自分が入れた誤りが残っていると、その先を論理で進められない
   const dup = duplicateCells(g);
@@ -2197,7 +2196,8 @@ async function askHint() {
     return;
   }
 
-  g.hints.explain++;
+  // 同じマスの説明をもう一度出しただけのときは、使用回数を二重に数えない
+  if (!g.hintState || g.hintState.cell !== step.cell) g.hints.explain++;
   const name = TECH_NAME[step.tech] || step.tech;
 
   if (step.cell !== undefined) {
