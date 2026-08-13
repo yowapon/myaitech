@@ -462,6 +462,13 @@ input[type=text],input[type=date],select{
 @media (prefers-reduced-motion:reduce){
   *{animation:none !important; transition:none !important}
 }
+
+/* 版と更新日時。直っていないのか、古いものが端末に残っているのかを見分けるために出す */
+.verfoot{
+  padding:16px 14px 30px; text-align:center;
+  font-size:11px; line-height:1.6; color:var(--fg-faint);
+}
+body.playing .verfoot{display:none}   /* 解いている間は盤面と数字パッドを優先する */
 </style>
 </head>
 <body>
@@ -670,6 +677,8 @@ input[type=text],input[type=date],select{
 </section>
 
 </main>
+
+<footer class="verfoot" id="verfoot"></footer>
 
 <div id="modal" role="dialog" aria-modal="true">
   <div class="modal-box">
@@ -3446,8 +3455,29 @@ function bindEvents() {
   window.addEventListener('pagehide', () => { pauseTimer(); saveProgress(); });
 }
 
+/* 版の表示。直したのに直っていないように見えるとき、古いものを開いているのか
+   本当に直っていないのかを画面で見分けられるようにする。
+
+   日時は `document.lastModified`（＝いま読み込まれているファイルの更新時刻）を使う。
+   手で書く必要がないうえ、**キャッシュに古いものが残っていれば古い日時がそのまま出る**ので、
+   版の食い違いをこの1行で判断できる。版番号だけはこのファイルを直したときに上げる */
+const APP_VERSION = 'v1.4';
+
+function showVersion() {
+  const el = $('#verfoot');
+  if (!el) return;
+  let stamp = '';
+  const d = new Date(document.lastModified);
+  if (!isNaN(d)) {
+    const p = n => String(n).padStart(2, '0');
+    stamp = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+  el.textContent = `ナンプレｘ解き方分析 ${APP_VERSION}` + (stamp ? `　更新 ${stamp}` : '');
+}
+
 async function boot() {
   Prefs.load();
+  showVersion();
   applyTheme(Prefs.data.theme);
   applyScale(Prefs.data.fontScale);
   App.size = Prefs.data.lastSize || 9;

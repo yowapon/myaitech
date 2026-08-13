@@ -777,6 +777,13 @@ details.foldout .foldbody{padding:0 15px 15px;font-size:13.5px;line-height:1.75;
 
 /* 印刷は想定しないが、最低限崩れないように */
 @media print{.appbar,.keypad,.btnrow{display:none}}
+
+/* 版と更新日時。直っていないのか、古いものが端末に残っているのかを見分けるために出す */
+.verfoot{
+  padding:16px 14px 30px;text-align:center;
+  font-size:11px;line-height:1.6;color:var(--fg-faint);
+}
+body.playing .verfoot{display:none}   /* 問題を解いている間は出さない */
 </style>
 </head>
 <body>
@@ -1067,6 +1074,8 @@ details.foldout .foldbody{padding:0 15px 15px;font-size:13.5px;line-height:1.75;
   </section>
 
 </main>
+
+<footer class="verfoot" id="verfoot"></footer>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -3765,8 +3774,29 @@ function applyPlayPrefs() {
     b.setAttribute('aria-pressed', String(b.dataset.kp === (Prefs.data.keypad || 'auto'))));
 }
 
+/* 版の表示。直したのに直っていないように見えるとき、古いものを開いているのか
+   本当に直っていないのかを画面で見分けられるようにする。
+
+   日時は `document.lastModified`（＝いま読み込まれているファイルの更新時刻）を使う。
+   手で書く必要がないうえ、**キャッシュに古いものが残っていれば古い日時がそのまま出る**ので、
+   版の食い違いをこの1行で判断できる。版番号だけはこのファイルを直したときに上げる */
+const APP_VERSION = 'v1.3';
+
+function showVersion() {
+  const el = $('#verfoot');
+  if (!el) return;
+  let stamp = '';
+  const d = new Date(document.lastModified);
+  if (!isNaN(d)) {
+    const p = n => String(n).padStart(2, '0');
+    stamp = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+  el.textContent = `フラッシュ暗算ｘ履歴分析 ${APP_VERSION}` + (stamp ? `　更新 ${stamp}` : '');
+}
+
 async function boot() {
   Prefs.load();
+  showVersion();
   applyTheme(Prefs.data.theme);
   applyFontScale();
   applyPlayPrefs();
