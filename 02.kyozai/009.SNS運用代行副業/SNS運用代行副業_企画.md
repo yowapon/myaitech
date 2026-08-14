@@ -75,7 +75,8 @@
 
 - **図解案**: マトリクス（比較表を図として組む）。Claude Pro / ChatGPT Plus の2列 × 「月額」「得意」「デスクトップで作業を任せる機能」「初心者の入りやすさ」の4行。下段に Claude Code / Claude Cowork / Codex の位置づけを1行ずつ
 - **本文で補う内容**:
-  - どちらも月$20（日本のストア表示で3,000円前後）。**両方契約する必要はない。1つで足りる**
+  - 日本から公式ページを開いた表示で Claude Pro 月$18 / ChatGPT Plus 月$20（2026年8月時点）。**両方契約する必要はない。1つで足りる**
+  - 表示額は国・消費税・年払いかどうか・支払い方法で変わる（ChatGPT Plus は iOSアプリ経由なら月3,000円税込の固定、ブラウザ決済はドル建て）。**教材に金額を書きっぱなしにせず、契約前に公式ページを見る手順まで書く**
   - ざっくりの傾向: 短い投稿文・画像生成は ChatGPT、長い企画書・レポート・文章の推敲は Claude
   - Cowork / Code / Codex は「チャットの外でファイル操作まで任せる」機能。**運用代行の初月には要らない**。レポート作成が毎月の負担になってから触ればいい
   - AI未経験なら、まずチャット画面だけで1か月使う
@@ -176,7 +177,9 @@
 - [厚生労働省 被扶養者の認定について](https://www.mhlw.go.jp/file/06-Seisakujouhou-12500000-Nenkinkyoku/hishokenshakubun.pdf) — 自営業者の年間収入は「総収入−直接必要な経費」で判定
 - [総務省 令和6年度 情報通信メディアの利用時間と情報行動に関する調査](https://www.soumu.go.jp/menu_news/s-news/01iicp01_02000125.html) — 主要SNSの全年代利用率（LINE 91.1% / YouTube 80.8% / Instagram 52.6% / X 43.3% / TikTok 33.2% / Facebook 26.8%）
 - [総務省 令和7年版 情報通信白書 コミュニケーションツール・SNS](https://www.soumu.go.jp/johotsusintokei/whitepaper/ja/r07/html/nd111120.html) — LINE利用率の推移
-- [Claude 料金プラン](https://claude.com/pricing) — Pro は $17〜20/月、Claude Code / Cowork が含まれる
+- [Claude 料金プラン（日本語）](https://claude.com/ja/pricing) — 日本からの表示で Pro 月$18 / Max 月額$110。Pro に Claude Code / Cowork が含まれる（2026年8月時点）
+- [ChatGPT の料金プラン（OpenAI）](https://openai.com/ja-JP/chatgpt/pricing/) — 最新価格の確認先
+- [ChatGPT料金一覧（2026年8月）](https://ai-revolution.co.jp/media/chatgpt-pricing/) — Plus は月$20、iOSアプリ経由は3,000円（税込）固定
 - [Claude Cowork の使い方（Anthropic ヘルプ）](https://support.claude.com/en/articles/13345190-get-started-with-claude-cowork) — Pro 以上で利用可、macOS/Windows デスクトップ対応
 - [SNS運用代行の費用相場（S.Line）](https://s--line.co.jp/sns-agency-cost/) — 会社向け相場 月3万〜100万円
 - [SNS運用代行フリーランスの始め方と相場](https://break-marketing-program.jp/blog/2026/03/26/sns-management-freelance/) — 副業初期の現実的な水準（月3,000円案件、月1万〜10万円）
