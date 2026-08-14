@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AIと始めるSNS運用代行 — 副業ゼロからの実務ガイド</title>
+<style>
+:root{
+  --bg:#ffffff; --bg-sub:#f7f7f5; --bg-hover:#efefed;
+  --text:#37352f; --text-mute:#787774; --text-faint:#9b9a97;
+  --border:#e9e9e7; --border-strong:#d3d3d1;
+  --accent:#2383e2; --accent-soft:#e7f1fd;
+  --green:#0f7b6c; --green-soft:#e4f3f0;
+  --amber:#cb912f; --amber-soft:#faf1dd;
+  --red:#e03e3e;   --red-soft:#fbe9e9;
+  --purple:#6940a5; --purple-soft:#eee6f7;
+  --radius:8px;
+  --font: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif;
+}
+html[data-theme="dark"]{
+  --bg:#191919; --bg-sub:#202020; --bg-hover:#2a2a2a;
+  --text:#d4d4d4; --text-mute:#9b9b9b; --text-faint:#6f6f6f;
+  --border:#2f2f2f; --border-strong:#414141;
+  --accent:#5b9dd9; --accent-soft:#1c2f3f;
+  --green:#4dab9a; --green-soft:#1c2b28;
+  --amber:#e0b44a; --amber-soft:#332a1b;
+  --red:#ff7369;   --red-soft:#3a2323;
+  --purple:#9a76d1; --purple-soft:#2a2136;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font); font-size:16px; line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+  transition:background .2s,color .2s;
+}
+.layout{display:flex; align-items:flex-start; max-width:1180px; margin:0 auto}
+
+/* ---------- 目次サイドバー ---------- */
+#sidebar{
+  position:sticky; top:0; flex:0 0 250px; height:100vh;
+  padding:28px 14px 40px; overflow-y:auto;
+  border-right:1px solid var(--border); background:var(--bg-sub);
+}
+#sidebar .toc-label{
+  font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--text-faint); padding:0 10px; margin-bottom:10px; font-weight:600;
+}
+#toc a{
+  display:block; padding:6px 10px; margin:1px 0; border-radius:6px;
+  color:var(--text-mute); text-decoration:none; font-size:13.5px; line-height:1.45;
+  border-left:2px solid transparent; transition:background .15s,color .15s;
+}
+#toc a:hover{background:var(--bg-hover); color:var(--text)}
+#toc a.active{background:var(--accent-soft); color:var(--accent); font-weight:600; border-left-color:var(--accent)}
+#toc a.sub{padding-left:22px; font-size:12.5px}
+
+/* ---------- 本文 ---------- */
+main{flex:1 1 auto; min-width:0; padding:56px 60px 140px; max-width:860px}
+.hero-eyebrow{font-size:12px; letter-spacing:.1em; color:var(--accent); font-weight:700; text-transform:uppercase}
+h1{font-size:40px; line-height:1.25; margin:.25em 0 .35em; letter-spacing:-.01em; font-weight:800}
+h2{font-size:26px; margin:2.6em 0 .6em; padding-bottom:.3em; border-bottom:1px solid var(--border); font-weight:700; letter-spacing:-.005em}
+h3{font-size:18px; margin:1.8em 0 .4em; font-weight:700}
+p{margin:.7em 0}
+a{color:var(--accent)}
+.lead{font-size:18px; color:var(--text-mute); line-height:1.8}
+.meta{display:flex; flex-wrap:wrap; gap:8px; margin:20px 0 8px}
+.chip{
+  font-size:12.5px; padding:4px 11px; border-radius:999px;
+  background:var(--bg-sub); border:1px solid var(--border); color:var(--text-mute);
+}
+strong{font-weight:700}
+mark{background:var(--amber-soft); color:inherit; padding:0 3px; border-radius:3px}
+code{background:var(--bg-sub); border:1px solid var(--border); border-radius:4px; padding:1px 5px; font-size:.88em}
+hr{border:0; border-top:1px solid var(--border); margin:3em 0}
+ul,ol{padding-left:1.4em} li{margin:.3em 0}
+
+/* ---------- 図解ブロック（各セクションの先頭に置く） ---------- */
+.figure{
+  margin:1.4em 0 1.2em; padding:24px; border:1px solid var(--border);
+  border-radius:var(--radius); background:var(--bg-sub);
+}
+.figure svg{display:block; width:100%; height:auto; max-width:100%}
+.figure figcaption{
+  margin-top:14px; padding-top:12px; border-top:1px solid var(--border);
+  font-size:13px; color:var(--text-mute); text-align:center;
+}
+/* SVG内で使う共通クラス */
+.svg-label{font-family:var(--font); font-size:13px; fill:var(--text)}
+.svg-label-sm{font-family:var(--font); font-size:11px; fill:var(--text-mute)}
+.svg-title{font-family:var(--font); font-size:14px; font-weight:700; fill:var(--text)}
+.svg-box{fill:var(--bg); stroke:var(--border-strong); stroke-width:1.5}
+.svg-box-accent{fill:var(--accent-soft); stroke:var(--accent); stroke-width:1.5}
+.svg-arrow{stroke:var(--text-faint); stroke-width:1.8; fill:none}
+
+/* ---------- コールアウト ---------- */
+.callout{
+  display:flex; gap:12px; padding:16px 18px; margin:1.2em 0;
+  border-radius:var(--radius); background:var(--bg-sub); border-left:3px solid var(--text-faint);
+}
+.callout .ico{flex:0 0 auto; font-size:18px; line-height:1.5}
+.callout p:first-child{margin-top:0} .callout p:last-child{margin-bottom:0}
+.callout.tip{background:var(--accent-soft); border-left-color:var(--accent)}
+.callout.warn{background:var(--amber-soft); border-left-color:var(--amber)}
+.callout.key{background:var(--green-soft); border-left-color:var(--green)}
+
+/* ---------- カードグリッド ---------- */
+.cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin:1.2em 0}
+.card{padding:16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg)}
+.card h4{margin:0 0 6px; font-size:14.5px; font-weight:700}
+.card p{margin:0; font-size:13.5px; color:var(--text-mute); line-height:1.7}
+
+/* ---------- プロンプト例 ---------- */
+.prompt{
+  margin:1em 0; padding:14px 16px; border:1px solid var(--border-strong);
+  border-radius:var(--radius); background:var(--bg-sub);
+  white-space:pre-wrap; word-break:break-word; overflow-x:auto;
+  font-family:var(--font); font-size:13.5px; line-height:1.85; color:var(--text);
+}
+.prompt b{display:block; font-size:11.5px; font-weight:700; letter-spacing:.06em;
+  color:var(--accent); margin-bottom:8px}
+
+/* ---------- 表 ---------- */
+.tablewrap{overflow-x:auto}
+table{width:100%; border-collapse:collapse; margin:1.2em 0; font-size:14.5px}
+th,td{border:1px solid var(--border); padding:10px 12px; text-align:left; vertical-align:top}
+th{background:var(--bg-sub); font-weight:700}
+
+/* ---------- クイズ ---------- */
+.quiz{
+  margin:2em 0; padding:22px 24px; border:1px solid var(--border);
+  border-radius:var(--radius); background:var(--bg-sub);
+}
+.quiz .qtag{
+  display:inline-block; font-size:11px; font-weight:700; letter-spacing:.06em;
+  color:var(--purple); background:var(--purple-soft); padding:3px 9px; border-radius:999px; margin-bottom:10px;
+}
+.quiz .qtext{font-weight:700; font-size:16.5px; margin:0 0 14px; line-height:1.65}
+.quiz .opts{display:flex; flex-direction:column; gap:8px}
+.quiz button.opt{
+  text-align:left; font:inherit; font-size:14.5px; color:var(--text); cursor:pointer;
+  padding:12px 14px; border:1px solid var(--border-strong); border-radius:6px;
+  background:var(--bg); transition:background .15s,border-color .15s;
+  display:flex; gap:10px; align-items:flex-start; line-height:1.6;
+}
+.quiz button.opt:hover:not(:disabled){background:var(--bg-hover); border-color:var(--accent)}
+.quiz button.opt:disabled{cursor:default}
+.quiz button.opt .mark{flex:0 0 20px; font-weight:700; color:var(--text-faint)}
+.quiz button.opt.correct{background:var(--green-soft); border-color:var(--green)}
+.quiz button.opt.correct .mark{color:var(--green)}
+.quiz button.opt.wrong{background:var(--red-soft); border-color:var(--red)}
+.quiz button.opt.wrong .mark{color:var(--red)}
+.quiz .explain{
+  display:none; margin-top:14px; padding:14px 16px; border-radius:6px;
+  background:var(--bg); border:1px solid var(--border); font-size:14px; line-height:1.75;
+}
+.quiz .explain.show{display:block}
+.quiz .verdict{font-weight:700; margin-bottom:4px}
+.quiz .verdict.ok{color:var(--green)} .quiz .verdict.ng{color:var(--red)}
+
+/* ---------- 出典 ---------- */
+.sources{font-size:14px; color:var(--text-mute)}
+.sources li{margin:.5em 0}
+
+/* ---------- テーマ切替ボタン ---------- */
+#themeBtn{
+  position:fixed; top:18px; right:22px; z-index:50;
+  width:38px; height:38px; border-radius:8px; cursor:pointer;
+  border:1px solid var(--border-strong); background:var(--bg); color:var(--text);
+  font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;
+  transition:background .15s;
+}
+#themeBtn:hover{background:var(--bg-hover)}
+
+/* ---------- レスポンシブ ---------- */
+@media (max-width:900px){
+  #sidebar{display:none}
+  main{padding:40px 22px 100px}
+  h1{font-size:30px} h2{font-size:22px}
+}
+@media print{
+  #sidebar,#themeBtn{display:none} main{max-width:none;padding:0}
+  .quiz .explain{display:block}
+}
+</style>
+</head>
+<body>
+
+<button id="themeBtn" aria-label="ライト/ダーク切替">🌙</button>
+
+<div class="layout">
+
+  <aside id="sidebar">
+    <div class="toc-label">目次</div>
+    <nav id="toc">
+      <a href="#about">この教材について</a>
+      <a href="#s1">1. この仕事の全体像</a>
+      <a href="#s2">2. 何を代行するのか</a>
+      <a href="#s3">3. いくらもらえるのか</a>
+      <a href="#s4">4. どのSNSを選ぶか</a>
+      <a href="#s5">5. AIに任せること・任せないこと</a>
+      <a href="#s6">6. どのAI契約を選ぶか</a>
+      <a href="#s7">7. 最初に打つプロンプト3本</a>
+      <a href="#s8">8. 実績ゼロから最初の1件</a>
+      <a href="#s9">9. 通る提案文・落ちる提案文</a>
+      <a href="#s10">10. 扶養と税金</a>
+      <a href="#s11">11. 契約で決めておく5項目</a>
+      <a href="#s12">12. 投稿する前の3チェック</a>
+      <a href="#s13">13. 最初の90日</a>
+      <a href="#summary">まとめ</a>
+      <a href="#sources">出典</a>
+    </nav>
+  </aside>
+
+  <main>
+
+    <!-- ============ ヘッダー ============ -->
+    <header>
+      <div class="hero-eyebrow">副業 / SNSマーケティング</div>
+      <h1>AIと始めるSNS運用代行</h1>
+      <p class="lead">SNSを運用したこともなく、副業もしたことがない人が、月3,000円のAI契約1つで最初の1件を取るまで。相場の現実、AIの線引き、扶養と契約の地雷を順に片づけます。</p>
+      <div class="meta">
+        <span class="chip">対象: 副業がはじめての人</span>
+        <span class="chip">レベル: 入門</span>
+        <span class="chip">所要 約40分</span>
+        <span class="chip">更新: 2026-08-14</span>
+      </div>
+    </header>
+
+    <!-- ============ この教材について ============ -->
+    <section id="about">
+      <h2>この教材について</h2>
+      <div class="callout key">
+        <span class="ico">🎯</span>
+        <div>
+          <p><strong>読み終えるとできるようになること</strong></p>
+          <ol>
+            <li>SNS運用代行が「誰から・何を頼まれて・いくらもらう仕事か」を自分の言葉で説明できる</li>
+            <li>AIに任せる作業と自分がやる作業の線引きができ、最初のプロンプトを実際に打てる</li>
+            <li>扶養・確定申告・契約という3つの地雷を避けて、最初の1件までの手順を紙に書ける</li>
+          </ol>
+        </div>
+      </div>
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><p>この教材は「未経験から月30万」とは言いません。実際の初期単価は<strong>月3,000円台から</strong>です。夢を売るのではなく、始めた人が3か月で辞めないための順番を示します。</p></div>
+      </div>
+      <p style="font-size:14px;color:var(--text-mute)">
+        主な参照元: <a href="https://www.soumu.go.jp/menu_news/s-news/01iicp01_02000125.html">総務省 情報通信メディアの利用時間と情報行動に関する調査</a> / <a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1900.htm">国税庁 No.1900</a> / <a href="https://www.caa.go.jp/policies/policy/representation/fair_labeling/stealth_marketing/">消費者庁 ステマ規制</a>（全出典は<a href="#sources">末尾</a>）
+      </p>
+    </section>
+
+    <!-- ============ 1 ============ -->
+    <section id="s1">
+      <h2>1. この仕事の全体像</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="依頼主・運用代行・アカウント・数字が循環する図">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="var(--text-faint)"/>
+            </marker>
+          </defs>
+          <g><rect x="270" y="10" width="180" height="66" rx="8" class="svg-box-accent"/>
+             <text x="360" y="40" text-anchor="middle" class="svg-title">依頼主</text>
+             <text x="360" y="60" text-anchor="middle" class="svg-label-sm">お店・小さな会社</text></g>
+          <g><rect x="510" y="130" width="180" height="66" rx="8" class="svg-box"/>
+             <text x="600" y="160" text-anchor="middle" class="svg-title">あなた</text>
+             <text x="600" y="180" text-anchor="middle" class="svg-label-sm">運用を代わりにやる</text></g>
+          <g><rect x="270" y="250" width="180" height="66" rx="8" class="svg-box"/>
+             <text x="360" y="280" text-anchor="middle" class="svg-title">アカウント</text>
+             <text x="360" y="300" text-anchor="middle" class="svg-label-sm">投稿・返信・更新</text></g>
+          <g><rect x="30" y="130" width="180" height="66" rx="8" class="svg-box"/>
+             <text x="120" y="160" text-anchor="middle" class="svg-title">数字</text>
+             <text x="120" y="180" text-anchor="middle" class="svg-label-sm">保存・来店・問合せ</text></g>
+          <path d="M450 43 C 560 43, 600 75, 600 125" class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M600 196 C 600 250, 550 283, 455 283" class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M270 283 C 170 283, 120 250, 120 201" class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M120 125 C 120 75, 160 43, 265 43" class="svg-arrow" marker-end="url(#ar)"/>
+          <rect x="285" y="140" width="150" height="46" rx="23" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.5"/>
+          <text x="360" y="160" text-anchor="middle" class="svg-title" fill="var(--green)">AI</text>
+          <text x="360" y="178" text-anchor="middle" class="svg-label-sm">＝下書き係</text>
+        </svg>
+        <figcaption>図1: 報酬が発生するのは輪の1周ぶん。AIは輪の中の1工程にしか入らない</figcaption>
+      </figure>
+
+      <p>SNS運用代行は「投稿を作って出す人」ではありません。<strong>依頼主の代わりにアカウントを育てる人</strong>です。依頼主が払うお金の根拠は、投稿の枚数ではなく「自分でやらずに済んだ時間」と「数字が動いたこと」の2つ。だから輪を1周させて、最後に数字を持って戻るところまでが仕事になります。</p>
+
+      <p>ここでAIの位置を先に決めておきます。AIが速いのは「案を出す」「文章にする」「まとめる」の部分だけ。依頼主と話す、事実を確認する、投稿ボタンを押す、数字を解釈して次を決める——この4つは人間の側に残ります。<mark>AIは輪を回す道具であって、輪そのものではありません。</mark></p>
+
+      <div class="callout tip">
+        <span class="ico">💡</span>
+        <div><p>依頼主の多くは「SNSが大事なのは分かるが、毎日投稿する時間がない」個人店です。競合はプロの代理店ではなく、<strong>依頼主自身の「後でやろう」</strong>。だから完璧さより継続の方が売り物になります。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section id="s2">
+      <h2>2. 何を代行するのか</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SNS運用代行の業務を6つに分解した図">
+          <rect x="270" y="8" width="180" height="50" rx="8" class="svg-box-accent"/>
+          <text x="360" y="39" text-anchor="middle" class="svg-title">SNS運用代行</text>
+          <path d="M360 58 V 74 M190 74 H 530 M190 74 V 96 M530 74 V 96" class="svg-arrow" fill="none"/>
+
+          <rect x="100" y="96" width="180" height="44" rx="8" class="svg-box"/>
+          <text x="190" y="124" text-anchor="middle" class="svg-title">出すまで</text>
+          <rect x="440" y="96" width="180" height="44" rx="8" class="svg-box"/>
+          <text x="530" y="124" text-anchor="middle" class="svg-title">出したあと</text>
+
+          <path d="M190 140 V 154 H 70 V 296" class="svg-arrow"/>
+          <path d="M70 190 H 108 M70 244 H 108 M70 296 H 108" class="svg-arrow"/>
+          <path d="M530 140 V 154 H 410 V 296" class="svg-arrow"/>
+          <path d="M410 190 H 448 M410 244 H 448 M410 296 H 448" class="svg-arrow"/>
+
+          <g><rect x="108" y="168" width="180" height="44" rx="6" class="svg-box"/>
+             <text x="198" y="188" text-anchor="middle" class="svg-label">① 企画</text>
+             <text x="198" y="205" text-anchor="middle" class="svg-label-sm">何を出すか決める</text></g>
+          <g><rect x="108" y="222" width="180" height="44" rx="6" class="svg-box"/>
+             <text x="198" y="242" text-anchor="middle" class="svg-label">② 制作</text>
+             <text x="198" y="259" text-anchor="middle" class="svg-label-sm">画像と文章を作る</text></g>
+          <g><rect x="108" y="274" width="180" height="44" rx="6" class="svg-box"/>
+             <text x="198" y="294" text-anchor="middle" class="svg-label">③ 投稿</text>
+             <text x="198" y="311" text-anchor="middle" class="svg-label-sm">出す・予約する</text></g>
+
+          <g><rect x="448" y="168" width="180" height="44" rx="6" class="svg-box"/>
+             <text x="538" y="188" text-anchor="middle" class="svg-label">④ コメント返信</text>
+             <text x="538" y="205" text-anchor="middle" class="svg-label-sm">DM・コメント対応</text></g>
+          <g><rect x="448" y="222" width="180" height="44" rx="6" class="svg-box"/>
+             <text x="538" y="242" text-anchor="middle" class="svg-label">⑤ 分析</text>
+             <text x="538" y="259" text-anchor="middle" class="svg-label-sm">数字を記録する</text></g>
+          <g><rect x="448" y="274" width="180" height="44" rx="6" class="svg-box-accent"/>
+             <text x="538" y="294" text-anchor="middle" class="svg-label">⑥ レポート</text>
+             <text x="538" y="311" text-anchor="middle" class="svg-label-sm">依頼主に報告する</text></g>
+        </svg>
+        <figcaption>図2: 6ブロックのうち、初心者が受けやすいのは②③④。単価を決めるのは①と⑥</figcaption>
+      </figure>
+
+      <p>案件は「全部お任せ」より「一部だけ」の方が多く出ます。未経験で入りやすいのは<strong>②制作・③投稿・④コメント返信</strong>。ここは手を動かせばできる作業で、依頼主から見れば「自分の時間が空く」ぶんだけで発注する価値があります。</p>
+
+      <p>いっぽう単価を左右するのは<strong>①企画と⑥レポート</strong>です。企画ができる人は「何を出すか」で悩む依頼主を助けられ、レポートが書ける人は「払っている意味」を依頼主に見せられます。作業だけの人は安く、判断ができる人は高い。この構図はどの受託仕事でも変わりません。</p>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><p>「投稿だけ」で安く受けると、数か月後に①企画や⑤分析をタダで求められがちです。受ける範囲は最初に紙に書く。この続きは<a href="#s11">11章</a>で扱います。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section id="s3">
+      <h2>3. いくらもらえるのか</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 290" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="個人副業と会社向けの月額相場を比較した横棒グラフ">
+          <line x1="170" y1="20" x2="170" y2="232" stroke="var(--border)"/>
+          <line x1="170" y1="232" x2="700" y2="232" stroke="var(--border-strong)"/>
+          <text x="170" y="250" text-anchor="middle" class="svg-label-sm">0</text>
+          <text x="276" y="250" text-anchor="middle" class="svg-label-sm">10万</text>
+          <text x="382" y="250" text-anchor="middle" class="svg-label-sm">20万</text>
+          <text x="488" y="250" text-anchor="middle" class="svg-label-sm">30万</text>
+          <text x="594" y="250" text-anchor="middle" class="svg-label-sm">40万</text>
+          <text x="700" y="250" text-anchor="middle" class="svg-label-sm">50万</text>
+
+          <rect x="173" y="34" width="8" height="26" rx="3" fill="var(--accent)" opacity=".55"/>
+          <text x="162" y="44" text-anchor="end" class="svg-label-sm">クラウドソーシングの</text>
+          <text x="162" y="58" text-anchor="end" class="svg-label-sm">初心者案件</text>
+          <text x="192" y="52" class="svg-label-sm">月3,000〜1万円</text>
+
+          <rect x="181" y="80" width="95" height="26" rx="3" fill="var(--accent)" opacity=".72"/>
+          <text x="162" y="90" text-anchor="end" class="svg-label-sm">副業で1〜3</text>
+          <text x="162" y="104" text-anchor="end" class="svg-label-sm">アカウント担当</text>
+          <text x="286" y="98" class="svg-label-sm">月1万〜10万円</text>
+
+          <line x1="170" y1="124" x2="700" y2="124" stroke="var(--border-strong)" stroke-dasharray="4 4"/>
+          <text x="700" y="120" text-anchor="end" class="svg-label-sm">↑ 個人の副業　↓ 会社が会社に払う値段</text>
+
+          <rect x="202" y="140" width="74" height="26" rx="3" fill="var(--green)" opacity=".7"/>
+          <text x="162" y="150" text-anchor="end" class="svg-label-sm">投稿代行のみ</text>
+          <text x="162" y="164" text-anchor="end" class="svg-label-sm">（制作会社）</text>
+          <text x="286" y="158" class="svg-label-sm">月3〜10万円</text>
+
+          <rect x="382" y="186" width="318" height="26" rx="3" fill="var(--green)"/>
+          <text x="162" y="196" text-anchor="end" class="svg-label-sm">運用全般＋広告</text>
+          <text x="162" y="210" text-anchor="end" class="svg-label-sm">（制作会社）</text>
+          <text x="394" y="204" class="svg-label" fill="var(--bg)">月20〜50万円</text>
+
+          <text x="170" y="276" class="svg-label-sm">単位: 円／月　出典: SNS運用代行の費用相場（S.Line）、SNS運用代行フリーランスの始め方と相場</text>
+        </svg>
+        <figcaption>図3: 同じ「SNS運用代行」という言葉で、桁が2つ違う2つの市場が並んでいる</figcaption>
+      </figure>
+
+      <p>ネットで見かける「月20〜40万円」は、ほとんどが<strong>会社が会社に払う値段</strong>です。動画制作やレポート担当を含めた複数人のチーム費用で、個人が副業で受ける金額とは別の市場になります。この2つを混ぜて期待値を作ると、最初の案件を見た瞬間に心が折れます。</p>
+
+      <p>現実の入り口は、クラウドソーシングの初心者向け案件で<strong>1件あたり月3,000円前後</strong>。5件こなして月1.5万円という水準がよく報告されています。ここから副業として月1万〜10万円のレンジに上がるまで、おおむね3〜6か月かかると見ておくのが安全です。</p>
+
+      <p>単価が上がるきっかけは、実績の「数」ではありません。<mark>数字を説明できるようになったとき</mark>です。「保存数が18から64になりました。理由はこの3本の投稿です」と言える人には、次の依頼主が値段を聞いてきます。</p>
+
+      <div class="callout tip">
+        <span class="ico">💡</span>
+        <div><p>クラウドソーシングは仲介手数料が引かれます。月3,000円の案件は手取りではさらに少なくなる。「最初は授業料」と割り切れる件数だけにして、長く低単価に留まらない設計にします。</p></div>
+      </div>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 1</span>
+      <p class="qtext">「SNS運用代行の相場は月20〜40万円」という記事を見ました。副業を始めるあなたの見立てとして正しいのは？</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>実績を丁寧に作れば、1件目からその水準を狙える</span></button>
+        <button class="opt" data-correct><span class="mark">B</span><span>それは会社向けの相場。個人の副業の入り口は月数千円〜1万円で、別の市場だと考える</span></button>
+        <button class="opt"><span class="mark">C</span><span>地域や業種によって変わるので、都市部なら1件目から20万円もありうる</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>Bが正解。公開されている相場記事の多くは、制作会社が法人クライアントに提示する月額で、チームの人件費を含みます。Aは、実績があっても発注側の予算枠そのものが違うため成立しません。Cの地域差は、この2桁の差を説明する要因にはなりません。個人の副業は、まず月3,000円台の案件から始まると考えて計画を立てます。</p>
+      </div>
+    </div>
+
+    <!-- ============ 4 ============ -->
+    <section id="s4">
+      <h2>4. どのSNSを選ぶか</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="主要SNSの全年代利用率の横棒グラフ">
+          <line x1="150" y1="16" x2="150" y2="248" stroke="var(--border)"/>
+          <line x1="150" y1="248" x2="670" y2="248" stroke="var(--border-strong)"/>
+
+          <rect x="150" y="26" width="474" height="28" rx="4" fill="var(--accent)" opacity=".3"/>
+          <text x="142" y="45" text-anchor="end" class="svg-label">LINE</text>
+          <text x="634" y="45" class="svg-label-sm">91.1%</text>
+
+          <rect x="150" y="64" width="420" height="28" rx="4" fill="var(--accent)" opacity=".3"/>
+          <text x="142" y="83" text-anchor="end" class="svg-label">YouTube</text>
+          <text x="580" y="83" class="svg-label-sm">80.8%</text>
+
+          <rect x="150" y="102" width="274" height="28" rx="4" fill="var(--accent)"/>
+          <text x="142" y="121" text-anchor="end" class="svg-label">Instagram</text>
+          <text x="434" y="121" class="svg-label-sm">52.6%</text>
+
+          <rect x="150" y="140" width="225" height="28" rx="4" fill="var(--accent)"/>
+          <text x="142" y="159" text-anchor="end" class="svg-label">X</text>
+          <text x="385" y="159" class="svg-label-sm">43.3%</text>
+
+          <rect x="150" y="178" width="173" height="28" rx="4" fill="var(--accent)"/>
+          <text x="142" y="197" text-anchor="end" class="svg-label">TikTok</text>
+          <text x="333" y="197" class="svg-label-sm">33.2%</text>
+
+          <rect x="150" y="216" width="139" height="28" rx="4" fill="var(--accent)" opacity=".3"/>
+          <text x="142" y="235" text-anchor="end" class="svg-label">Facebook</text>
+          <text x="299" y="235" class="svg-label-sm">26.8%</text>
+
+          <rect x="150" y="264" width="14" height="12" rx="2" fill="var(--accent)"/>
+          <text x="172" y="275" class="svg-label-sm">濃い色＝個人向けの代行案件が出やすい媒体</text>
+          <text x="150" y="292" class="svg-label-sm">単位: %（全年代の利用率）　出典: 総務省 令和6年度 情報通信メディアの利用時間と情報行動に関する調査</text>
+        </svg>
+        <figcaption>図4: 利用率の順位と、代行案件が出る順位は一致しない</figcaption>
+      </figure>
+
+      <p>利用率1位はLINE（91.1%）ですが、LINE公式アカウントの配信は別のスキル体系で、個人副業の入り口にはなりにくい媒体です。YouTubeも同じで、動画編集ができないと入れません。<strong>利用率が高い＝案件が取りやすい、ではない</strong>ところが最初の落とし穴です。</p>
+
+      <p>未経験が最初に選ぶなら<strong>Instagram</strong>が現実的です。飲食店・美容室・教室・小売といった小規模事業者の需要が厚く、写真と短い文章で成立するため、動画スキルがなくても始められます。慣れてきてから、同じ依頼主にリール（短尺動画）を足していく形にすると自然に単価が上がります。</p>
+
+      <p>そして<mark>1媒体に絞ること</mark>。複数を薄く触るより、1つで1年ぶんの季節・反応・失敗を知っている方が売り物になります。提案文でも「Instagramを1年やってきました」の方が「4媒体対応できます」より強い。</p>
+    </section>
+
+    <!-- ============ 5 ============ -->
+    <section id="s5">
+      <h2>5. AIに任せること・任せないこと</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="被害の大きさと手数の多さでAIの使い分けを整理した2軸マトリクス">
+          <rect x="120" y="20" width="500" height="270" fill="none" stroke="var(--border-strong)"/>
+          <line x1="370" y1="20" x2="370" y2="290" stroke="var(--border)"/>
+          <line x1="120" y1="155" x2="620" y2="155" stroke="var(--border)"/>
+
+          <rect x="126" y="26" width="238" height="123" rx="6" fill="var(--red-soft)"/>
+          <text x="245" y="62" text-anchor="middle" class="svg-title">人が決める</text>
+          <text x="245" y="86" text-anchor="middle" class="svg-label-sm">価格・効能・在庫の記述</text>
+          <text x="245" y="106" text-anchor="middle" class="svg-label-sm">依頼主への約束</text>
+          <text x="245" y="126" text-anchor="middle" class="svg-label-sm">投稿ボタンを押す</text>
+
+          <rect x="376" y="26" width="238" height="123" rx="6" fill="var(--amber-soft)"/>
+          <text x="495" y="62" text-anchor="middle" class="svg-title">AIが下書き→人が全部確認</text>
+          <text x="495" y="86" text-anchor="middle" class="svg-label-sm">商品・サービスの紹介文</text>
+          <text x="495" y="106" text-anchor="middle" class="svg-label-sm">月次レポートの文章</text>
+          <text x="495" y="126" text-anchor="middle" class="svg-label-sm">クレームへの返信案</text>
+
+          <rect x="126" y="161" width="238" height="123" rx="6" fill="var(--bg)"/>
+          <text x="245" y="197" text-anchor="middle" class="svg-title">どちらでもよい</text>
+          <text x="245" y="221" text-anchor="middle" class="svg-label-sm">絵文字の選定</text>
+          <text x="245" y="241" text-anchor="middle" class="svg-label-sm">投稿時刻の設定</text>
+
+          <rect x="376" y="161" width="238" height="123" rx="6" fill="var(--green-soft)"/>
+          <text x="495" y="197" text-anchor="middle" class="svg-title">AIに任せる</text>
+          <text x="495" y="221" text-anchor="middle" class="svg-label-sm">投稿ネタを30案出す</text>
+          <text x="495" y="241" text-anchor="middle" class="svg-label-sm">ハッシュタグ候補</text>
+          <text x="495" y="261" text-anchor="middle" class="svg-label-sm">言い回しの言い換え</text>
+
+          <text x="370" y="318" text-anchor="middle" class="svg-label-sm">→ 手数の多さ（少ない ／ 多い）</text>
+          <text x="108" y="88" text-anchor="end" class="svg-label-sm">被害 大</text>
+          <text x="108" y="228" text-anchor="end" class="svg-label-sm">被害 小</text>
+          <text x="360" y="345" text-anchor="middle" class="svg-label-sm">縦軸＝まちがえたときに依頼主が受ける損害の大きさ</text>
+        </svg>
+        <figcaption>図5: AIが代行できるのは手数であって、責任ではない</figcaption>
+      </figure>
+
+      <p>AIは「思いつく速さ」と「書き出す速さ」を肩代わりする道具です。逆に肩代わりできないのが<strong>事実の保証</strong>。AIは依頼主の店の営業時間も、今月の価格も、在庫の有無も知りません。知らないまま、それらしい文章を書いてしまいます。ここが実務でいちばん事故になる場所です。</p>
+
+      <p>だから使い方は「AIが埋める欄」と「あなたが埋める欄」を分けることに尽きます。<mark>事実は自分が調べてプロンプトに入れ、AIには表現だけをやらせる。</mark>この形にすると、AIが事実を作る余地が消えます。</p>
+
+      <p>効果がいちばん大きいのは、右下の使い方——<strong>案を30個出させて、自分が3個選ぶ</strong>。人間が0から3個ひねり出すより速く、質も上がります。選ぶのは人間なので、外れ案が混ざっていても害はありません。</p>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><p>AIが書いた文をそのまま投稿する運用は、事故が起きたときに説明ができません。とくに化粧品・健康食品・医療系は、効果を断言した一文で薬機法に触れます（<a href="#s12">12章</a>）。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section id="s6">
+      <h2>6. どのAI契約を選ぶか</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 350" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Claude ProとChatGPT Plusの比較と、上位機能の位置づけ">
+          <rect x="20" y="16" width="330" height="212" rx="8" class="svg-box-accent"/>
+          <text x="185" y="46" text-anchor="middle" class="svg-title">Claude Pro</text>
+          <text x="185" y="70" text-anchor="middle" class="svg-label">月 約3,000円（$20）</text>
+          <line x1="44" y1="86" x2="326" y2="86" stroke="var(--border-strong)"/>
+          <text x="44" y="112" class="svg-label-sm">得意: 長い文章・企画書・レポート</text>
+          <text x="44" y="136" class="svg-label-sm">　　　推敲、言い回しの調整</text>
+          <text x="44" y="164" class="svg-label-sm">同梱: Claude Code / Cowork</text>
+          <text x="44" y="188" class="svg-label-sm">画像生成: なし</text>
+          <text x="44" y="212" class="svg-label-sm">初心者の入りやすさ: ふつう</text>
+
+          <rect x="370" y="16" width="330" height="212" rx="8" class="svg-box"/>
+          <text x="535" y="46" text-anchor="middle" class="svg-title">ChatGPT Plus</text>
+          <text x="535" y="70" text-anchor="middle" class="svg-label">月 約3,000円（$20）</text>
+          <line x1="394" y1="86" x2="676" y2="86" stroke="var(--border-strong)"/>
+          <text x="394" y="112" class="svg-label-sm">得意: 短い投稿文・キャッチコピー</text>
+          <text x="394" y="136" class="svg-label-sm">　　　ハッシュタグ、案の量産</text>
+          <text x="394" y="164" class="svg-label-sm">同梱: Codex（開発者向け）</text>
+          <text x="394" y="188" class="svg-label-sm">画像生成: あり</text>
+          <text x="394" y="212" class="svg-label-sm">初心者の入りやすさ: 高い</text>
+
+          <rect x="20" y="252" width="680" height="80" rx="8" fill="var(--bg)" stroke="var(--border-strong)" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <text x="360" y="280" text-anchor="middle" class="svg-title" fill="var(--text-mute)">Claude Code / Claude Cowork / Codex</text>
+          <text x="360" y="304" text-anchor="middle" class="svg-label-sm">チャットの外で、パソコンのファイルを触らせる機能</text>
+          <text x="360" y="322" text-anchor="middle" class="svg-label-sm">最初の1〜2か月は使わなくてよい。レポート作りが重荷になってから触る</text>
+        </svg>
+        <figcaption>図6: どちらか1つで足ります。上位機能は後回しでよい</figcaption>
+      </figure>
+
+      <p>Claude Pro も ChatGPT Plus も月$20（日本のストア表示でおおむね3,000円）で、価格差はありません。<strong>両方契約する必要はなく、1つで足ります。</strong>迷ったら、画像も一緒に作りたいなら ChatGPT、レポートや提案文の文章を整えたいなら Claude、という選び方でかまいません。あとから乗り換えても損はほとんどありません。</p>
+
+      <p>Claude Code / Claude Cowork / Codex は、チャット画面の外でファイルを開いたり書き換えたりまで任せられる機能です。Cowork は Claude Pro に含まれ、Windows と macOS のデスクトップアプリで動きます。ただし<mark>運用代行の初月には要りません。</mark>先に覚えるべきは、チャット欄に何をどう書くかの方です。</p>
+
+      <div class="callout tip">
+        <span class="ico">💡</span>
+        <div><p>AIが初めてなら、最初の1か月はチャット画面だけを使ってください。毎月のレポート作成が「同じ作業の繰り返し」になってきたら、そのときに Cowork や Code を開くと、ありがたみが分かります。順番を逆にすると挫折します。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ 7 ============ -->
+    <section id="s7">
+      <h2>7. 最初に打つプロンプト3本</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="プロンプトを4つの層に分けた階層図">
+          <rect x="30" y="12" width="400" height="60" rx="6" class="svg-box-accent"/>
+          <text x="52" y="38" class="svg-title">① 役割</text>
+          <text x="52" y="59" class="svg-label-sm">AIに誰として答えさせるか</text>
+          <text x="446" y="47" class="svg-label-sm">「あなたは個人店のSNS担当です」</text>
+
+          <rect x="30" y="80" width="400" height="60" rx="6" class="svg-box"/>
+          <text x="52" y="106" class="svg-title">② 前提（事実）</text>
+          <text x="52" y="127" class="svg-label-sm">あなたが調べて入れる情報</text>
+          <text x="446" y="115" class="svg-label-sm">店名・価格・営業時間・客層</text>
+
+          <rect x="30" y="148" width="400" height="60" rx="6" class="svg-box"/>
+          <text x="52" y="174" class="svg-title">③ 制約</text>
+          <text x="52" y="195" class="svg-label-sm">やってほしくないことを書く</text>
+          <text x="446" y="183" class="svg-label-sm">120字以内／絵文字3つまで</text>
+
+          <rect x="30" y="216" width="400" height="60" rx="6" class="svg-box"/>
+          <text x="52" y="242" class="svg-title">④ 出力形式</text>
+          <text x="52" y="263" class="svg-label-sm">どんな形で何個ほしいか</text>
+          <text x="446" y="251" class="svg-label-sm">「箇条書きで30個」</text>
+
+          <text x="230" y="294" text-anchor="middle" class="svg-label-sm">この4つが欠けるほど、返ってくる文章はぼやける</text>
+        </svg>
+        <figcaption>図7: 「投稿文を書いて」が効かないのは、4層のうち3層が抜けているから</figcaption>
+      </figure>
+
+      <p>AIが初めての人がつまずくのは、命令が短すぎることです。「投稿文を書いて」だけでは、AIはどこかで見た平均的な文章を返します。逆に4つの層を埋めるだけで、出力は別物になります。以下は<strong>そのまま貼って使える3本</strong>。角かっこの中だけ、自分の依頼主の情報に置き換えてください。</p>
+
+      <div class="prompt"><b>(A) 投稿ネタを30個出す</b>あなたは個人店のInstagram運用担当です。
+
+【お店の情報】
+・業種：［例：住宅街のパン屋］
+・客層：［例：30〜40代の子育て世帯、平日の午前中が中心］
+・強み：［例：国産小麦・添加物なし・毎朝5時に焼く］
+・避けたい話題：［例：価格の安さを売りにしない］
+
+【依頼】
+このお店のInstagramに投稿するネタを30個、箇条書きで出してください。
+
+【条件】
+・30個のうち10個は「商品の紹介以外」にしてください
+・専門用語を使わず、私が写真を用意できる範囲にしてください
+・1個につき「投稿タイトル」と「なぜ刺さるか」を1行ずつ</div>
+
+      <div class="prompt"><b>(B) 1本を投稿文に仕上げる</b>先ほどのネタのうち「［選んだネタ］」を投稿文にしてください。
+
+【必ず使う事実】（これ以外の事実を書かないでください）
+・商品名：［　］／価格：［　］（税込）
+・販売日時：［　］
+・注意事項：［例：数量限定・予約不可］
+
+【条件】
+・本文は120字以内、絵文字は3つまで
+・効果や効能を断言する表現は使わないでください
+・ハッシュタグは10個、そのうち5個は投稿数の少ないものを提案してください
+・3パターン出して、それぞれ「誰に向けた案か」を1行添えてください</div>
+
+      <div class="prompt"><b>(C) 月次レポートの文章を作る</b>あなたはSNS運用の報告書を書く担当者です。
+
+【今月の数字】
+・フォロワー：月初［　］人 → 月末［　］人
+・投稿数：［　］本／保存数の合計：［　］
+・いちばん伸びた投稿：［タイトル］（保存［　］）
+・いちばん伸びなかった投稿：［タイトル］（保存［　］）
+
+【依頼】
+この数字をもとに、依頼主（SNSに詳しくない店主）向けの報告文を書いてください。
+
+【条件】
+・「今月わかったこと」「来月やること」の2見出しで、各200字以内
+・専門用語は使わず、使う場合は括弧で説明を付けてください
+・数字が悪い月でも、言い訳ではなく次の打ち手を書いてください</div>
+
+      <p>3本とも、<mark>事実の欄はあなたが埋める構造</mark>になっています。AIに「調べておいて」と頼まない。この一点を守るだけで、事故の大半は起きなくなります。</p>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 2</span>
+      <p class="qtext">依頼主のカフェの新メニューを紹介する投稿をAIに書かせます。いちばん安全で実務的なやり方は？</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>「このカフェの新メニューを調べて紹介文を書いて」と頼み、AIの検索結果に任せる</span></button>
+        <button class="opt"><span class="mark">B</span><span>とりあえず投稿し、依頼主から間違いを指摘されたら直す</span></button>
+        <button class="opt" data-correct><span class="mark">C</span><span>商品名・価格・提供期間を自分で依頼主に確認してプロンプトに入れ、出てきた文章を再度その事実と照合する</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>Cが正解。AIは依頼主の最新の価格や提供条件を知らないため、事実は人間が入れるのが原則です。Aは、AIが古い情報や別店舗の情報をそれらしく書いてしまう典型的な事故パターン。Bは、間違った価格を出した時点で依頼主の信用問題になり、修正しても「一度出た」事実は消えません。事実は入力側で固定し、AIには表現だけを任せます。</p>
+      </div>
+    </div>
+
+    <!-- ============ 8 ============ -->
+    <section id="s8">
+      <h2>8. 実績ゼロから最初の1件</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 310" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="共通の準備から3つのルートを経て1件目に至る流れ">
+          <rect x="14" y="112" width="176" height="86" rx="8" class="svg-box-accent"/>
+          <text x="102" y="140" text-anchor="middle" class="svg-title">まず自分の</text>
+          <text x="102" y="160" text-anchor="middle" class="svg-title">アカウント</text>
+          <text x="102" y="182" text-anchor="middle" class="svg-label-sm">2か月・週3投稿</text>
+
+          <path d="M190 155 H 218" class="svg-arrow"/>
+          <path d="M218 45 V 265" class="svg-arrow"/>
+          <path d="M218 45 H 244" class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M218 155 H 244" class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M218 265 H 244" class="svg-arrow" marker-end="url(#ar)"/>
+
+          <g><rect x="250" y="16" width="220" height="60" rx="8" class="svg-box"/>
+             <text x="360" y="42" text-anchor="middle" class="svg-label">A クラウドソーシング</text>
+             <text x="360" y="62" text-anchor="middle" class="svg-label-sm">「初心者歓迎」案件に応募</text></g>
+          <g><rect x="250" y="126" width="220" height="60" rx="8" class="svg-box"/>
+             <text x="360" y="152" text-anchor="middle" class="svg-label">B ココナラで出品</text>
+             <text x="360" y="172" text-anchor="middle" class="svg-label-sm">待つ側に回る／単価は自分で決める</text></g>
+          <g><rect x="250" y="236" width="220" height="60" rx="8" class="svg-box"/>
+             <text x="360" y="262" text-anchor="middle" class="svg-label">C 知人のお店</text>
+             <text x="360" y="282" text-anchor="middle" class="svg-label-sm">無料または低額で1件だけ</text></g>
+
+          <path d="M470 45 H 500" class="svg-arrow"/>
+          <path d="M470 155 H 500" class="svg-arrow"/>
+          <path d="M470 265 H 500" class="svg-arrow"/>
+          <path d="M500 45 V 265" class="svg-arrow"/>
+          <path d="M500 155 H 522" class="svg-arrow" marker-end="url(#ar)"/>
+
+          <rect x="528" y="112" width="176" height="86" rx="8" class="svg-box-accent"/>
+          <text x="616" y="148" text-anchor="middle" class="svg-title">1件目の契約</text>
+          <text x="616" y="172" text-anchor="middle" class="svg-label-sm">ここから値上げしていく</text>
+        </svg>
+        <figcaption>図8: 3ルートのどれを通るにしても、前段の「自分のアカウント」は共通で必要</figcaption>
+      </figure>
+
+      <p>実績がない状態で応募しても通りません。だから<strong>自分のアカウントを最初のポートフォリオにします</strong>。テーマは何でもよいのですが、狙う依頼主が想像しやすい分野にすると転用が効きます。パン屋を狙うなら「近所のパン屋めぐり」、教室を狙うなら「子どもの習い事記録」といった具合です。</p>
+
+      <p>2か月ぶん、週3投稿を続けると数字が動きます。フォロワー200人でもかまいません。<mark>大事なのは数の大きさではなく、増えた過程を説明できること</mark>。「この3本が伸びた、理由はこう考えている」と言えれば、それが実力の証明になります。</p>
+
+      <p>ルートCが最短ですが、<strong>無料でやるのは1件だけ</strong>にしてください。無料の仕事は「無料でやってくれる人」という実績にしかならず、2件目も無料を期待されます。1件目が終わったら数字を持って「来月から月◯円でお願いします」と切り出す。ここで言えないと、ずっと言えません。</p>
+    </section>
+
+    <!-- ============ 9 ============ -->
+    <section id="s9">
+      <h2>9. 通る提案文・落ちる提案文</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="落ちる提案文と通る提案文の対比">
+          <rect x="10" y="20" width="310" height="196" rx="8" fill="var(--bg)" stroke="var(--border-strong)" stroke-width="1.5"/>
+          <text x="165" y="50" text-anchor="middle" class="svg-title" fill="var(--text-mute)">落ちる提案文</text>
+          <text x="165" y="84" text-anchor="middle" class="svg-label">「未経験ですが頑張ります」</text>
+          <text x="165" y="112" text-anchor="middle" class="svg-label">「現在スクールで勉強中です」</text>
+          <text x="165" y="140" text-anchor="middle" class="svg-label">「何でもやらせていただきます」</text>
+          <text x="165" y="176" text-anchor="middle" class="svg-label-sm">→ 誰にでも送れる文＝誰にも刺さらない</text>
+          <text x="165" y="198" text-anchor="middle" class="svg-label-sm">→ 意欲は、任せる理由にならない</text>
+
+          <path d="M334 118 H 386" class="svg-arrow" stroke-width="2.5" marker-end="url(#ar)"/>
+
+          <rect x="400" y="20" width="310" height="196" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="555" y="50" text-anchor="middle" class="svg-title" fill="var(--accent)">通る提案文</text>
+          <text x="555" y="84" text-anchor="middle" class="svg-label">「同業のアカウントを2か月運用し」</text>
+          <text x="555" y="112" text-anchor="middle" class="svg-label">「保存数を月18→64にしました」</text>
+          <text x="555" y="140" text-anchor="middle" class="svg-label">「御店なら◯◯の投稿を週3本」</text>
+          <text x="555" y="176" text-anchor="middle" class="svg-label-sm">→ 数字 ＋ その依頼主だけへの提案</text>
+          <text x="555" y="198" text-anchor="middle" class="svg-label-sm">→ 稼働できる曜日と時間まで書く</text>
+        </svg>
+        <figcaption>図9: 依頼主が知りたいのは意欲ではなく「任せたら数字が動くか」</figcaption>
+      </figure>
+
+      <p>提案文で落ちる原因はほぼ1つ、<strong>誰にでも送れる文になっていること</strong>です。「未経験ですが」「勉強中です」「何でもやります」は、受け取る側から見ると判断材料がゼロ。意欲は伝わりますが、意欲で発注する人はいません。</p>
+
+      <p>入れるべきは3点だけです。<strong>①自分が運用したアカウントの数値の変化</strong>（小さくてよい）、<strong>②その依頼主のアカウントを見たうえでの具体的な提案</strong>（1つでよい）、<strong>③稼働できる曜日と時間帯</strong>。③は軽視されがちですが、家庭と両立する副業では信用に直結します。「平日の午前中に作業し、返信は当日中」と書ける人は、返信が読めない人より強い。</p>
+
+      <div class="callout tip">
+        <span class="ico">💡</span>
+        <div><p>提案文はAIに下書きさせて構いませんが、②だけは自分で書いてください。依頼主のアカウントを実際に見ないと書けない部分で、そこが読まれています。AIに書かせると必ず一般論になります。</p></div>
+      </div>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 3</span>
+      <p class="qtext">未経験のあなたが提案文に書いたとき、いちばん採用率を上げるのはどれ？</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>受講したSNSマーケティング講座の名前と修了証</span></button>
+        <button class="opt" data-correct><span class="mark">B</span><span>自分で運用したアカウントの数値の変化と、その理由の説明</span></button>
+        <button class="opt"><span class="mark">C</span><span>Instagram・X・TikTok・Facebookすべてに対応できること</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>Bが正解。依頼主が判断したいのは「任せて数字が動くか」の一点で、それを示せるのは実際に動かした数字だけです。Aの講座名は、依頼主にとって成果と結びつかない情報で、修了証は投稿の質を保証しません。Cの多媒体対応は、未経験者が書くと「どれも浅い」と読まれやすく、1媒体を1年やった人に負けます。数字は小さくてよいので、変化と理由をセットで書きます。</p>
+      </div>
+    </div>
+
+    <!-- ============ 10 ============ -->
+    <section id="s10">
+      <h2>10. 扶養と税金</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 390" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="所得税の確定申告と社会保険の扶養、2つの独立した判定">
+          <rect x="10" y="10" width="340" height="300" rx="8" fill="var(--bg)" stroke="var(--border-strong)" stroke-width="1.5"/>
+          <text x="180" y="40" text-anchor="middle" class="svg-title">A. 所得税（確定申告）</text>
+
+          <rect x="40" y="58" width="280" height="52" rx="6" class="svg-box-accent"/>
+          <text x="180" y="82" text-anchor="middle" class="svg-label">副業の「所得」を出す</text>
+          <text x="180" y="100" text-anchor="middle" class="svg-label-sm">所得 ＝ 収入 − 経費</text>
+
+          <path d="M180 110 V 130 M100 130 H 260 M100 130 V 150 M260 130 V 150" class="svg-arrow"/>
+
+          <rect x="30" y="150" width="140" height="70" rx="6" class="svg-box"/>
+          <text x="100" y="176" text-anchor="middle" class="svg-label">20万円以下</text>
+          <text x="100" y="196" text-anchor="middle" class="svg-label-sm">所得税の申告は</text>
+          <text x="100" y="212" text-anchor="middle" class="svg-label-sm">原則不要</text>
+
+          <rect x="190" y="150" width="140" height="70" rx="6" class="svg-box"/>
+          <text x="260" y="176" text-anchor="middle" class="svg-label">20万円超</text>
+          <text x="260" y="196" text-anchor="middle" class="svg-label-sm">確定申告が</text>
+          <text x="260" y="212" text-anchor="middle" class="svg-label-sm">必要</text>
+
+          <rect x="30" y="238" width="300" height="56" rx="6" fill="var(--amber-soft)"/>
+          <text x="180" y="262" text-anchor="middle" class="svg-label-sm">20万円以下でも、住民税の申告は別途必要</text>
+          <text x="180" y="282" text-anchor="middle" class="svg-label-sm">（お住まいの自治体へ）</text>
+
+          <rect x="370" y="10" width="340" height="300" rx="8" fill="var(--bg)" stroke="var(--border-strong)" stroke-width="1.5"/>
+          <text x="540" y="40" text-anchor="middle" class="svg-title">B. 社会保険の扶養</text>
+
+          <rect x="400" y="58" width="280" height="52" rx="6" class="svg-box-accent"/>
+          <text x="540" y="82" text-anchor="middle" class="svg-label">今後1年間の収入見込み</text>
+          <text x="540" y="100" text-anchor="middle" class="svg-label-sm">経費は「直接必要な分」しか引けない</text>
+
+          <path d="M540 110 V 130 M460 130 H 620 M460 130 V 150 M620 130 V 150" class="svg-arrow"/>
+
+          <rect x="390" y="150" width="140" height="70" rx="6" class="svg-box"/>
+          <text x="460" y="176" text-anchor="middle" class="svg-label">130万円未満</text>
+          <text x="460" y="196" text-anchor="middle" class="svg-label-sm">扶養に</text>
+          <text x="460" y="212" text-anchor="middle" class="svg-label-sm">とどまれる</text>
+
+          <rect x="550" y="150" width="140" height="70" rx="6" class="svg-box"/>
+          <text x="620" y="176" text-anchor="middle" class="svg-label">130万円以上</text>
+          <text x="620" y="196" text-anchor="middle" class="svg-label-sm">自分で国保・</text>
+          <text x="620" y="212" text-anchor="middle" class="svg-label-sm">国民年金に加入</text>
+
+          <rect x="390" y="238" width="300" height="56" rx="6" fill="var(--red-soft)"/>
+          <text x="540" y="262" text-anchor="middle" class="svg-label-sm">判定の細かい基準は健康保険組合ごとに違う</text>
+          <text x="540" y="282" text-anchor="middle" class="svg-label-sm">→ 配偶者の健保に必ず直接確認する</text>
+
+          <text x="360" y="340" text-anchor="middle" class="svg-title">A と B は別の話。片方をクリアしても、もう片方は別に判定される</text>
+          <text x="360" y="366" text-anchor="middle" class="svg-label-sm">「106万円の壁」は勤め先の給与にかかる話で、業務委託の副業には原則かからない（2026年10月に撤廃予定）</text>
+        </svg>
+        <figcaption>図10: 所得税の話と、社会保険の扶養の話。混ぜると必ず間違える</figcaption>
+      </figure>
+
+      <p>主婦が副業を始めるとき、いちばん先に確認すべきはここです。そして最も多い誤解が<strong>「税金の話」と「扶養の話」を1本の線で考えてしまうこと</strong>。この2つは所管も基準も別なので、それぞれ独立に判定されます。</p>
+
+      <p>まず所得税。給与を1か所から受けている人は、<strong>副業の所得が年20万円を超えると確定申告が必要</strong>です（国税庁 No.1900）。この「20万円」は売上ではなく<mark>所得＝収入−経費</mark>。月3万円の案件を年間続けて売上36万円でも、経費が20万円あれば所得は16万円です。なお20万円以下で所得税の申告が不要な場合でも、<strong>住民税の申告は別途必要</strong>になります。</p>
+
+      <p>次に社会保険の扶養。こちらは「今後1年間の収入見込みが130万円未満」が基本線です。注意すべきは経費の扱いで、扶養の判定では<strong>「直接必要な経費」しか差し引けません</strong>。仕入れのような費用は引けても、通信費・パソコン代・広告費などは認められないことが多い。つまり<mark>確定申告で使う経費と、扶養判定で使える経費は別物</mark>です。</p>
+
+      <p>そして「106万円の壁」。これは勤め先で厚生年金・健康保険に入る賃金要件の話で、業務委託の副業には原則かかりません。なおこの賃金要件自体、2026年10月に撤廃される予定です。</p>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><p>扶養の判定基準は<strong>健康保険組合ごとに運用が違います</strong>。ネット記事や本教材の説明だけで判断せず、配偶者の勤務先の健保に「業務委託で収入がある場合の判定方法と、引ける経費の範囲」を必ず直接確認してください。ここだけは人に聞くのが最短です。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ 11 ============ -->
+    <section id="s11">
+      <h2>11. 契約で決めておく5項目</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="契約時に決めるべき5項目のチェックリスト">
+          <g><rect x="30" y="14" width="660" height="52" rx="6" class="svg-box-accent"/>
+             <rect x="46" y="30" width="20" height="20" rx="4" fill="none" stroke="var(--accent)" stroke-width="2"/>
+             <path d="M50 40 L55 46 L63 34" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+             <text x="82" y="38" class="svg-title">① 業務範囲</text>
+             <text x="82" y="57" class="svg-label-sm">やること／やらないこと の両方を書く（ここが最重要）</text></g>
+
+          <g><rect x="30" y="76" width="660" height="52" rx="6" class="svg-box"/>
+             <rect x="46" y="92" width="20" height="20" rx="4" fill="none" stroke="var(--text-faint)" stroke-width="2"/>
+             <text x="82" y="100" class="svg-title">② 投稿の最終承認は誰か</text>
+             <text x="82" y="119" class="svg-label-sm">依頼主が承認してから出す。事故のときの責任が明確になる</text></g>
+
+          <g><rect x="30" y="138" width="660" height="52" rx="6" class="svg-box"/>
+             <rect x="46" y="154" width="20" height="20" rx="4" fill="none" stroke="var(--text-faint)" stroke-width="2"/>
+             <text x="82" y="162" class="svg-title">③ 報酬・支払日・修正回数の上限</text>
+             <text x="82" y="181" class="svg-label-sm">「修正は2回まで、以降は別料金」まで書く</text></g>
+
+          <g><rect x="30" y="200" width="660" height="52" rx="6" class="svg-box"/>
+             <rect x="46" y="216" width="20" height="20" rx="4" fill="none" stroke="var(--text-faint)" stroke-width="2"/>
+             <text x="82" y="224" class="svg-title">④ アカウント情報の扱い</text>
+             <text x="82" y="243" class="svg-label-sm">IDとパスワードの共有方法、契約終了時の返却と権限削除</text></g>
+
+          <g><rect x="30" y="262" width="660" height="52" rx="6" class="svg-box"/>
+             <rect x="46" y="278" width="20" height="20" rx="4" fill="none" stroke="var(--text-faint)" stroke-width="2"/>
+             <text x="82" y="286" class="svg-title">⑤ 炎上・クレーム時の責任分担</text>
+             <text x="82" y="305" class="svg-label-sm">誰が一次対応するか。多くの場合、代行者の業務範囲外にする</text></g>
+        </svg>
+        <figcaption>図11: トラブルの大半は①の書き漏れから始まる</figcaption>
+      </figure>
+
+      <p>個人どうしのやりとりでも、簡単な業務委託契約書は交わします。無料のひな形が公開されているので、それを埋めるところから始めれば十分です。<strong>争いのほとんどは「どこまでが仕事か」の認識ずれ</strong>で起きるので、①が最重要になります。</p>
+
+      <p>①でとくに効くのが<mark>「やらないこと」を書く欄</mark>です。「写真の撮影は含まない」「広告の運用は含まない」「電話でのクレーム一次対応は含まない」——書いてあれば断れます。書いていないと、断ったときに「冷たい人」になってしまう。</p>
+
+      <p>②の最終承認は、初心者ほど依頼主側に置いてください。自分に承認権があると、投稿内容の誤りがそのまま自分の責任になります。承認を挟むと納品は少し遅くなりますが、事故ったときに立場を守れる方がはるかに大きい。</p>
+
+      <p>④は見落とされがちです。パスワードをメッセージアプリに平文で送らない、契約終了時には権限を外す。<strong>アカウントは依頼主の資産</strong>という前提を、最初に文章で確認しておきます。</p>
+    </section>
+
+    <!-- ============ 12 ============ -->
+    <section id="s12">
+      <h2>12. 投稿する前の3チェック</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="投稿前に通す3つのチェックゲート">
+          <g><rect x="8" y="60" width="120" height="70" rx="8" class="svg-box"/>
+             <text x="68" y="92" text-anchor="middle" class="svg-label">投稿案</text>
+             <text x="68" y="112" text-anchor="middle" class="svg-label-sm">AIの下書き</text></g>
+          <path d="M132 95 H 152" class="svg-arrow" marker-end="url(#ar)"/>
+
+          <g><rect x="156" y="52" width="146" height="86" rx="8" class="svg-box-accent"/>
+             <text x="229" y="80" text-anchor="middle" class="svg-title">① 事実</text>
+             <text x="229" y="102" text-anchor="middle" class="svg-label-sm">価格・日付・在庫は</text>
+             <text x="229" y="120" text-anchor="middle" class="svg-label-sm">依頼主に確認したか</text></g>
+          <path d="M306 95 H 326" class="svg-arrow" marker-end="url(#ar)"/>
+
+          <g><rect x="330" y="52" width="146" height="86" rx="8" class="svg-box-accent"/>
+             <text x="403" y="80" text-anchor="middle" class="svg-title">② 権利</text>
+             <text x="403" y="102" text-anchor="middle" class="svg-label-sm">写真・音楽・引用は</text>
+             <text x="403" y="120" text-anchor="middle" class="svg-label-sm">使ってよいものか</text></g>
+          <path d="M480 95 H 500" class="svg-arrow" marker-end="url(#ar)"/>
+
+          <g><rect x="504" y="52" width="146" height="86" rx="8" class="svg-box-accent"/>
+             <text x="577" y="80" text-anchor="middle" class="svg-title">③ 表示</text>
+             <text x="577" y="102" text-anchor="middle" class="svg-label-sm">広告ならPRと分かるか</text>
+             <text x="577" y="120" text-anchor="middle" class="svg-label-sm">効能を断言していないか</text></g>
+          <path d="M654 95 H 674" class="svg-arrow" marker-end="url(#ar)"/>
+          <circle cx="694" cy="95" r="18" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.5"/>
+          <path d="M686 95 L692 102 L703 88" fill="none" stroke="var(--green)" stroke-width="2.5"/>
+
+          <text x="360" y="176" text-anchor="middle" class="svg-label-sm">3つとも通ってから投稿ボタン。1つでも「たぶん大丈夫」があれば止める</text>
+        </svg>
+        <figcaption>図12: 投稿前の3ゲート。AI下書きのときほど①が抜ける</figcaption>
+      </figure>
+
+      <p><strong>①事実</strong>——AIの下書きは、価格や日付をそれらしく埋めてきます。依頼主に確認していない数字が1つでも残っていたら投稿しない。これが最頻出の事故です。</p>
+
+      <p><strong>②権利</strong>——写真は依頼主から受け取ったものだけを使います。ネットで拾った画像、他店の写真、音源つきの動画は触らない。デザインツールのテンプレート素材を使う場合も、素材そのものの転売や、テンプレートを文字だけ差し替えて納品する使い方は規約に触れることがあります。</p>
+
+      <p><strong>③表示</strong>——ステルスマーケティング規制（景品表示法）は<strong>令和5年10月1日施行</strong>で、広告であることを隠した表示が違反になります。ここで押さえておきたいのは、<mark>規制の名宛人は「商品・サービスを供給する事業者」＝依頼主</mark>だという点です。代行者は直接の処分対象ではありません。ただし依頼主に違反させたら、その仕事は終わります。だから代行者は「これはPR表記を入れましょう」と提案する側に回るのが正解です。</p>
+
+      <p>あわせて、化粧品・健康食品・医療系で効果を断言する表現は薬機法の領域に入ります。「シミが消える」「痩せる」「治る」はAIがうっかり書きがちな言い回しなので、プロンプトの制約欄に「効果や効能を断言しない」と毎回入れておきます。</p>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 4</span>
+      <p class="qtext">ステマ規制（景品表示法）で違反に問われるのは誰でしょう？</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>投稿を実際に作成・投稿した運用代行者</span></button>
+        <button class="opt"><span class="mark">B</span><span>投稿を掲載したSNSプラットフォーム</span></button>
+        <button class="opt" data-correct><span class="mark">C</span><span>商品・サービスを供給する事業者（＝依頼主）</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>Cが正解。消費者庁は「規制の対象となるのは、商品・サービスを供給する事業者（広告主）」と明示しており、インフルエンサーなどの第三者は対象外とされています。Aの運用代行者は直接の処分対象ではありませんが、依頼主を違反させれば契約は続きません。Bのプラットフォームも名宛人ではありません。だからこそ代行者の実務上の役割は、依頼主に「ここはPR表記が要ります」と提案する側に回ることになります。</p>
+      </div>
+    </div>
+
+    <!-- ============ 13 ============ -->
+    <section id="s13">
+      <h2>13. 最初の90日</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="90日間の進め方のタイムライン">
+          <line x1="50" y1="100" x2="690" y2="100" stroke="var(--border-strong)" stroke-width="2"/>
+          <g><circle cx="110" cy="100" r="8" fill="var(--accent)" opacity=".6"/>
+             <text x="110" y="60" text-anchor="middle" class="svg-title">0〜30日</text>
+             <text x="110" y="80" text-anchor="middle" class="svg-label-sm">お金にならない期間</text>
+             <text x="110" y="130" text-anchor="middle" class="svg-label-sm">自分のアカウント開設</text>
+             <text x="110" y="148" text-anchor="middle" class="svg-label-sm">週3投稿／AIに慣れる</text></g>
+          <g><circle cx="290" cy="100" r="8" fill="var(--accent)" opacity=".75"/>
+             <text x="290" y="60" text-anchor="middle" class="svg-title">31〜60日</text>
+             <text x="290" y="130" text-anchor="middle" class="svg-label-sm">数字を毎週記録する</text>
+             <text x="290" y="148" text-anchor="middle" class="svg-label-sm">ポートフォリオ1枚を作る</text></g>
+          <g><circle cx="470" cy="100" r="8" fill="var(--accent)"/>
+             <text x="470" y="60" text-anchor="middle" class="svg-title">61〜90日</text>
+             <text x="470" y="130" text-anchor="middle" class="svg-label-sm">3ルートで応募・出品</text>
+             <text x="470" y="148" text-anchor="middle" class="svg-label-sm">1件目を取る</text></g>
+          <g><circle cx="640" cy="100" r="10" fill="var(--green)"/>
+             <text x="640" y="60" text-anchor="middle" class="svg-title">90日〜</text>
+             <text x="640" y="130" text-anchor="middle" class="svg-label-sm">2件目から値上げ</text>
+             <text x="640" y="148" text-anchor="middle" class="svg-label-sm">レポートを付ける</text></g>
+          <text x="360" y="185" text-anchor="middle" class="svg-label-sm">毎日やらない。週3投稿・週1分析を「固定の曜日」に置く方が続く</text>
+        </svg>
+        <figcaption>図13: 最初の30日は収入ゼロ。そう決めておくと辞めずに済む</figcaption>
+      </figure>
+
+      <p>辞める人がいちばん多いのは最初の30日です。投稿しても反応がなく、収入もない期間だから。<strong>ここは無収入と決めておく</strong>と、心理的に耐えられます。逆にここを飛ばして応募だけ先に始めると、提案文に書ける数字がなくて落ち続け、余計に折れます。</p>
+
+      <p>続けるコツは、毎日やらないことです。<mark>週3投稿・週1分析を、固定の曜日に置く</mark>。「火・木・土に投稿、日曜の夜に数字を見る」のように生活に埋め込むと、やる気に依存しなくなります。家庭と両立する副業では、これが最大の技術です。</p>
+
+      <p>90日で1件も取れなかった場合、見直す順番は<strong>①媒体 → ②提案文 → ③単価</strong>。単価から下げるのは最後にしてください。安くして取った1件目は、そのまま自分の相場になります。</p>
+
+      <div class="callout key">
+        <span class="ico">✅</span>
+        <div><p>今日やること: ①どの媒体にするか決める（迷ったら Instagram）／②AIをどちらか1つ契約する／③配偶者の健保に扶養の判定方法を聞く。この3つは今日中に終わります。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ まとめ ============ -->
+    <section id="summary">
+      <h2>まとめ</h2>
+      <div class="cards">
+        <div class="card"><h4>相場は2つある</h4><p>月20〜40万円は会社向け。個人の副業は月3,000円台から始まり、上がるのは「数字を説明できたとき」。</p></div>
+        <div class="card"><h4>AIは下書き係</h4><p>事実は自分がプロンプトに入れる。確認と投稿ボタンは人間が握る。この線を引けば事故は起きない。</p></div>
+        <div class="card"><h4>先に地雷を外す</h4><p>扶養（健保に確認）・契約（やらないことを書く）・PR表記。1件目を取る前に片づける。</p></div>
+      </div>
+    </section>
+
+    <!-- ============ 出典 ============ -->
+    <section id="sources">
+      <h2>出典</h2>
+      <ul class="sources">
+        <li><a href="https://www.caa.go.jp/policies/policy/representation/fair_labeling/stealth_marketing/">消費者庁 ステルスマーケティング規制について</a> — 令和5年10月1日施行、規制対象は商品・サービスを供給する事業者（広告主）</li>
+        <li><a href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1900.htm">国税庁 No.1900 給与所得者で確定申告が必要な人</a> — 副業の所得が20万円を超える場合の確定申告義務</li>
+        <li><a href="https://www.mhlw.go.jp/stf/taiou_001_00002.html">厚生労働省「年収の壁」への対応</a> — 106万円の壁（賃金要件）の令和8年10月撤廃予定、130万円の壁の扱い</li>
+        <li><a href="https://www.mhlw.go.jp/file/06-Seisakujouhou-12500000-Nenkinkyoku/hishokenshakubun.pdf">厚生労働省 収入がある者についての被扶養者の認定について</a> — 自営業者の年間収入は「総収入−直接必要な経費」で判定</li>
+        <li><a href="https://www.soumu.go.jp/menu_news/s-news/01iicp01_02000125.html">総務省 令和6年度 情報通信メディアの利用時間と情報行動に関する調査</a> — 主要SNSの全年代利用率（LINE 91.1% / YouTube 80.8% / Instagram 52.6% / X 43.3% / TikTok 33.2% / Facebook 26.8%）</li>
+        <li><a href="https://www.soumu.go.jp/johotsusintokei/whitepaper/ja/r07/html/nd111120.html">総務省 令和7年版 情報通信白書 コミュニケーションツール・SNS</a> — SNS利用率の推移</li>
+        <li><a href="https://claude.com/pricing">Claude 料金プラン（Anthropic）</a> — Pro は月$17〜20、Claude Code / Claude Cowork を含む</li>
+        <li><a href="https://support.claude.com/en/articles/13345190-get-started-with-claude-cowork">Claude Cowork を使いはじめる（Anthropic ヘルプ）</a> — Pro 以上で利用可、macOS / Windows デスクトップ対応</li>
+        <li><a href="https://s--line.co.jp/sns-agency-cost/">SNS運用代行を費用で比較｜月3万〜100万円の相場（S.Line）</a> — 制作会社に依頼した場合の月額相場</li>
+        <li><a href="https://break-marketing-program.jp/blog/2026/03/26/sns-management-freelance/">SNS運用代行フリーランスの始め方と相場</a> — 副業初期の現実的な水準（月3,000円案件、副業で月1万〜10万円）</li>
+        <li><a href="https://hatch-inc.jp/column/sns-management-contract/">SNS運用代行でトラブル回避、契約書に必須の5項目（HATCH）</a> — 契約書で定めるべき項目</li>
+        <li><a href="https://it-trend.jp/sns_operation_service/article/995-5929">SNS運用代行サービスの失敗例と注意点（ITトレンド）</a> — 業務範囲の認識ずれ、業務範囲外になりやすい項目</li>
+        <li><a href="https://buzz-brain.com/sns%E9%81%8B%E7%94%A8%E3%81%AE%E3%83%9D%E3%83%BC%E3%83%88%E3%83%95%E3%82%A9%E3%83%AA%E3%82%AA%E3%81%AE%E4%BD%9C%E3%82%8A%E6%96%B9%E3%81%A8%E3%81%AF%EF%BC%9F%E6%A1%88%E4%BB%B6%E3%81%AA%E3%81%97/">SNS運用のポートフォリオの作り方（Buzz Brain）</a> — 実績ゼロからのポートフォリオの作り方</li>
+        <li><a href="https://www.canva.com/ja_jp/templates/s/sns/">Canva SNS投稿テンプレート</a> — 無料プランで使えるSNS投稿用テンプレート</li>
+      </ul>
+    </section>
+
+  </main>
+</div>
+
+<script>
+// ---- テーマ切替（OS設定を初期値にし、選択はセッション内で保持） ----
+(function(){
+  var root=document.documentElement, btn=document.getElementById('themeBtn');
+  if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+    root.setAttribute('data-theme','dark');
+  }
+  var sync=function(){ btn.textContent = root.getAttribute('data-theme')==='dark' ? '☀️' : '🌙'; };
+  sync();
+  btn.addEventListener('click',function(){
+    root.setAttribute('data-theme', root.getAttribute('data-theme')==='dark'?'light':'dark');
+    sync();
+  });
+})();
+
+// ---- 目次スクロール連動 ----
+(function(){
+  var links=[].slice.call(document.querySelectorAll('#toc a'));
+  var map={}; links.forEach(function(a){ var el=document.querySelector(a.getAttribute('href')); if(el) map[el.id]=a; });
+  var targets=Object.keys(map).map(function(id){return document.getElementById(id);});
+  if(!targets.length) return;
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        links.forEach(function(a){a.classList.remove('active');});
+        map[e.target.id].classList.add('active');
+      }
+    });
+  },{rootMargin:'-15% 0px -70% 0px', threshold:0});
+  targets.forEach(function(t){io.observe(t);});
+})();
+
+// ---- クイズ：3択・即時採点・解説表示 ----
+(function(){
+  document.querySelectorAll('[data-quiz]').forEach(function(q){
+    var opts=[].slice.call(q.querySelectorAll('.opt'));
+    var box=q.querySelector('.explain'), verdict=q.querySelector('.verdict');
+    opts.forEach(function(btn){
+      btn.addEventListener('click',function(){
+        if(btn.disabled) return;
+        var ok=btn.hasAttribute('data-correct');
+        opts.forEach(function(o){
+          o.disabled=true;
+          if(o.hasAttribute('data-correct')) o.classList.add('correct');
+        });
+        if(!ok) btn.classList.add('wrong');
+        verdict.textContent = ok ? '正解！' : '惜しい — 正解は上の緑の選択肢です';
+        verdict.className = 'verdict ' + (ok?'ok':'ng');
+        box.classList.add('show');
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
