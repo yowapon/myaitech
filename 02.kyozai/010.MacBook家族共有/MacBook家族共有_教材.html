@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>はじめてのMacBookを家族で共有する — ユーザアカウントと Apple アカウント</title>
+<style>
+:root{
+  --bg:#ffffff; --bg-sub:#f7f7f5; --bg-hover:#efefed;
+  --text:#37352f; --text-mute:#787774; --text-faint:#9b9a97;
+  --border:#e9e9e7; --border-strong:#d3d3d1;
+  --accent:#2383e2; --accent-soft:#e7f1fd;
+  --green:#0f7b6c; --green-soft:#e4f3f0;
+  --amber:#cb912f; --amber-soft:#faf1dd;
+  --red:#e03e3e;   --red-soft:#fbe9e9;
+  --purple:#6940a5; --purple-soft:#eee6f7;
+  --radius:8px;
+  --font: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif;
+}
+html[data-theme="dark"]{
+  --bg:#191919; --bg-sub:#202020; --bg-hover:#2a2a2a;
+  --text:#d4d4d4; --text-mute:#9b9b9b; --text-faint:#6f6f6f;
+  --border:#2f2f2f; --border-strong:#414141;
+  --accent:#5b9dd9; --accent-soft:#1c2f3f;
+  --green:#4dab9a; --green-soft:#1c2b28;
+  --amber:#e0b44a; --amber-soft:#332a1b;
+  --red:#ff7369;   --red-soft:#3a2323;
+  --purple:#9a76d1; --purple-soft:#2a2136;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font); font-size:16px; line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+  transition:background .2s,color .2s;
+}
+.layout{display:flex; align-items:flex-start; max-width:1180px; margin:0 auto}
+
+/* ---------- 目次サイドバー ---------- */
+#sidebar{
+  position:sticky; top:0; flex:0 0 250px; height:100vh;
+  padding:28px 14px 40px; overflow-y:auto;
+  border-right:1px solid var(--border); background:var(--bg-sub);
+}
+#sidebar .toc-label{
+  font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--text-faint); padding:0 10px; margin-bottom:10px; font-weight:600;
+}
+#toc a{
+  display:block; padding:6px 10px; margin:1px 0; border-radius:6px;
+  color:var(--text-mute); text-decoration:none; font-size:13.5px; line-height:1.45;
+  border-left:2px solid transparent; transition:background .15s,color .15s;
+}
+#toc a:hover{background:var(--bg-hover); color:var(--text)}
+#toc a.active{background:var(--accent-soft); color:var(--accent); font-weight:600; border-left-color:var(--accent)}
+#toc a.sub{padding-left:22px; font-size:12.5px}
+
+/* ---------- 本文 ---------- */
+main{flex:1 1 auto; min-width:0; padding:56px 60px 140px; max-width:860px}
+.hero-eyebrow{font-size:12px; letter-spacing:.1em; color:var(--accent); font-weight:700; text-transform:uppercase}
+h1{font-size:40px; line-height:1.25; margin:.25em 0 .35em; letter-spacing:-.01em; font-weight:800}
+h2{font-size:26px; margin:2.6em 0 .6em; padding-bottom:.3em; border-bottom:1px solid var(--border); font-weight:700; letter-spacing:-.005em}
+h3{font-size:18px; margin:1.8em 0 .4em; font-weight:700}
+p{margin:.7em 0}
+a{color:var(--accent)}
+.lead{font-size:18px; color:var(--text-mute); line-height:1.8}
+.meta{display:flex; flex-wrap:wrap; gap:8px; margin:20px 0 8px}
+.chip{
+  font-size:12.5px; padding:4px 11px; border-radius:999px;
+  background:var(--bg-sub); border:1px solid var(--border); color:var(--text-mute);
+}
+strong{font-weight:700}
+mark{background:var(--amber-soft); color:inherit; padding:0 3px; border-radius:3px}
+code{background:var(--bg-sub); border:1px solid var(--border); border-radius:4px; padding:1px 5px; font-size:.88em}
+hr{border:0; border-top:1px solid var(--border); margin:3em 0}
+ul,ol{padding-left:1.4em} li{margin:.3em 0}
+
+/* ---------- 図解ブロック（各セクションの先頭に置く） ---------- */
+.figure{
+  margin:1.4em 0 1.2em; padding:24px; border:1px solid var(--border);
+  border-radius:var(--radius); background:var(--bg-sub);
+}
+.figure svg{display:block; width:100%; height:auto; max-width:100%}
+.figure figcaption{
+  margin-top:14px; padding-top:12px; border-top:1px solid var(--border);
+  font-size:13px; color:var(--text-mute); text-align:center;
+}
+/* SVG内で使う共通クラス */
+.svg-label{font-family:var(--font); font-size:13px; fill:var(--text)}
+.svg-label-sm{font-family:var(--font); font-size:11px; fill:var(--text-mute)}
+.svg-title{font-family:var(--font); font-size:14px; font-weight:700; fill:var(--text)}
+.svg-box{fill:var(--bg); stroke:var(--border-strong); stroke-width:1.5}
+.svg-box-accent{fill:var(--accent-soft); stroke:var(--accent); stroke-width:1.5}
+.svg-arrow{stroke:var(--text-faint); stroke-width:1.8; fill:none}
+
+/* ---------- コールアウト ---------- */
+.callout{
+  display:flex; gap:12px; padding:16px 18px; margin:1.2em 0;
+  border-radius:var(--radius); background:var(--bg-sub); border-left:3px solid var(--text-faint);
+}
+.callout .ico{flex:0 0 auto; font-size:18px; line-height:1.5}
+.callout p:first-child{margin-top:0} .callout p:last-child{margin-bottom:0}
+.callout.tip{background:var(--accent-soft); border-left-color:var(--accent)}
+.callout.warn{background:var(--amber-soft); border-left-color:var(--amber)}
+.callout.key{background:var(--green-soft); border-left-color:var(--green)}
+
+/* ---------- カードグリッド ---------- */
+.cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin:1.2em 0}
+.card{padding:16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg)}
+.card h4{margin:0 0 6px; font-size:14.5px; font-weight:700}
+.card p{margin:0; font-size:13.5px; color:var(--text-mute); line-height:1.7}
+
+/* ---------- 表 ---------- */
+table{width:100%; border-collapse:collapse; margin:1.2em 0; font-size:14.5px}
+th,td{border:1px solid var(--border); padding:10px 12px; text-align:left; vertical-align:top}
+th{background:var(--bg-sub); font-weight:700}
+
+/* ---------- クイズ ---------- */
+.quiz{
+  margin:2em 0; padding:22px 24px; border:1px solid var(--border);
+  border-radius:var(--radius); background:var(--bg-sub);
+}
+.quiz .qtag{
+  display:inline-block; font-size:11px; font-weight:700; letter-spacing:.06em;
+  color:var(--purple); background:var(--purple-soft); padding:3px 9px; border-radius:999px; margin-bottom:10px;
+}
+.quiz .qtext{font-weight:700; font-size:16.5px; margin:0 0 14px; line-height:1.65}
+.quiz .opts{display:flex; flex-direction:column; gap:8px}
+.quiz button.opt{
+  text-align:left; font:inherit; font-size:14.5px; color:var(--text); cursor:pointer;
+  padding:12px 14px; border:1px solid var(--border-strong); border-radius:6px;
+  background:var(--bg); transition:background .15s,border-color .15s;
+  display:flex; gap:10px; align-items:flex-start; line-height:1.6;
+}
+.quiz button.opt:hover:not(:disabled){background:var(--bg-hover); border-color:var(--accent)}
+.quiz button.opt:disabled{cursor:default}
+.quiz button.opt .mark{flex:0 0 20px; font-weight:700; color:var(--text-faint)}
+.quiz button.opt.correct{background:var(--green-soft); border-color:var(--green)}
+.quiz button.opt.correct .mark{color:var(--green)}
+.quiz button.opt.wrong{background:var(--red-soft); border-color:var(--red)}
+.quiz button.opt.wrong .mark{color:var(--red)}
+.quiz .explain{
+  display:none; margin-top:14px; padding:14px 16px; border-radius:6px;
+  background:var(--bg); border:1px solid var(--border); font-size:14px; line-height:1.75;
+}
+.quiz .explain.show{display:block}
+.quiz .verdict{font-weight:700; margin-bottom:4px}
+.quiz .verdict.ok{color:var(--green)} .quiz .verdict.ng{color:var(--red)}
+
+/* ---------- 出典 ---------- */
+.sources{font-size:14px; color:var(--text-mute)}
+.sources li{margin:.5em 0}
+
+/* ---------- テーマ切替ボタン ---------- */
+#themeBtn{
+  position:fixed; top:18px; right:22px; z-index:50;
+  width:38px; height:38px; border-radius:8px; cursor:pointer;
+  border:1px solid var(--border-strong); background:var(--bg); color:var(--text);
+  font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;
+  transition:background .15s;
+}
+#themeBtn:hover{background:var(--bg-hover)}
+
+/* ---------- レスポンシブ ---------- */
+@media (max-width:900px){
+  #sidebar{display:none}
+  main{padding:40px 22px 100px}
+  h1{font-size:30px} h2{font-size:22px}
+}
+@media print{
+  #sidebar,#themeBtn{display:none} main{max-width:none;padding:0}
+  .quiz .explain{display:block}
+}
+</style>
+</head>
+<body>
+
+<button id="themeBtn" aria-label="ライト/ダーク切替">🌙</button>
+
+<div class="layout">
+
+  <aside id="sidebar">
+    <div class="toc-label">目次</div>
+    <nav id="toc">
+      <a href="#about">この教材について</a>
+      <a href="#s1">1. アカウントは2階建て</a>
+      <a href="#s2">2. 2つのアカウントの正体</a>
+      <a href="#s3">3. 鍵は2本ある</a>
+      <a href="#s4">4. ユーザアカウントの4種類</a>
+      <a href="#s5">5. 4人家族の設計表</a>
+      <a href="#s6">6. セットアップの順番（初回だけ）</a>
+      <a href="#s7">7. 電源オフから自分の画面まで</a>
+      <a href="#s8">8. Apple アカウントを入れるのはいつ</a>
+      <a href="#s9">9. ファストユーザスイッチ</a>
+      <a href="#s10">10. ファミリー共有</a>
+      <a href="#s11">11. iCloud+ を分け合う</a>
+      <a href="#s12">12. 使い回してはいけない</a>
+      <a href="#s13">13. FileVault は選べる</a>
+      <a href="#s14">14. 家族間のファイル受け渡し</a>
+      <a href="#summary">まとめ</a>
+      <a href="#sources">出典</a>
+    </nav>
+  </aside>
+
+  <main>
+
+    <header>
+      <div class="hero-eyebrow">Mac入門 / 家族での運用</div>
+      <h1>はじめてのMacBookを家族で共有する</h1>
+      <p class="lead">家族4人で MacBook 1台を使い分けるまで。「Mac のユーザアカウント」と「Apple アカウント」という別物の2つを、Windows と並べながら整理します。</p>
+      <div class="meta">
+        <span class="chip">対象: Windowsユーザー / Mac未経験</span>
+        <span class="chip">レベル: 入門</span>
+        <span class="chip">所要 約25分</span>
+        <span class="chip">更新: 2026-08-17</span>
+      </div>
+    </header>
+
+    <section id="about">
+      <h2>この教材について</h2>
+      <div class="callout key">
+        <span class="ico">🎯</span>
+        <div>
+          <p><strong>読み終えるとできるようになること</strong></p>
+          <ol>
+            <li>「Mac のユーザアカウント」と「Apple アカウント」の違いを説明できる</li>
+            <li>電源オフの状態から自分の画面を出すのに、どちらをいつ入れるのかが分かる</li>
+            <li>家族4人で1台を使うとき、誰に何のアカウントを作るか決められる</li>
+            <li>Apple アカウントを使い回してはいけない理由と、ファミリー共有の役割が分かる</li>
+          </ol>
+        </div>
+      </div>
+      <p style="font-size:14px;color:var(--text-mute)">
+        主な参照元: <a href="https://support.apple.com/ja-jp/guide/mac-help/mtusr001/mac">Apple「Macのユーザとグループを設定する」</a> / <a href="https://www.apple.com/jp/family-sharing/">Apple「ファミリー共有」</a>（全出典は<a href="#sources">末尾</a>）
+      </p>
+      <div class="callout tip">
+        <span class="ico">💡</span>
+        <div><p>2024年秋の OS 更新から、「Apple ID」は<strong>「Apple アカウント」</strong>に改称されました。メールアドレスもパスワードもそのままで、名前だけの変更です。この教材では新しい呼び方に統一します。</p></div>
+      </div>
+    </section>
+
+    <section id="s1">
+      <h2>1. アカウントは2階建て</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 350" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MacBook1台の中に4人分のユーザアカウントがあり、それぞれが別のAppleアカウントにサインインする2階建ての構造">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="var(--text-faint)"/>
+            </marker>
+          </defs>
+
+          <text x="10" y="18" class="svg-label-sm">2階：Apple のサービス側（App Store・iCloud・iMessage）</text>
+          <rect x="10" y="28" width="700" height="92" rx="10" class="svg-box-accent"/>
+          <rect x="25" y="44" width="160" height="60" rx="8" class="svg-box"/>
+          <text x="105" y="70" text-anchor="middle" class="svg-title">父</text>
+          <text x="105" y="91" text-anchor="middle" class="svg-label-sm">Apple アカウント</text>
+          <rect x="195" y="44" width="160" height="60" rx="8" class="svg-box"/>
+          <text x="275" y="70" text-anchor="middle" class="svg-title">母</text>
+          <text x="275" y="91" text-anchor="middle" class="svg-label-sm">Apple アカウント</text>
+          <rect x="365" y="44" width="160" height="60" rx="8" class="svg-box"/>
+          <text x="445" y="70" text-anchor="middle" class="svg-title">長男</text>
+          <text x="445" y="91" text-anchor="middle" class="svg-label-sm">Apple アカウント</text>
+          <rect x="535" y="44" width="160" height="60" rx="8" class="svg-box"/>
+          <text x="615" y="70" text-anchor="middle" class="svg-title">次男</text>
+          <text x="615" y="91" text-anchor="middle" class="svg-label-sm">Apple アカウント</text>
+
+          <path d="M105 250 V 126" class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M275 250 V 126" class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M445 250 V 126" class="svg-arrow" marker-end="url(#ar)"/>
+          <path d="M615 250 V 126" class="svg-arrow" marker-end="url(#ar)"/>
+          <text x="360" y="192" text-anchor="middle" class="svg-label-sm">サインイン</text>
+
+          <text x="10" y="228" class="svg-label-sm">1階：MacBook 1台（端末の中）</text>
+          <rect x="10" y="238" width="700" height="96" rx="10" fill="var(--bg)" stroke="var(--border-strong)" stroke-width="1.5"/>
+          <rect x="25" y="254" width="160" height="62" rx="8" class="svg-box"/>
+          <text x="105" y="281" text-anchor="middle" class="svg-title">父</text>
+          <text x="105" y="302" text-anchor="middle" class="svg-label-sm">ユーザアカウント</text>
+          <rect x="195" y="254" width="160" height="62" rx="8" class="svg-box"/>
+          <text x="275" y="281" text-anchor="middle" class="svg-title">母</text>
+          <text x="275" y="302" text-anchor="middle" class="svg-label-sm">ユーザアカウント</text>
+          <rect x="365" y="254" width="160" height="62" rx="8" class="svg-box"/>
+          <text x="445" y="281" text-anchor="middle" class="svg-title">長男</text>
+          <text x="445" y="302" text-anchor="middle" class="svg-label-sm">ユーザアカウント</text>
+          <rect x="535" y="254" width="160" height="62" rx="8" class="svg-box"/>
+          <text x="615" y="281" text-anchor="middle" class="svg-title">次男</text>
+          <text x="615" y="302" text-anchor="middle" class="svg-label-sm">ユーザアカウント</text>
+        </svg>
+        <figcaption>図1: 1階＝端末の中の区画、2階＝Apple の会員証。階が違うので混ざらない</figcaption>
+      </figure>
+
+      <p>アカウントは2階建てです。1階は端末の中の区画で、これが <strong>Mac のユーザアカウント</strong>。2階は Apple のサービス側の会員証で、これが <strong>Apple アカウント</strong>。1階の区画ごとに、2階の別々の会員証でサインインする——これが家族共有の完成形です。以降の章はすべて、この図のどこかの話になります。</p>
+    </section>
+
+    <section id="s2">
+      <h2>2. 2つのアカウントの正体</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Windowsのローカルアカウントとマイクロソフトアカウントが、Macのユーザアカウントとアップルアカウントに対応する対比図">
+          <text x="170" y="24" text-anchor="middle" class="svg-title" fill="var(--text-mute)">Windows なら</text>
+          <text x="550" y="24" text-anchor="middle" class="svg-title" fill="var(--accent)">Mac では</text>
+
+          <rect x="30" y="40" width="280" height="90" rx="8" class="svg-box"/>
+          <text x="170" y="70" text-anchor="middle" class="svg-title">ローカルアカウント</text>
+          <text x="170" y="92" text-anchor="middle" class="svg-label-sm">その1台の中だけの存在</text>
+          <text x="170" y="112" text-anchor="middle" class="svg-label-sm">デスクトップ・書類・設定を分ける</text>
+          <path d="M310 85 H 342" class="svg-arrow"/>
+          <text x="355" y="91" text-anchor="middle" class="svg-title" fill="var(--text-faint)">≒</text>
+          <path d="M368 85 H 400" class="svg-arrow" marker-end="url(#ar)"/>
+          <rect x="410" y="40" width="280" height="90" rx="8" class="svg-box-accent"/>
+          <text x="550" y="70" text-anchor="middle" class="svg-title">ユーザアカウント</text>
+          <text x="550" y="92" text-anchor="middle" class="svg-label-sm">その1台の中だけの存在</text>
+          <text x="550" y="112" text-anchor="middle" class="svg-label-sm">デスクトップ・書類・設定を分ける</text>
+
+          <rect x="30" y="160" width="280" height="90" rx="8" class="svg-box"/>
+          <text x="170" y="190" text-anchor="middle" class="svg-title">Microsoft アカウント</text>
+          <text x="170" y="212" text-anchor="middle" class="svg-label-sm">会社のサービスに入る会員証</text>
+          <text x="170" y="232" text-anchor="middle" class="svg-label-sm">Store・OneDrive・Outlook</text>
+          <path d="M310 205 H 342" class="svg-arrow"/>
+          <text x="355" y="211" text-anchor="middle" class="svg-title" fill="var(--text-faint)">≒</text>
+          <path d="M368 205 H 400" class="svg-arrow" marker-end="url(#ar)"/>
+          <rect x="410" y="160" width="280" height="90" rx="8" class="svg-box-accent"/>
+          <text x="550" y="190" text-anchor="middle" class="svg-title">Apple アカウント</text>
+          <text x="550" y="212" text-anchor="middle" class="svg-label-sm">会社のサービスに入る会員証</text>
+          <text x="550" y="232" text-anchor="middle" class="svg-label-sm">App Store・iCloud・iMessage</text>
+
+          <text x="360" y="282" text-anchor="middle" class="svg-label-sm">役割は対応する。ただし Windows は2つを1つにまとめるのが既定、Mac は常に別々</text>
+        </svg>
+        <figcaption>図2: 役割は対応する。違うのは「まとめるか、分けるか」の既定値</figcaption>
+      </figure>
+
+      <p>Mac のユーザアカウントは Windows のローカルアカウントと同じで、デスクトップや書類、設定を人ごとに分けるもの。その1台の中だけの存在です。Apple アカウントは Microsoft アカウントと同じで、サービスに入るための会員証。購入履歴も iCloud のデータも iMessage の宛先も、すべてこちらに紐づきます。</p>
+    </section>
+
+    <section id="s3">
+      <h2>3. 鍵は2本ある</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Macのログインパスワードとアップルアカウントのパスワードが、それぞれ別のものを開けることを示す図">
+          <rect x="20" y="30" width="260" height="86" rx="8" class="svg-box-accent"/>
+          <text x="150" y="64" text-anchor="middle" class="svg-title">Mac のログインパスワード</text>
+          <text x="150" y="88" text-anchor="middle" class="svg-label-sm">ユーザアカウントごとに設定</text>
+          <path d="M290 73 H 330" class="svg-arrow" marker-end="url(#ar)"/>
+          <rect x="340" y="30" width="360" height="86" rx="8" class="svg-box"/>
+          <text x="520" y="64" text-anchor="middle" class="svg-title">この MacBook を開ける</text>
+          <text x="520" y="88" text-anchor="middle" class="svg-label-sm">デスクトップ・書類・アプリ・設定</text>
+
+          <rect x="20" y="140" width="260" height="86" rx="8" class="svg-box-accent"/>
+          <text x="150" y="174" text-anchor="middle" class="svg-title">Apple アカウントのパスワード</text>
+          <text x="150" y="198" text-anchor="middle" class="svg-label-sm">1人に1つ。iPhone と同じもの</text>
+          <path d="M290 183 H 330" class="svg-arrow" marker-end="url(#ar)"/>
+          <rect x="340" y="140" width="360" height="86" rx="8" class="svg-box"/>
+          <text x="520" y="174" text-anchor="middle" class="svg-title">Apple のサービスを開ける</text>
+          <text x="520" y="198" text-anchor="middle" class="svg-label-sm">App Store・iCloud・iMessage・探す</text>
+
+          <text x="360" y="250" text-anchor="middle" class="svg-label-sm">ログイン画面で入れるのは上の鍵。Apple アカウントのパスワードではない</text>
+        </svg>
+        <figcaption>図3: 鍵が2本ある。どちらが何を開けるかを取り違えると設定が進まない</figcaption>
+      </figure>
+
+      <p>Windows 11 は初期設定で Microsoft アカウントでのサインインを勧めるので、「PC のログイン＝Microsoft アカウント」が一体に見えます。Mac は違います。ログイン画面で入れるのは<mark>その端末のユーザアカウントのパスワード</mark>で、Apple アカウントのパスワードではありません。極端な話、Apple アカウントに一度もサインインしなくても Mac は使えます。<strong>2本をいつ・何回入れるのかは <a href="#s7">7章</a>と<a href="#s8">8章</a>で具体的に見ます。</strong></p>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 1</span>
+      <p class="qtext">Mac のログイン画面で入力するパスワードはどれですか。</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>Apple アカウントのパスワード</span></button>
+        <button class="opt" data-correct><span class="mark">B</span><span>その端末のユーザアカウントのパスワード</span></button>
+        <button class="opt"><span class="mark">C</span><span>iPhone のパスコードと同じもの</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>Mac へのログインは端末側のユーザアカウントに対する認証です。Apple アカウントのパスワードは App Store や iCloud で使うもので別物（A）。iPhone のパスコードとも無関係です（C）。</p>
+      </div>
+    </div>
+
+    <section id="s4">
+      <h2>4. ユーザアカウントの4種類</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="管理者・通常・共有のみ・ゲストの4種類のアカウントでできることの比較表">
+          <rect x="20" y="50" width="680" height="222" fill="none" stroke="var(--border-strong)" stroke-width="1.5"/>
+          <rect x="20" y="80" width="680" height="48" fill="var(--accent-soft)"/>
+          <line x1="20" y1="80" x2="700" y2="80" stroke="var(--border-strong)"/>
+          <line x1="20" y1="128" x2="700" y2="128" stroke="var(--border)"/>
+          <line x1="20" y1="176" x2="700" y2="176" stroke="var(--border)"/>
+          <line x1="20" y1="224" x2="700" y2="224" stroke="var(--border)"/>
+          <line x1="180" y1="50" x2="180" y2="272" stroke="var(--border)"/>
+          <line x1="310" y1="50" x2="310" y2="272" stroke="var(--border)"/>
+          <line x1="440" y1="50" x2="440" y2="272" stroke="var(--border)"/>
+          <line x1="570" y1="50" x2="570" y2="272" stroke="var(--border)"/>
+
+          <text x="245" y="64" text-anchor="middle" class="svg-label-sm">ログイン</text>
+          <text x="245" y="76" text-anchor="middle" class="svg-label-sm">できる</text>
+          <text x="375" y="64" text-anchor="middle" class="svg-label-sm">アプリを</text>
+          <text x="375" y="76" text-anchor="middle" class="svg-label-sm">全体に入れる</text>
+          <text x="505" y="64" text-anchor="middle" class="svg-label-sm">他のユーザを</text>
+          <text x="505" y="76" text-anchor="middle" class="svg-label-sm">作る・消す</text>
+          <text x="635" y="64" text-anchor="middle" class="svg-label-sm">システム設定</text>
+          <text x="635" y="76" text-anchor="middle" class="svg-label-sm">を変える</text>
+
+          <text x="34" y="102" class="svg-title">管理者</text>
+          <text x="34" y="120" class="svg-label-sm">家族の代表 1〜2人</text>
+          <text x="245" y="110" text-anchor="middle" class="svg-title">○</text>
+          <text x="375" y="110" text-anchor="middle" class="svg-title">○</text>
+          <text x="505" y="110" text-anchor="middle" class="svg-title">○</text>
+          <text x="635" y="110" text-anchor="middle" class="svg-title">○</text>
+
+          <text x="34" y="150" class="svg-title">通常</text>
+          <text x="34" y="168" class="svg-label-sm">ふだんの家族はこれ</text>
+          <text x="245" y="158" text-anchor="middle" class="svg-title">○</text>
+          <text x="375" y="158" text-anchor="middle" class="svg-title">△</text>
+          <text x="505" y="158" text-anchor="middle" class="svg-title">×</text>
+          <text x="635" y="158" text-anchor="middle" class="svg-title">×</text>
+
+          <text x="34" y="198" class="svg-title">共有のみ</text>
+          <text x="34" y="216" class="svg-label-sm">ファイル共有の相手用</text>
+          <text x="245" y="206" text-anchor="middle" class="svg-title">×</text>
+          <text x="375" y="206" text-anchor="middle" class="svg-title">×</text>
+          <text x="505" y="206" text-anchor="middle" class="svg-title">×</text>
+          <text x="635" y="206" text-anchor="middle" class="svg-title">×</text>
+
+          <text x="34" y="246" class="svg-title">ゲスト</text>
+          <text x="34" y="264" class="svg-label-sm">終了するとデータが消える</text>
+          <text x="245" y="254" text-anchor="middle" class="svg-title">○</text>
+          <text x="375" y="254" text-anchor="middle" class="svg-title">×</text>
+          <text x="505" y="254" text-anchor="middle" class="svg-title">×</text>
+          <text x="635" y="254" text-anchor="middle" class="svg-title">×</text>
+
+          <text x="20" y="292" class="svg-label-sm">○＝できる ／ △＝自分のアカウント内だけ ／ ×＝できない</text>
+        </svg>
+        <figcaption>図4: 家族なら管理者は1〜2人、残りは「通常」が基本形</figcaption>
+      </figure>
+
+      <p>通常ユーザでも自分用のアプリは入れられるので、日常の不便はほとんどありません。共有のみはファイル共有専用でログインできず、ゲストは終了時にデータが消えます。来客に貸すとき以外、下の2つを家族運用で使うことはありません。</p>
+    </section>
+
+    <section id="s5">
+      <h2>5. 4人家族の設計表</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 275" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="父母と子供2人それぞれのアカウント種別とAppleアカウントの割り当てを示す設計表">
+          <rect x="15" y="20" width="690" height="220" fill="none" stroke="var(--border-strong)" stroke-width="1.5"/>
+          <rect x="15" y="56" width="690" height="46" fill="var(--accent-soft)"/>
+          <line x1="15" y1="56" x2="705" y2="56" stroke="var(--border-strong)"/>
+          <line x1="15" y1="102" x2="705" y2="102" stroke="var(--border)"/>
+          <line x1="15" y1="148" x2="705" y2="148" stroke="var(--border)"/>
+          <line x1="15" y1="194" x2="705" y2="194" stroke="var(--border)"/>
+          <line x1="145" y1="20" x2="145" y2="240" stroke="var(--border)"/>
+          <line x1="295" y1="20" x2="295" y2="240" stroke="var(--border)"/>
+          <line x1="495" y1="20" x2="495" y2="240" stroke="var(--border)"/>
+
+          <text x="27" y="44" class="svg-label-sm">家族</text>
+          <text x="157" y="44" class="svg-label-sm">Mac のユーザ種別</text>
+          <text x="307" y="44" class="svg-label-sm">Apple アカウント</text>
+          <text x="507" y="44" class="svg-label-sm">主な用途</text>
+
+          <text x="27" y="84" class="svg-title">父（45）</text>
+          <text x="157" y="84" class="svg-label">管理者</text>
+          <text x="307" y="84" class="svg-label">本人のもの</text>
+          <text x="507" y="84" class="svg-label">Mac の管理・仕事・家計</text>
+
+          <text x="27" y="130" class="svg-title">母（43）</text>
+          <text x="157" y="130" class="svg-label">通常</text>
+          <text x="307" y="130" class="svg-label">本人のもの</text>
+          <text x="507" y="130" class="svg-label">写真整理・買い物</text>
+
+          <text x="27" y="176" class="svg-title">長男（15）</text>
+          <text x="157" y="176" class="svg-label">通常</text>
+          <text x="307" y="176" class="svg-label">本人のもの</text>
+          <text x="507" y="176" class="svg-label">学校の課題・動画</text>
+
+          <text x="27" y="222" class="svg-title">次男（10）</text>
+          <text x="157" y="222" class="svg-label">通常</text>
+          <text x="307" y="222" class="svg-label">お子様用（親が作成）</text>
+          <text x="507" y="222" class="svg-label">学習アプリ・お絵かき</text>
+
+          <text x="360" y="264" text-anchor="middle" class="svg-label-sm">管理者は1〜2人だけ。全員を管理者にすると、子どもが自分で制限を外せてしまう</text>
+        </svg>
+        <figcaption>図5: 迷ったらこの形。管理者を絞り、子には保護者が作るアカウントを割り当てる</figcaption>
+      </figure>
+
+      <p>全員を管理者にしない理由は2つ。システムに関わる操作を誰でもできると原因不明の不調が起きやすいこと、そして子どもが自分でスクリーンタイムを外せてしまうことです。13歳未満の子どもは自分で Apple アカウントを作れないので、保護者がファミリー共有から「お子様用アカウント」として作ります。</p>
+    </section>
+
+    <section id="s6">
+      <h2>6. セットアップの順番（初回だけ）</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 165" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="管理者作成、ユーザ追加、各自のサインイン、ファミリー共有の4ステップ">
+          <g><rect x="10" y="30" width="150" height="96" rx="8" class="svg-box-accent"/>
+             <text x="85" y="62" text-anchor="middle" class="svg-title">① 最初の1人</text>
+             <text x="85" y="84" text-anchor="middle" class="svg-label-sm">開封時に作られる</text>
+             <text x="85" y="102" text-anchor="middle" class="svg-label-sm">管理者アカウント</text></g>
+          <path d="M165 78 H 185" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="190" y="30" width="150" height="96" rx="8" class="svg-box"/>
+             <text x="265" y="62" text-anchor="middle" class="svg-title">② 人数分を追加</text>
+             <text x="265" y="84" text-anchor="middle" class="svg-label-sm">システム設定 ＞</text>
+             <text x="265" y="102" text-anchor="middle" class="svg-label-sm">ユーザとグループ</text></g>
+          <path d="M345 78 H 365" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="370" y="30" width="150" height="96" rx="8" class="svg-box"/>
+             <text x="445" y="62" text-anchor="middle" class="svg-title">③ 各自でサインイン</text>
+             <text x="445" y="84" text-anchor="middle" class="svg-label-sm">自分の Apple</text>
+             <text x="445" y="102" text-anchor="middle" class="svg-label-sm">アカウントで</text></g>
+          <path d="M525 78 H 545" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="550" y="30" width="150" height="96" rx="8" class="svg-box"/>
+             <text x="625" y="62" text-anchor="middle" class="svg-title">④ 家族をつなぐ</text>
+             <text x="625" y="84" text-anchor="middle" class="svg-label-sm">管理者が</text>
+             <text x="625" y="102" text-anchor="middle" class="svg-label-sm">ファミリー共有を作成</text></g>
+          <text x="360" y="152" text-anchor="middle" class="svg-label-sm">③を飛ばして④はできない（招く相手が Apple アカウントを持っている必要がある）</text>
+        </svg>
+        <figcaption>図6: 順番どおりに進める。②と③はそれぞれ数分で終わる</figcaption>
+      </figure>
+
+      <p>ファミリー共有に招くには相手が自分の Apple アカウントを持っている必要があるので、③を飛ばして④には進めません。<strong>③は本人にやらせてください。</strong>親がパスワードを預かると、「誰の操作か」が分からなくなります。</p>
+
+      <p><strong>この4ステップは最初の1回だけです。</strong>2日目からは何も設定せず、次の章の流れで使い始められます。</p>
+    </section>
+
+    <section id="s7">
+      <h2>7. 電源オフから自分の画面が出るまで</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 290" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="電源を入れてから自分のデスクトップが出るまでの4ステップと、Appleアカウントは求められないという注記">
+          <g><rect x="10" y="30" width="150" height="100" rx="8" class="svg-box"/>
+             <text x="85" y="62" text-anchor="middle" class="svg-title">① 電源ボタン</text>
+             <text x="85" y="86" text-anchor="middle" class="svg-label-sm">りんごのマークが</text>
+             <text x="85" y="104" text-anchor="middle" class="svg-label-sm">出て、少し待つ</text></g>
+          <path d="M165 78 H 185" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="190" y="30" width="150" height="100" rx="8" class="svg-box"/>
+             <text x="265" y="62" text-anchor="middle" class="svg-title">② ログイン画面</text>
+             <text x="265" y="86" text-anchor="middle" class="svg-label-sm">家族4人の名前が</text>
+             <text x="265" y="104" text-anchor="middle" class="svg-label-sm">並ぶ。自分を選ぶ</text></g>
+          <path d="M345 78 H 365" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="370" y="30" width="150" height="100" rx="8" class="svg-box-accent"/>
+             <text x="445" y="62" text-anchor="middle" class="svg-title">③ パスワード</text>
+             <text x="445" y="86" text-anchor="middle" class="svg-label-sm">Mac のログイン</text>
+             <text x="445" y="104" text-anchor="middle" class="svg-label-sm">パスワードを入力</text></g>
+          <path d="M525 78 H 545" class="svg-arrow" marker-end="url(#ar)"/>
+          <g><rect x="550" y="30" width="150" height="100" rx="8" class="svg-box"/>
+             <text x="625" y="62" text-anchor="middle" class="svg-title">④ 自分の画面</text>
+             <text x="625" y="86" text-anchor="middle" class="svg-label-sm">自分のデスクトップ</text>
+             <text x="625" y="104" text-anchor="middle" class="svg-label-sm">と書類が出る</text></g>
+
+          <rect x="10" y="156" width="690" height="54" rx="8" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.5"/>
+          <text x="355" y="181" text-anchor="middle" class="svg-title" fill="var(--green)">この4ステップに Apple アカウントは出てこない</text>
+          <text x="355" y="201" text-anchor="middle" class="svg-label-sm">毎日入れるのは「Mac のログインパスワード」1つだけ</text>
+
+          <rect x="10" y="222" width="690" height="54" rx="8" fill="var(--amber-soft)" stroke="var(--amber)" stroke-width="1.5"/>
+          <text x="355" y="247" text-anchor="middle" class="svg-title">Touch ID が使えるのは2回目から</text>
+          <text x="355" y="267" text-anchor="middle" class="svg-label-sm">電源を入れた直後・再起動直後・ログアウト後の1回目は、必ず手入力</text>
+        </svg>
+        <figcaption>図7: 電源オフの状態から自分の画面が出るまで。入力は1回、1種類だけ</figcaption>
+      </figure>
+
+      <p>電源が完全に切れた状態から自分の画面を出すまでに入力するのは、<mark>Mac のユーザアカウントのパスワード</mark>、これ1つだけです。ログイン画面には家族全員の名前がアイコンで並ぶので、自分の名前を選んでパスワードを入れます。Apple アカウントのメールアドレスもパスワードも、ここでは一切求められません。</p>
+
+      <p>Touch ID に指紋を登録していても、<strong>電源を入れた直後・再起動した直後・ログアウトした後の1回目だけは指紋が使えず</strong>、パスワードの手入力が必要です。故障ではなく Apple が決めた仕様で、2回目からは指紋で入れます。</p>
+
+      <div class="callout tip">
+        <span class="ico">💡</span>
+        <div><p>ログイン画面に自分の名前が出てこないときは、まだそのユーザアカウントが作られていないか、FileVault を使っていて解錠が許可されていないかのどちらかです（→ <a href="#s13">13章</a>）。</p></div>
+      </div>
+    </section>
+
+    <section id="s8">
+      <h2>8. Apple アカウントを入れるのは、いつ？</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="初回だけ・2回目以降・ときどき、の3つの場面で何を入力するかの一覧">
+          <rect x="10" y="20" width="150" height="76" rx="8" class="svg-box-accent"/>
+          <text x="85" y="52" text-anchor="middle" class="svg-title">初回だけ</text>
+          <text x="85" y="74" text-anchor="middle" class="svg-label-sm">買った日に1回</text>
+          <rect x="175" y="20" width="525" height="76" rx="8" class="svg-box"/>
+          <text x="195" y="52" class="svg-label">Mac のログインパスワードを決める</text>
+          <text x="195" y="76" class="svg-label">＋ Apple アカウントのメールとパスワードでサインイン</text>
+
+          <rect x="10" y="112" width="150" height="76" rx="8" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.5"/>
+          <text x="85" y="144" text-anchor="middle" class="svg-title" fill="var(--green)">2回目以降</text>
+          <text x="85" y="166" text-anchor="middle" class="svg-label-sm">毎日ずっと</text>
+          <rect x="175" y="112" width="525" height="76" rx="8" class="svg-box"/>
+          <text x="195" y="146" class="svg-label">Mac のログインパスワードだけ</text>
+          <text x="195" y="170" class="svg-label-sm">Apple アカウントはサインインしたままなので、聞かれない</text>
+
+          <rect x="10" y="204" width="150" height="96" rx="8" fill="var(--amber-soft)" stroke="var(--amber)" stroke-width="1.5"/>
+          <text x="85" y="244" text-anchor="middle" class="svg-title">ときどき</text>
+          <text x="85" y="266" text-anchor="middle" class="svg-label-sm">不定期に</text>
+          <rect x="175" y="204" width="525" height="96" rx="8" class="svg-box"/>
+          <text x="195" y="234" class="svg-label-sm">・App や音楽を買うとき（Touch ID で代わりにできる）</text>
+          <text x="195" y="258" class="svg-label-sm">・新しい iPhone や Mac を同じアカウントに追加するとき</text>
+          <text x="195" y="282" class="svg-label-sm">・iCloud の設定を変えたとき、パスワードを変えたとき</text>
+        </svg>
+        <figcaption>図8: Apple アカウントを打ち込むのは初回だけ。以後は「ときどき」聞かれる程度</figcaption>
+      </figure>
+
+      <p>Apple アカウントを入力するのは、原則として<strong>初回セットアップの1回だけ</strong>です。箱を開けて最初に電源を入れると設定アシスタントが立ち上がり、その中で「Apple ID でサインイン」と「コンピュータアカウントを作成」が続けて出てきます。ここを通せば、Apple アカウントはサインインした状態のまま保たれます。</p>
+
+      <p>つまり<mark>「毎回ユーザアカウント → Apple アカウント」と2回入れる必要はありません</mark>。日々の起動で入れるのは Mac のログインパスワードだけです。ただし図の3つ目の場面では、改めて Apple アカウントのパスワードを聞かれます。App を買うときは Touch ID で代用できるので、実際に打ち込む機会はかなり少なくなります。</p>
+
+      <div class="callout tip">
+        <span class="ico">💡</span>
+        <div><p>設定アシスタントで Apple アカウントのサインインを飛ばしても、Mac は問題なく使えます。あとから <code>システム設定</code> の左上（自分の名前が出るところ）から、いつでもサインインできます。</p></div>
+      </div>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 2</span>
+      <p class="qtext">家族4人分のアカウントを作り終えました。翌日、母が電源の切れた MacBook を使うとき、自分の画面が出るまでに入力するものはどれですか。</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>Mac のログインパスワード → 続けて Apple アカウントのパスワード</span></button>
+        <button class="opt" data-correct><span class="mark">B</span><span>Mac のログインパスワードだけ</span></button>
+        <button class="opt"><span class="mark">C</span><span>Apple アカウントのパスワードだけ</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>Apple アカウントは初回セットアップで一度サインインすればそのままなので、毎回は入れません（A）。ログイン画面の認証は端末側のユーザアカウントに対して行われるため、Apple アカウントのパスワードでは入れません（C）。App の購入や新しい端末の追加のときだけ、改めて聞かれます。</p>
+      </div>
+    </div>
+
+    <section id="s9">
+      <h2>9. ファストユーザスイッチ</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ログアウトして交代する場合とファストユーザスイッチで切り替える場合の違い">
+          <rect x="10" y="20" width="330" height="200" rx="8" fill="var(--bg)" stroke="var(--border-strong)" stroke-width="1.5"/>
+          <text x="175" y="50" text-anchor="middle" class="svg-title" fill="var(--text-mute)">ログアウトして交代</text>
+          <text x="32" y="88" class="svg-label">① 父：アプリを全部閉じる</text>
+          <text x="32" y="118" class="svg-label">② ログアウトする</text>
+          <text x="32" y="148" class="svg-label">③ 母：ログインする</text>
+          <text x="32" y="178" class="svg-label">④ 父の作業は消えている</text>
+          <text x="32" y="204" class="svg-label-sm">戻るたびに開き直しになる</text>
+
+          <path d="M348 120 H 372" class="svg-arrow" marker-end="url(#ar)"/>
+
+          <rect x="380" y="20" width="330" height="200" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="545" y="50" text-anchor="middle" class="svg-title" fill="var(--accent)">ファストユーザスイッチ</text>
+          <text x="402" y="88" class="svg-label">① 父：開いたまま切り替え</text>
+          <text x="402" y="118" class="svg-label">② 母：ログインする</text>
+          <text x="402" y="148" class="svg-label">③ 父の作業は残っている</text>
+          <text x="402" y="178" class="svg-label">④ いつでも戻って続けられる</text>
+          <text x="402" y="204" class="svg-label-sm">その分メモリを使い続ける</text>
+        </svg>
+        <figcaption>図9: Windows の「ユーザーの切り替え」と同じ発想。作業を残したまま替われる</figcaption>
+      </figure>
+
+      <p>既定ではメニューに出ていません。<code>システム設定 ＞ メニューバー</code>で「ファストユーザスイッチ」を追加すると、画面右上から切り替えられます。ただし前のユーザーはログインしたままなので、人数分のアプリがメモリを占め続けます。使い終わったら意識してログアウトすると、動作が重くなりません。</p>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><p>ほかの家族がログインしたままシャットダウンしようとすると確認が出ます。強行すると相手の未保存データが失われるので、閉じる前に一声かける運用にしておきます。</p></div>
+      </div>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 3</span>
+      <p class="qtext">ファストユーザスイッチで父から母に切り替えました。父が開いていたアプリはどうなりますか。</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>すべて終了し、次のログイン時は何も開いていない</span></button>
+        <button class="opt" data-correct><span class="mark">B</span><span>開いたまま残り、父に切り替え直すと続きから使える</span></button>
+        <button class="opt"><span class="mark">C</span><span>保存されてから終了し、次のログイン時に復元される</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>切り替えでは前のユーザーはログアウトされず、ログインしたまま並列に保持されます。A はログアウトを選んだときの挙動、C は「再ログイン時にウインドウを開き直す」という別の機能です。残る以上メモリも使い続けます。</p>
+      </div>
+    </div>
+
+    <section id="s10">
+      <h2>10. ファミリー共有 — 共有されるもの、されないもの</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ファミリー共有で共有されるものと共有されないものの分類">
+          <rect x="250" y="10" width="220" height="56" rx="8" class="svg-box-accent"/>
+          <text x="360" y="35" text-anchor="middle" class="svg-title">ファミリー共有</text>
+          <text x="360" y="55" text-anchor="middle" class="svg-label-sm">最大6人（管理者を含む）</text>
+          <path d="M360 66 V 92 M180 92 H 540 M180 92 V 118 M540 92 V 118" class="svg-arrow"/>
+
+          <rect x="20" y="118" width="320" height="176" rx="8" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.5"/>
+          <text x="180" y="146" text-anchor="middle" class="svg-title" fill="var(--green)">共有される＝支払いと権利</text>
+          <text x="42" y="180" class="svg-label">・iCloud+ のストレージ容量</text>
+          <text x="42" y="208" class="svg-label">・購入した App・音楽・本</text>
+          <text x="42" y="236" class="svg-label">・Apple Music / TV+ など</text>
+          <text x="42" y="264" class="svg-label">・位置情報とスクリーンタイム</text>
+          <text x="42" y="286" class="svg-label-sm">支払いは代表者のカードに集約</text>
+
+          <rect x="380" y="118" width="320" height="176" rx="8" fill="var(--bg)" stroke="var(--border-strong)" stroke-width="1.5"/>
+          <text x="540" y="146" text-anchor="middle" class="svg-title" fill="var(--text-mute)">共有されない＝個人のデータ</text>
+          <text x="402" y="180" class="svg-label">・写真ライブラリ</text>
+          <text x="402" y="208" class="svg-label">・メッセージとメール</text>
+          <text x="402" y="236" class="svg-label">・連絡先とカレンダー</text>
+          <text x="402" y="264" class="svg-label">・iCloud Drive の中身</text>
+          <text x="402" y="286" class="svg-label-sm">家族にも中身は見えない</text>
+
+          <text x="360" y="320" text-anchor="middle" class="svg-label-sm">「容量を分け合う」のであって「中身を見せ合う」のではない</text>
+        </svg>
+        <figcaption>図10: 共有されるのは支払いと権利であって、データではない</figcaption>
+      </figure>
+
+      <p>最大6人のグループです。iCloud+ の容量は分け合いますが、中の写真やファイルは互いに見えません。買った App は家族で使え、誰が何を買ったかは個別に非表示にできます。子どもの購入時に管理者へ通知が届く「承認と購入のリクエスト」も、ここで設定します。</p>
+    </section>
+
+    <section id="s11">
+      <h2>11. iCloud+ を分け合う</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="200GBを4人が個別契約した場合と、ファミリー共有で1つを共有した場合の月額比較">
+          <line x1="230" y1="30" x2="230" y2="215" stroke="var(--border-strong)"/>
+          <rect x="230" y="45" width="380" height="38" rx="4" fill="var(--accent)" opacity=".85"/>
+          <text x="222" y="70" text-anchor="end" class="svg-label">別々に契約（200GB×4人）</text>
+          <text x="620" y="70" class="svg-label-sm">2,160円/月</text>
+          <rect x="230" y="105" width="95" height="38" rx="4" fill="var(--green)"/>
+          <text x="222" y="130" text-anchor="end" class="svg-label">共有（200GB を4人で）</text>
+          <text x="335" y="130" class="svg-label-sm">540円/月</text>
+          <rect x="230" y="165" width="317" height="38" rx="4" fill="var(--green)" opacity=".7"/>
+          <text x="222" y="190" text-anchor="end" class="svg-label">共有（2TB を4人で）</text>
+          <text x="557" y="190" class="svg-label-sm">1,800円/月</text>
+          <text x="230" y="243" class="svg-label-sm">出典: Apple「iCloud+」（2026年8月時点・日本の月額）</text>
+        </svg>
+        <figcaption>図11: 同じ200GBでも、契約の仕方で月額が4倍違う</figcaption>
+      </figure>
+
+      <p>無料枠は5GB しかなく、Mac を使い始めるとすぐ足りなくなります。iCloud+ はどのプランでも最大5人の家族と共有でき、<strong>人数が増えても料金は変わりません</strong>。</p>
+
+      <table>
+        <thead><tr><th>プラン</th><th>月額</th><th>ファミリー共有</th></tr></thead>
+        <tbody>
+          <tr><td>50GB</td><td>180円</td><td rowspan="5">最大5人と共有可</td></tr>
+          <tr><td>200GB</td><td>540円</td></tr>
+          <tr><td>2TB</td><td>1,800円</td></tr>
+          <tr><td>6TB</td><td>5,500円</td></tr>
+          <tr><td>12TB</td><td>11,000円</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 4</span>
+      <p class="qtext">ファミリー共有で iCloud+ の200GBプランを家族4人で共有しました。正しいのはどれですか。</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>写真ライブラリが1つにまとまり、全員が見られる</span></button>
+        <button class="opt" data-correct><span class="mark">B</span><span>容量だけを分け合い、写真やファイルは互いに見えない</span></button>
+        <button class="opt"><span class="mark">C</span><span>200GB が4等分され、1人50GBまでしか使えない</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>共有されるのは容量というプールで、中身のデータではありません（A）。等分もされないので写真の多い人が多く使えます（C）。見せたい写真は「共有アルバム」で別途共有します。</p>
+      </div>
+    </div>
+
+    <section id="s12">
+      <h2>12. 1つの Apple アカウントを使い回してはいけない</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="1つのアップルアカウントを使い回した場合の問題と、1人1つに分けた場合の利点の対比">
+          <rect x="10" y="20" width="330" height="200" rx="8" fill="var(--red-soft)" stroke="var(--red)" stroke-width="1.5"/>
+          <text x="175" y="50" text-anchor="middle" class="svg-title" fill="var(--red)">✕ 1つを4人で使い回す</text>
+          <text x="30" y="84" class="svg-label">・写真ライブラリが混ざる</text>
+          <text x="30" y="112" class="svg-label">・iMessage が全員に届く</text>
+          <text x="30" y="140" class="svg-label">・子の購入が親のカードに直行</text>
+          <text x="30" y="168" class="svg-label">・1人が消すと全員から消える</text>
+          <text x="30" y="196" class="svg-label">・パスワード変更が全員に波及</text>
+
+          <path d="M348 120 H 372" class="svg-arrow" marker-end="url(#ar)"/>
+
+          <rect x="380" y="20" width="330" height="200" rx="8" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.5"/>
+          <text x="545" y="50" text-anchor="middle" class="svg-title" fill="var(--green)">○ 1人1つ ＋ ファミリー共有</text>
+          <text x="400" y="84" class="svg-label">・データは各自のまま</text>
+          <text x="400" y="112" class="svg-label">・支払いは1つにまとめられる</text>
+          <text x="400" y="140" class="svg-label">・買った App は家族で使える</text>
+          <text x="400" y="168" class="svg-label">・容量は共有プールで足りる</text>
+          <text x="400" y="196" class="svg-label">・子の購入は承認リクエスト</text>
+        </svg>
+        <figcaption>図12: 「分けると費用が増える」は誤解。分けてからつなぐのが正解</figcaption>
+      </figure>
+
+      <p>「分けると課金が4倍になる」という誤解が、使い回しの一番の動機です。実際はファミリー共有が解決します。Apple 自身も「誰もが自分の Apple アカウントを持つべきだ」と明記しています。後から分けるのは手間がかかるので、写真とメッセージが積み上がる前に分けてください。</p>
+    </section>
+
+    <section id="s13">
+      <h2>13. FileVault は、入れる・入れないを選べる</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 268" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="FileVaultをオフのままにした場合とオンにした場合の違いと、それぞれ向いている使い方">
+          <rect x="10" y="20" width="335" height="200" rx="8" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.5"/>
+          <text x="177" y="50" text-anchor="middle" class="svg-title" fill="var(--green)">オフのまま（初期状態）</text>
+          <text x="30" y="86" class="svg-label">・ストレージは暗号化済み</text>
+          <text x="42" y="106" class="svg-label-sm">Apple シリコン／T2 のMacは自動</text>
+          <text x="30" y="138" class="svg-label">・ログイン画面に全員が出る</text>
+          <text x="30" y="170" class="svg-label">・設定も確認も要らない</text>
+          <text x="30" y="200" class="svg-label-sm">向いているのは：家に置いて使う1台</text>
+
+          <rect x="375" y="20" width="335" height="200" rx="8" class="svg-box"/>
+          <text x="542" y="50" text-anchor="middle" class="svg-title" fill="var(--text-mute)">オンにする（任意）</text>
+          <text x="395" y="86" class="svg-label">・盗まれても中身を読めない</text>
+          <text x="407" y="106" class="svg-label-sm">ログインパスワードがないと解けない</text>
+          <text x="395" y="138" class="svg-label">・解錠を許可した人だけが出る</text>
+          <text x="395" y="170" class="svg-label">・家族分の許可と復旧キーが要る</text>
+          <text x="395" y="200" class="svg-label-sm">向いているのは：持ち歩く1台</text>
+
+          <text x="360" y="248" text-anchor="middle" class="svg-label-sm">どちらでもよい。オンにするときだけ、家族全員の解錠許可を忘れないこと</text>
+        </svg>
+        <figcaption>図13: FileVault は必須ではない。持ち歩くかどうかで決める</figcaption>
+      </figure>
+
+      <div class="callout key">
+        <span class="ico">🟢</span>
+        <div><p><strong>FileVault はオンにしなくてもかまいません。</strong>Apple シリコン搭載機（M1 以降）と T2 チップ搭載機では、内蔵ストレージのデータは<strong>初めから自動で暗号化されています</strong>。Apple 自身が、これらの Mac では FileVault は任意だと書いています。家に置いて家族だけで使う1台なら、オフのままで問題ありません。</p></div>
+      </div>
+
+      <p>では何が変わるのか。FileVault は、その暗号を解く鍵に<strong>「ログインパスワードを知っている人でないと解けない」という条件を足すもの</strong>です。Windows の BitLocker に相当します。持ち歩いて紛失・盗難の可能性がある1台なら、オンにする価値があります。</p>
+
+      <table>
+        <thead><tr><th>使い方</th><th>おすすめ</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr><td>家に置いて家族だけで使う</td><td>オフのままでよい</td><td>ストレージは既に暗号化済み。設定の手間と、入れなくなるリスクを避けられる</td></tr>
+          <tr><td>持ち歩く／外で使う</td><td>オンにする</td><td>紛失・盗難のとき、拾った人がディスクを取り出しても中身を読めない</td></tr>
+          <tr><td>Intel Mac（T2 なし）</td><td>オンにする</td><td>オフだと暗号化そのものが掛からない</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><p><strong>オンにする場合だけ、2つ注意があります。</strong>ひとつは、追加した家族に解錠の許可を与え忘れると、起動直後のログイン画面にその人の名前が出ず、本人が入れなくなること。設定したら必ず再起動して、全員が入れるか確かめてください。もうひとつは復旧キーで、これを失うとパスワードを忘れたときにデータを取り戻せません。保管場所を家族で決めておきます。</p></div>
+      </div>
+    </section>
+
+    <section id="s14">
+      <h2>14. 家族間のファイル受け渡し</h2>
+
+      <figure class="figure">
+        <svg viewBox="0 0 720 285" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Usersフォルダの下に各自のホームフォルダと共有フォルダが並ぶ構造">
+          <rect x="280" y="10" width="160" height="44" rx="8" class="svg-box"/>
+          <text x="360" y="38" text-anchor="middle" class="svg-title">/Users</text>
+          <path d="M360 54 V 76 M80 76 H 640 M80 76 V 98 M220 76 V 98 M360 76 V 98 M500 76 V 98 M640 76 V 98" class="svg-arrow"/>
+
+          <rect x="15" y="98" width="130" height="76" rx="8" class="svg-box"/>
+          <text x="80" y="126" text-anchor="middle" class="svg-title">父</text>
+          <text x="80" y="147" text-anchor="middle" class="svg-label-sm">ホーム</text>
+          <text x="80" y="164" text-anchor="middle" class="svg-label-sm">本人だけ</text>
+          <rect x="155" y="98" width="130" height="76" rx="8" class="svg-box"/>
+          <text x="220" y="126" text-anchor="middle" class="svg-title">母</text>
+          <text x="220" y="147" text-anchor="middle" class="svg-label-sm">ホーム</text>
+          <text x="220" y="164" text-anchor="middle" class="svg-label-sm">本人だけ</text>
+          <rect x="295" y="98" width="130" height="76" rx="8" class="svg-box"/>
+          <text x="360" y="126" text-anchor="middle" class="svg-title">長男</text>
+          <text x="360" y="147" text-anchor="middle" class="svg-label-sm">ホーム</text>
+          <text x="360" y="164" text-anchor="middle" class="svg-label-sm">本人だけ</text>
+          <rect x="435" y="98" width="130" height="76" rx="8" class="svg-box"/>
+          <text x="500" y="126" text-anchor="middle" class="svg-title">次男</text>
+          <text x="500" y="147" text-anchor="middle" class="svg-label-sm">ホーム</text>
+          <text x="500" y="164" text-anchor="middle" class="svg-label-sm">本人だけ</text>
+          <rect x="575" y="98" width="130" height="76" rx="8" class="svg-box-accent"/>
+          <text x="640" y="126" text-anchor="middle" class="svg-title">Shared</text>
+          <text x="640" y="147" text-anchor="middle" class="svg-label-sm">共有フォルダ</text>
+          <text x="640" y="164" text-anchor="middle" class="svg-label-sm">全員が読み書き</text>
+
+          <text x="290" y="198" text-anchor="middle" class="svg-label-sm">ほかの人のホームフォルダは開けない</text>
+          <text x="640" y="198" text-anchor="middle" class="svg-label-sm">Windows のパブリック相当</text>
+
+          <rect x="15" y="218" width="690" height="52" rx="8" fill="var(--bg)" stroke="var(--border)" stroke-width="1.5"/>
+          <text x="360" y="250" text-anchor="middle" class="svg-label">別の手：相手のホーム内 Public ▸ Drop Box に入れる（入るが、中は覗けない）</text>
+        </svg>
+        <figcaption>図14: 渡したいものは Shared に置く。Windows のパブリック相当</figcaption>
+      </figure>
+
+      <p>ほかの人のホームフォルダは開けません。Windows でも同じです。渡したいファイルは <code>/Users/Shared</code> に置きます。ただし Shared のファイルは作った本人以外は書き換えられないことがあるので、共同で編集したいなら iCloud Drive の共有フォルダのほうが確実です。</p>
+    </section>
+
+    <div class="quiz" data-quiz>
+      <span class="qtag">理解度チェック 5</span>
+      <p class="qtext">同じ Mac の別ユーザーに動画ファイルを渡すとき、正しい方法はどれですか。</p>
+      <div class="opts">
+        <button class="opt"><span class="mark">A</span><span>相手のホームフォルダの「デスクトップ」に直接コピーする</span></button>
+        <button class="opt" data-correct><span class="mark">B</span><span>/Users/Shared に置いて、相手に取りに行ってもらう</span></button>
+        <button class="opt"><span class="mark">C</span><span>相手のアカウントでログインし直して置く</span></button>
+      </div>
+      <div class="explain">
+        <div class="verdict"></div>
+        <p>ほかのユーザーのホームフォルダには書き込めません（A）。C は相手のパスワードが必要で、避けるべき運用です。他の家族に見せたくないなら、相手の Public 内 Drop Box を使います。</p>
+      </div>
+    </div>
+
+    <section id="summary">
+      <h2>まとめ</h2>
+      <div class="cards">
+        <div class="card"><h4>2階建てで考える</h4><p>1階が端末のユーザアカウント、2階が Apple の会員証。鍵も2本ある。</p></div>
+        <div class="card"><h4>毎日入れるのは1つだけ</h4><p>起動時は Mac のログインパスワードのみ。Apple アカウントは初回だけ。</p></div>
+        <div class="card"><h4>Apple アカウントは1人1つ</h4><p>使い回さない。分けてからファミリー共有でつなぐと費用は1つにまとまる。</p></div>
+        <div class="card"><h4>共有されるのは支払い</h4><p>容量・サブスク・購入権は共有。写真とメッセージは各自のまま。</p></div>
+      </div>
+      <div class="callout key">
+        <span class="ico">✅</span>
+        <div><p><strong>買った日にやること（30分ほど）</strong>：設定アシスタントで Apple アカウントにサインイン＋管理者アカウントを作る → 家族分の通常ユーザを追加 → 各自に初回ログインして自分の Apple アカウントでサインインしてもらう → ファミリー共有を作る。</p>
+        <p><strong>翌日からやること</strong>：電源を入れて、自分の名前を選び、Mac のログインパスワードを入れる。以上です。</p></div>
+      </div>
+    </section>
+
+    <section id="sources">
+      <h2>出典</h2>
+      <ul class="sources">
+        <li><a href="https://support.apple.com/ja-jp/guide/mac-help/mtusr001/mac">Macのユーザ、ゲスト、およびグループを設定する — Apple サポート</a> — 4種類の権限の定義</li>
+        <li><a href="https://support.apple.com/ja-jp/guide/mac-help/mchlp2439/mac">Macで素早くユーザを切り替える — Apple サポート</a> — 切り替えの有効化手順</li>
+        <li><a href="https://support.apple.com/ja-jp/guide/mac-help/mchl16fbf90a/mac">MacでTouch IDを使う — Apple サポート</a> — 起動・再起動・ログアウト後の1回目はパスワード手入力</li>
+        <li><a href="https://support.apple.com/ja-jp/guide/mac-help/mh11785/mac">MacのFileVaultで起動ディスクを暗号化する — Apple サポート</a> — Apple シリコン／T2 では自動で暗号化され、FileVault は任意</li>
+        <li><a href="https://www.apple.com/jp/family-sharing/">ファミリー共有 — Apple（日本）</a> — 6人上限と共有対象</li>
+        <li><a href="https://www.apple.com/jp/icloud/">iCloud+ — Apple（日本）</a> — 容量別の月額（2026年8月時点）</li>
+        <li><a href="https://support.apple.com/en-us/105023">Manage and use your Apple Account — Apple Support</a> — 1人1アカウントの原則</li>
+        <li><a href="https://support.apple.com/ja-jp/102617">お子様のApple Accountを作成する方法 — Apple サポート</a> — お子様用アカウント</li>
+        <li><a href="https://www.itmedia.co.jp/news/articles/2406/12/news088.html">「Apple ID」は今秋から「Apple Account」に名称変更 — ITmedia NEWS</a> — 2024年秋の改称</li>
+        <li><a href="https://support.microsoft.com/ja-jp/windows/windows-%E3%81%A7%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC-%E3%82%A2%E3%82%AB%E3%82%A6%E3%83%B3%E3%83%88%E3%82%92%E7%AE%A1%E7%90%86%E3%81%99%E3%82%8B-104dc19f-6430-4b49-6a2b-e4dbd1dcdf32">Windows でユーザー アカウントを管理する — Microsoft Support</a> — Windows 側のアカウント種別</li>
+      </ul>
+    </section>
+
+  </main>
+</div>
+
+<script>
+// ---- テーマ切替（OS設定を初期値にし、選択はlocalStorageではなくセッション内変数で保持） ----
+(function(){
+  var root=document.documentElement, btn=document.getElementById('themeBtn');
+  if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+    root.setAttribute('data-theme','dark');
+  }
+  var sync=function(){ btn.textContent = root.getAttribute('data-theme')==='dark' ? '☀️' : '🌙'; };
+  sync();
+  btn.addEventListener('click',function(){
+    root.setAttribute('data-theme', root.getAttribute('data-theme')==='dark'?'light':'dark');
+    sync();
+  });
+})();
+
+// ---- 目次スクロール連動 ----
+(function(){
+  var links=[].slice.call(document.querySelectorAll('#toc a'));
+  var map={}; links.forEach(function(a){ var el=document.querySelector(a.getAttribute('href')); if(el) map[el.id]=a; });
+  var targets=Object.keys(map).map(function(id){return document.getElementById(id);});
+  if(!targets.length) return;
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        links.forEach(function(a){a.classList.remove('active');});
+        map[e.target.id].classList.add('active');
+      }
+    });
+  },{rootMargin:'-15% 0px -70% 0px', threshold:0});
+  targets.forEach(function(t){io.observe(t);});
+})();
+
+// ---- クイズ：3択・即時採点・解説表示 ----
+(function(){
+  document.querySelectorAll('[data-quiz]').forEach(function(q){
+    var opts=[].slice.call(q.querySelectorAll('.opt'));
+    var box=q.querySelector('.explain'), verdict=q.querySelector('.verdict');
+    opts.forEach(function(btn){
+      btn.addEventListener('click',function(){
+        if(btn.disabled) return;
+        var ok=btn.hasAttribute('data-correct');
+        opts.forEach(function(o){
+          o.disabled=true;
+          if(o.hasAttribute('data-correct')) o.classList.add('correct');
+        });
+        if(!ok) btn.classList.add('wrong');
+        verdict.textContent = ok ? '正解！' : '惜しい — 正解は上の緑の選択肢です';
+        verdict.className = 'verdict ' + (ok?'ok':'ng');
+        box.classList.add('show');
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
